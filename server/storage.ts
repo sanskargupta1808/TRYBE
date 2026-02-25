@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, desc, ne, inArray } from "drizzle-orm";
+import { eq, and, or, desc, ne, inArray, count } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
@@ -110,7 +110,23 @@ export async function upsertUserProfile(userId: string, data: Partial<schema.Ins
 
 // ─── Tables ───────────────────────────────────────────────────────────────────
 export async function getAllTables() {
-  return db.select().from(schema.tables).where(eq(schema.tables.status, "ACTIVE")).orderBy(desc(schema.tables.createdAt));
+  return db
+    .select({
+      id: schema.tables.id,
+      title: schema.tables.title,
+      purpose: schema.tables.purpose,
+      tags: schema.tables.tags,
+      status: schema.tables.status,
+      createdByUserId: schema.tables.createdByUserId,
+      requiresApprovalToJoin: schema.tables.requiresApprovalToJoin,
+      createdAt: schema.tables.createdAt,
+      memberCount: count(schema.tableMembers.id),
+    })
+    .from(schema.tables)
+    .leftJoin(schema.tableMembers, eq(schema.tables.id, schema.tableMembers.tableId))
+    .where(eq(schema.tables.status, "ACTIVE"))
+    .groupBy(schema.tables.id)
+    .orderBy(desc(schema.tables.createdAt));
 }
 export async function getTableById(id: string) {
   const [table] = await db.select().from(schema.tables).where(eq(schema.tables.id, id));
@@ -186,7 +202,21 @@ export async function updateJoinRequestStatus(id: string, status: string) {
 
 // ─── Threads ──────────────────────────────────────────────────────────────────
 export async function getThreadsByTable(tableId: string) {
-  return db.select().from(schema.threads).where(eq(schema.threads.tableId, tableId)).orderBy(desc(schema.threads.createdAt));
+  return db
+    .select({
+      id: schema.threads.id,
+      tableId: schema.threads.tableId,
+      title: schema.threads.title,
+      createdByUserId: schema.threads.createdByUserId,
+      status: schema.threads.status,
+      createdAt: schema.threads.createdAt,
+      postCount: count(schema.posts.id),
+    })
+    .from(schema.threads)
+    .leftJoin(schema.posts, eq(schema.threads.id, schema.posts.threadId))
+    .where(eq(schema.threads.tableId, tableId))
+    .groupBy(schema.threads.id)
+    .orderBy(desc(schema.threads.createdAt));
 }
 export async function getThreadById(id: string) {
   const [thread] = await db.select().from(schema.threads).where(eq(schema.threads.id, id));
@@ -195,6 +225,16 @@ export async function getThreadById(id: string) {
 export async function createThread(data: schema.InsertThread) {
   const [thread] = await db.insert(schema.threads).values(data).returning();
   return thread;
+}
+export async function closeThread(id: string) {
+  const [updated] = await db.update(schema.threads).set({ status: "CLOSED" }).where(eq(schema.threads.id, id)).returning();
+  return updated;
+}
+
+// ─── Table Member Role ────────────────────────────────────────────────────────
+export async function getTableMemberRole(tableId: string, userId: string): Promise<string | null> {
+  const [m] = await db.select().from(schema.tableMembers).where(and(eq(schema.tableMembers.tableId, tableId), eq(schema.tableMembers.userId, userId)));
+  return m?.memberRole ?? null;
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
@@ -205,9 +245,20 @@ export async function getPostsByThread(threadId: string) {
     .where(eq(schema.posts.threadId, threadId))
     .orderBy(schema.posts.createdAt);
 }
+export async function getPostById(id: string) {
+  const [post] = await db.select().from(schema.posts).where(eq(schema.posts.id, id));
+  return post;
+}
 export async function createPost(data: schema.InsertPost) {
   const [post] = await db.insert(schema.posts).values(data).returning();
   return post;
+}
+export async function updatePostContent(id: string, content: string) {
+  const [updated] = await db.update(schema.posts).set({ content, editedAt: new Date() }).where(eq(schema.posts.id, id)).returning();
+  return updated;
+}
+export async function deletePost(id: string) {
+  await db.delete(schema.posts).where(eq(schema.posts.id, id));
 }
 export async function updatePostModeration(id: string, status: string) {
   const [updated] = await db.update(schema.posts).set({ moderationStatus: status }).where(eq(schema.posts.id, id)).returning();

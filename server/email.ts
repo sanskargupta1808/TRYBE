@@ -296,3 +296,55 @@ export async function sendAccountApprovedEmail(recipientEmail: string, recipient
   );
   return result.sent;
 }
+
+export async function sendTableJoinApprovedEmail(recipientEmail: string, recipientName: string, tableTitle: string): Promise<boolean> {
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>TRYBE — Table Access Approved</title>
+  <style>body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}
+  .wrapper{max-width:560px;margin:48px auto;background:#fff;border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;}
+  .header{background:#1a1a1a;padding:32px 40px;}.logo-name{color:#fff;font-size:18px;font-weight:600;}
+  .body{padding:40px;}.cta{display:block;background:#c2692e;color:#fff;text-decoration:none;text-align:center;font-size:15px;font-weight:600;padding:14px 24px;border-radius:6px;margin:28px 0;}
+  h1{font-size:22px;font-weight:600;color:#111;margin:0 0 12px;}p{font-size:15px;line-height:1.65;color:#555;margin:0 0 20px;}
+  .footer{padding:20px 40px;background:#f9f8f6;border-top:1px solid #e8e6e1;}.footer p{font-size:12px;color:#aaa;margin:0;}</style></head>
+  <body><div class="wrapper"><div class="header"><div class="logo-name">TRYBE</div></div>
+  <div class="body"><h1>You've been approved to join a table${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
+  <p>Your request to join <strong>${tableTitle}</strong> has been approved. You can now access the table and contribute to its discussions.</p>
+  <a href="${APP_URL}/app/tables" class="cta">View your tables</a>
+  <p style="font-size:13px;color:#888;">All contributions are moderated and must meet TRYBE's professional conduct standards.</p></div>
+  <div class="footer"><p>TRYBE &mdash; Private Global Health Collaboration</p></div></div></body></html>`.trim();
+  const result = await sendEmail(recipientEmail, `You've been approved to join "${tableTitle}" on TRYBE`, html);
+  return result.sent;
+}
+
+export async function sendTableJoinDeclinedEmail(recipientEmail: string, recipientName: string, tableTitle: string): Promise<boolean> {
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>TRYBE — Table Request Update</title>
+  <style>body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}
+  .wrapper{max-width:560px;margin:48px auto;background:#fff;border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;}
+  .header{background:#1a1a1a;padding:32px 40px;}.logo-name{color:#fff;font-size:18px;font-weight:600;}
+  .body{padding:40px;}h1{font-size:22px;font-weight:600;color:#111;margin:0 0 12px;}p{font-size:15px;line-height:1.65;color:#555;margin:0 0 20px;}
+  .footer{padding:20px 40px;background:#f9f8f6;border-top:1px solid #e8e6e1;}.footer p{font-size:12px;color:#aaa;margin:0;}</style></head>
+  <body><div class="wrapper"><div class="header"><div class="logo-name">TRYBE</div></div>
+  <div class="body"><h1>Your table join request${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
+  <p>Your request to join <strong>${tableTitle}</strong> was not approved at this time. This may be due to the table's current focus or capacity.</p>
+  <p>You can explore other tables on the platform or request a new table if your area of focus isn't yet represented.</p>
+  <p style="font-size:13px;color:#888;">If you think this was in error, please use the Feedback section inside TRYBE.</p></div>
+  <div class="footer"><p>TRYBE &mdash; Private Global Health Collaboration</p></div></div></body></html>`.trim();
+  const result = await sendEmail(recipientEmail, `Update on your request to join "${tableTitle}"`, html);
+  return result.sent;
+}
+
+export async function sendTableRequestDeclinedEmail(recipientEmail: string, recipientName: string, tableTitle: string): Promise<boolean> {
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>TRYBE — Table Request Update</title>
+  <style>body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}
+  .wrapper{max-width:560px;margin:48px auto;background:#fff;border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;}
+  .header{background:#1a1a1a;padding:32px 40px;}.logo-name{color:#fff;font-size:18px;font-weight:600;}
+  .body{padding:40px;}h1{font-size:22px;font-weight:600;color:#111;margin:0 0 12px;}p{font-size:15px;line-height:1.65;color:#555;margin:0 0 20px;}
+  .footer{padding:20px 40px;background:#f9f8f6;border-top:1px solid #e8e6e1;}.footer p{font-size:12px;color:#aaa;margin:0;}</style></head>
+  <body><div class="wrapper"><div class="header"><div class="logo-name">TRYBE</div></div>
+  <div class="body"><h1>Update on your table proposal${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
+  <p>Thank you for proposing <strong>${tableTitle}</strong>. After review, we're not able to create this table at this time.</p>
+  <p>TRYBE tables are carefully curated during Alpha. We encourage you to explore existing tables or submit a revised proposal in the future.</p>
+  <p style="font-size:13px;color:#888;">If you have questions, use the Feedback section inside TRYBE.</p></div>
+  <div class="footer"><p>TRYBE &mdash; Private Global Health Collaboration</p></div></div></body></html>`.trim();
+  const result = await sendEmail(recipientEmail, `Update on your TRYBE table proposal: "${tableTitle}"`, html);
+  return result.sent;
+}

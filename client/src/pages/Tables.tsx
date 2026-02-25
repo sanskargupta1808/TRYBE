@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, Users, ChevronRight } from "lucide-react";
+import { Search, Plus, Users, ChevronRight, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Tables() {
@@ -94,8 +94,13 @@ export default function Tables() {
                   <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-mytable-${table.id}`}>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{table.title}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1 mt-1 items-center">
                         {(table.tags || []).slice(0, 3).map((tag: string) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+                        {(table.memberCount ?? 0) > 0 && (
+                          <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
+                            <Users className="h-3 w-3" />{table.memberCount}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-3" />
@@ -126,8 +131,18 @@ export default function Tables() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-foreground text-sm">{table.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{table.purpose}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1 mt-2 items-center">
                       {(table.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+                      {(table.memberCount ?? 0) > 0 && (
+                        <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
+                          <Users className="h-3 w-3" />{table.memberCount} {table.memberCount === 1 ? "member" : "members"}
+                        </span>
+                      )}
+                      {table.requiresApprovalToJoin && (
+                        <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
+                          <Lock className="h-3 w-3" />By request
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">

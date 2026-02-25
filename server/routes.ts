@@ -4,7 +4,7 @@ import session from "express-session";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
-import { sendInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail } from "./email";
+import { sendInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail } from "./email";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -309,12 +309,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
   app.post("/api/tables/:id/join-requests/:reqId/approve", requireActive, async (req, res) => {
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "APPROVED");
-    // Add to table members
     await storage.addTableMember(req.params.id, updated.userId);
+    const table = await storage.getTableById(req.params.id);
+    const requester = await storage.getUserById(updated.userId);
+    if (requester?.email && table) {
+      sendTableJoinApprovedEmail(requester.email, requester.name, table.title).catch(() => {});
+    }
     res.json(updated);
   });
   app.post("/api/tables/:id/join-requests/:reqId/decline", requireActive, async (req, res) => {
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "DECLINED");
+    const table = await storage.getTableById(req.params.id);
+    const requester = await storage.getUserById(updated.userId);
+    if (requester?.email && table) {
+      sendTableJoinDeclinedEmail(requester.email, requester.name, table.title).catch(() => {});
+    }
     res.json(updated);
   });
 
@@ -353,6 +362,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
   app.post("/api/admin/table-requests/:id/decline", requireAdmin, async (req, res) => {
     const updated = await storage.updateTableRequestStatus(req.params.id, "DECLINED");
+    if (updated.requestedByUserId) {
+      const requester = await storage.getUserById(updated.requestedByUserId);
+      if (requester?.email) {
+        sendTableRequestDeclinedEmail(requester.email, requester.name, updated.title).catch(() => {});
+      }
+    }
     res.json(updated);
   });
 
@@ -375,8 +390,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const thread = await storage.getThreadById(req.params.id);
     if (!thread) return res.status(404).json({ error: "Thread not found" });
     const posts = await storage.getPostsByThread(req.params.id);
-    const isMember = await storage.isTableMember(thread.tableId, req.session.userId!);
-    res.json({ ...thread, posts, isMember });
+    const memberRole = await storage.getTableMemberRole(thread.tableId, req.session.userId!);
+    const isMember = !!memberRole;
+    const isHost = memberRole === "HOST";
+    res.json({ ...thread, posts, isMember, isHost });
+  });
+  app.post("/api/threads/:id/close", requireActive, async (req, res) => {
+    const thread = await storage.getThreadById(req.params.id);
+    if (!thread) return res.status(404).json({ error: "Thread not found" });
+    const memberRole = await storage.getTableMemberRole(thread.tableId, req.session.userId!);
+    const isAdminUser = (await storage.getUserById(req.session.userId!))?.role === "ADMIN";
+    if (memberRole !== "HOST" && !isAdminUser) return res.status(403).json({ error: "Only the table host can close threads" });
+    const updated = await storage.closeThread(req.params.id);
+    res.json(updated);
   });
 
   // ─── Posts ────────────────────────────────────────────────────────────────
@@ -394,11 +420,36 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (!isMember) return res.status(403).json({ error: "You must be a table member to post in this thread" });
     const mod = await moderateContent(content);
     if (mod.flagged) {
-      await storage.createModerationItem({ contentType: "POST", contentId: "pending", reason: mod.reason || "Flagged", reportedByUserId: req.session.userId });
+      await storage.createModerationItem({ contentType: "POST_ATTEMPT", contentId: req.params.threadId, reason: mod.reason || "Flagged by moderation", reportedByUserId: req.session.userId });
       return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase and try again." });
     }
     const post = await storage.createPost({ threadId: req.params.threadId, userId: req.session.userId, content, moderationStatus: "CLEAN" });
     res.json(post);
+  });
+  app.post("/api/posts/:id/flag", requireActive, async (req, res) => {
+    const post = await storage.getPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    await storage.createModerationItem({ contentType: "POST", contentId: post.id, reason: "User flagged", reportedByUserId: req.session.userId });
+    res.json({ success: true });
+  });
+  app.patch("/api/posts/:id", requireActive, async (req, res) => {
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const post = await storage.getPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (post.userId !== req.session.userId) return res.status(403).json({ error: "You can only edit your own posts" });
+    const mod = await moderateContent(content);
+    if (mod.flagged) return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase." });
+    const updated = await storage.updatePostContent(post.id, content.trim());
+    res.json(updated);
+  });
+  app.delete("/api/posts/:id", requireActive, async (req, res) => {
+    const post = await storage.getPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    const user = await storage.getUserById(req.session.userId!);
+    if (post.userId !== req.session.userId && user?.role !== "ADMIN") return res.status(403).json({ error: "You can only delete your own posts" });
+    await storage.deletePost(post.id);
+    res.json({ success: true });
   });
   app.post("/api/admin/posts/:id/moderation", requireAdmin, async (req, res) => {
     const { status } = req.body;

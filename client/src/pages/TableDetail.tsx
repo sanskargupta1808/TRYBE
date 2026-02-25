@@ -240,9 +240,14 @@ export default function TableDetail() {
               <Link key={thread.id} href={`/app/tables/${id}/threads/${thread.id}`}>
                 <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-thread-${thread.id}`}>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{thread.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{thread.title}</p>
+                      {thread.status === "CLOSED" && <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">Closed</span>}
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {new Date(thread.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      {" · "}
+                      {thread.postCount ?? 0} {thread.postCount === 1 ? "post" : "posts"}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
