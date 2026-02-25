@@ -4,6 +4,7 @@ import session from "express-session";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
+import { sendInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail } from "./email";
 
 declare module "express-session" {
   interface SessionData {
@@ -481,11 +482,15 @@ Only include suggestedActions that are genuinely relevant. Keep suggestedActions
     res.json(invites);
   });
   app.post("/api/admin/invites", requireAdmin, async (req, res) => {
-    const { expiresInDays } = req.body;
+    const { email, recipientName, expiresInDays } = req.body;
     const expiresAt = new Date(Date.now() + (expiresInDays || 30) * 86400000);
-    const invite = await storage.createInvite({ createdByUserId: req.session.userId, expiresAt });
-    await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: {} });
-    res.json(invite);
+    const invite = await storage.createInvite({ email, createdByUserId: req.session.userId, expiresAt });
+    await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: { email } });
+    let emailSent = false;
+    if (email) {
+      emailSent = await sendInviteEmail(email, recipientName, invite.token);
+    }
+    res.json({ ...invite, emailSent });
   });
   app.delete("/api/admin/invites/:id", requireAdmin, async (req, res) => {
     const invite = await storage.revokeInvite(req.params.id);
@@ -499,6 +504,7 @@ Only include suggestedActions that are genuinely relevant. Keep suggestedActions
     if (action === "APPROVE") {
       user = await storage.updateUserStatus(userId, "ACTIVE");
       await createAuditEntry({ actorUserId: req.session.userId, action: "USER_APPROVED", targetType: "USER", targetId: userId });
+      if (user?.email) sendAccountApprovedEmail(user.email, user.name).catch(() => {});
     } else if (action === "REJECT") {
       user = await storage.updateUserStatus(userId, "REJECTED");
       await createAuditEntry({ actorUserId: req.session.userId, action: "USER_REJECTED", targetType: "USER", targetId: userId });
@@ -519,7 +525,11 @@ Only include suggestedActions that are genuinely relevant. Keep suggestedActions
     if (action === "APPROVE") {
       const updated = await storage.updateInviteRequestStatus(req.params.id, "APPROVED");
       const invite = await storage.createInvite({ email: updated.email, createdByUserId: req.session.userId, expiresAt: new Date(Date.now() + 30 * 86400000) });
-      res.json({ request: updated, invite });
+      let emailSent = false;
+      if (updated.email) {
+        emailSent = await sendInviteRequestApprovedEmail(updated.email, updated.name, invite.token);
+      }
+      res.json({ request: updated, invite, emailSent });
     } else if (action === "REJECT") {
       const updated = await storage.updateInviteRequestStatus(req.params.id, "REJECTED");
       res.json(updated);
