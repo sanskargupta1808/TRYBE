@@ -10,7 +10,7 @@ export default function Landing() {
       <nav className="border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/trybe-logo.png" alt="TRYBE" className="h-[30px] w-auto" />
+            <img src="/trybe-logo.png" alt="TRYBE" className="h-[84px] w-auto" />
             <Badge variant="secondary" className="text-xs">Alpha</Badge>
           </div>
           <div className="flex items-center gap-3">
