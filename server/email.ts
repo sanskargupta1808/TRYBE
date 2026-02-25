@@ -1,12 +1,62 @@
+import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
 const APP_URL = process.env.APP_URL || `https://${process.env.REPLIT_DOMAINS?.split(",")[0] || "trybe.health"}`;
-const FROM_ADDRESS = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const FROM_ADDRESS = GMAIL_USER ? `TRYBE <${GMAIL_USER}>` : (process.env.FROM_EMAIL || "onboarding@resend.dev");
+
+const gmailTransport = GMAIL_USER && GMAIL_APP_PASSWORD
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+    })
+  : null;
+
+const resend = !gmailTransport && process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 export function emailEnabled(): boolean {
-  return !!resend;
+  return !!(gmailTransport || resend);
+}
+
+export function emailProvider(): string {
+  if (gmailTransport) return "gmail";
+  if (resend) return "resend";
+  return "none";
+}
+
+async function sendEmail(to: string, subject: string, html: string): Promise<{ sent: boolean; error?: string }> {
+  if (gmailTransport) {
+    try {
+      await gmailTransport.sendMail({ from: FROM_ADDRESS, to, subject, html });
+      console.log(`[Email/Gmail] Sent to ${to}`);
+      return { sent: true };
+    } catch (err: any) {
+      console.error("[Email/Gmail] Failed:", err?.message || err);
+      return { sent: false, error: err?.message || "Gmail send failed" };
+    }
+  }
+
+  if (resend) {
+    try {
+      const { error } = await resend.emails.send({ from: FROM_ADDRESS, to, subject, html });
+      if (error) {
+        console.error("[Email/Resend] Failed:", error);
+        return { sent: false, error: (error as any).message || "Resend send failed" };
+      }
+      console.log(`[Email/Resend] Sent to ${to}`);
+      return { sent: true };
+    } catch (err: any) {
+      console.error("[Email/Resend] Error:", err?.message || err);
+      return { sent: false, error: err?.message || "Resend error" };
+    }
+  }
+
+  console.log(`[Email] No provider configured. Would have sent to ${to}: ${subject}`);
+  return { sent: false, error: "No email provider configured" };
 }
 
 function buildInviteEmail(name: string | undefined, token: string): string {
@@ -98,10 +148,8 @@ function buildApprovalEmail(name: string, token: string): string {
     body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
     .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
     .header { background: #1a1a1a; padding: 32px 40px; }
-    .logo { display: flex; align-items: center; gap: 10px; }
     .logo-mark { width: 32px; height: 32px; background: #c2692e; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; line-height: 32px; text-align: center; }
     .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-    .logo-tag { color: #9a9a9a; font-size: 11px; margin-top: 2px; }
     .body { padding: 40px 40px 32px; }
     h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 12px; letter-spacing: -0.3px; }
     p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
@@ -117,11 +165,11 @@ function buildApprovalEmail(name: string, token: string): string {
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="logo">
+      <div style="display:flex;align-items:center;gap:10px;">
         <div class="logo-mark">T</div>
         <div>
           <div class="logo-name">TRYBE</div>
-          <div class="logo-tag">Alpha</div>
+          <div style="color:#9a9a9a;font-size:11px;margin-top:2px;">Alpha</div>
         </div>
       </div>
     </div>
@@ -202,73 +250,27 @@ function buildApprovalPendingEmail(name: string): string {
 }
 
 export async function sendInviteEmail(recipientEmail: string, recipientName: string | undefined, token: string): Promise<{ sent: boolean; error?: string }> {
-  if (!resend) {
-    console.log(`[Email] RESEND_API_KEY not configured. Would have sent invite to ${recipientEmail} with token ${token}`);
-    return { sent: false, error: "Email not configured" };
-  }
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: recipientEmail,
-      subject: "You're invited to TRYBE — Private Global Health Collaboration",
-      html: buildInviteEmail(recipientName, token),
-    });
-    if (error) {
-      console.error("[Email] Failed to send invite:", error);
-      return { sent: false, error: (error as any).message || "Send failed" };
-    }
-    console.log(`[Email] Invite sent to ${recipientEmail}`);
-    return { sent: true };
-  } catch (err: any) {
-    console.error("[Email] Error sending invite:", err);
-    return { sent: false, error: err?.message || "Unknown error" };
-  }
+  return sendEmail(
+    recipientEmail,
+    "You're invited to TRYBE — Private Global Health Collaboration",
+    buildInviteEmail(recipientName, token)
+  );
 }
 
 export async function sendInviteRequestApprovedEmail(recipientEmail: string, recipientName: string, token: string): Promise<boolean> {
-  if (!resend) {
-    console.log(`[Email] RESEND_API_KEY not configured. Would have sent approval email to ${recipientEmail}`);
-    return false;
-  }
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: recipientEmail,
-      subject: "Your TRYBE invitation request has been approved",
-      html: buildApprovalEmail(recipientName, token),
-    });
-    if (error) {
-      console.error("[Email] Failed to send approval email:", error);
-      return false;
-    }
-    console.log(`[Email] Approval email sent to ${recipientEmail}`);
-    return true;
-  } catch (err) {
-    console.error("[Email] Error sending approval email:", err);
-    return false;
-  }
+  const result = await sendEmail(
+    recipientEmail,
+    "Your TRYBE invitation request has been approved",
+    buildApprovalEmail(recipientName, token)
+  );
+  return result.sent;
 }
 
 export async function sendAccountApprovedEmail(recipientEmail: string, recipientName: string): Promise<boolean> {
-  if (!resend) {
-    console.log(`[Email] RESEND_API_KEY not configured. Would have sent account approval to ${recipientEmail}`);
-    return false;
-  }
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: recipientEmail,
-      subject: "Your TRYBE account has been approved",
-      html: buildApprovalPendingEmail(recipientName),
-    });
-    if (error) {
-      console.error("[Email] Failed to send account approval email:", error);
-      return false;
-    }
-    console.log(`[Email] Account approval email sent to ${recipientEmail}`);
-    return true;
-  } catch (err) {
-    console.error("[Email] Error sending account approval email:", err);
-    return false;
-  }
+  const result = await sendEmail(
+    recipientEmail,
+    "Your TRYBE account has been approved",
+    buildApprovalPendingEmail(recipientName)
+  );
+  return result.sent;
 }
