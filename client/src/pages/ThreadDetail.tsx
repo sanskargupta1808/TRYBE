@@ -79,23 +79,29 @@ export default function ThreadDetail() {
       </div>
 
       {/* Composer */}
-      <div className="bg-card border border-card-border rounded-md p-4">
-        <Textarea
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder="Write your contribution here. Keep it professional, respectful, and relevant to this table."
-          rows={4}
-          className="mb-3 resize-none"
-          data-testid="input-post-content"
-        />
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Contributions are moderated for professional relevance.</p>
-          <Button onClick={() => postMutation.mutate(content.trim())} disabled={!content.trim() || postMutation.isPending} data-testid="button-post-submit">
-            {postMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
-            Post
-          </Button>
+      {data?.isMember ? (
+        <div className="bg-card border border-card-border rounded-md p-4">
+          <Textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="Write your contribution here. Keep it professional, respectful, and relevant to this table."
+            rows={4}
+            className="mb-3 resize-none"
+            data-testid="input-post-content"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Contributions are moderated for professional relevance.</p>
+            <Button onClick={() => postMutation.mutate(content.trim())} disabled={!content.trim() || postMutation.isPending} data-testid="button-post-submit">
+              {postMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+              Post
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-muted/30 border border-border rounded-md p-4 text-center" data-testid="notice-join-to-post">
+          <p className="text-sm text-muted-foreground">Join this table to contribute to the discussion.</p>
+        </div>
+      )}
     </div>
   );
 }

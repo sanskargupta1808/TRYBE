@@ -13,8 +13,9 @@ export default function AdminTableRequests() {
   const { data: requests = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/table-requests"] });
 
   const actionMutation = useMutation({
-    mutationFn: async ({ id, action, adminNotes }: { id: string; action: string; adminNotes?: string }) => {
-      const res = await apiRequest("POST", `/api/admin/table-requests/${id}/action`, { action, adminNotes });
+    mutationFn: async ({ id, action }: { id: string; action: "APPROVE" | "DECLINE" }) => {
+      const endpoint = action === "APPROVE" ? "approve" : "decline";
+      const res = await apiRequest("POST", `/api/admin/table-requests/${id}/${endpoint}`, {});
       return res.json();
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/admin/table-requests"] }); toast({ title: "Table request updated" }); },
@@ -46,7 +47,7 @@ export default function AdminTableRequests() {
         {req.status === "PENDING" && (
           <div className="flex gap-2 flex-shrink-0">
             <Button size="sm" onClick={() => actionMutation.mutate({ id: req.id, action: "APPROVE" })} disabled={actionMutation.isPending} data-testid={`button-approve-${req.id}`}>Approve</Button>
-            <Button size="sm" variant="outline" onClick={() => actionMutation.mutate({ id: req.id, action: "REJECT" })} disabled={actionMutation.isPending} data-testid={`button-reject-${req.id}`}>Reject</Button>
+            <Button size="sm" variant="outline" onClick={() => actionMutation.mutate({ id: req.id, action: "DECLINE" })} disabled={actionMutation.isPending} data-testid={`button-reject-${req.id}`}>Decline</Button>
           </div>
         )}
       </div>

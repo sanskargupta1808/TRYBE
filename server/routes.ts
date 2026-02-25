@@ -271,7 +271,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (aMember !== bMember) return aMember - bMember;
       return b._score - a._score;
     });
-    res.json({ all: scored, myTableIds: Array.from(myIds) });
+    const clean = scored.map(({ _score, ...t }) => t);
+    res.json({ all: clean, myTableIds: Array.from(myIds) });
   });
   app.get("/api/tables/my", requireActive, async (req, res) => {
     const tables = await storage.getTablesForUser(req.session.userId!);
@@ -374,7 +375,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const thread = await storage.getThreadById(req.params.id);
     if (!thread) return res.status(404).json({ error: "Thread not found" });
     const posts = await storage.getPostsByThread(req.params.id);
-    res.json({ ...thread, posts });
+    const isMember = await storage.isTableMember(thread.tableId, req.session.userId!);
+    res.json({ ...thread, posts, isMember });
   });
 
   // ─── Posts ────────────────────────────────────────────────────────────────
@@ -386,6 +388,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/threads/:threadId/posts", requireActive, async (req, res) => {
     const { content } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const thread = await storage.getThreadById(req.params.threadId);
+    if (!thread) return res.status(404).json({ error: "Thread not found" });
+    const isMember = await storage.isTableMember(thread.tableId, req.session.userId!);
+    if (!isMember) return res.status(403).json({ error: "You must be a table member to post in this thread" });
     const mod = await moderateContent(content);
     if (mod.flagged) {
       await storage.createModerationItem({ contentType: "POST", contentId: "pending", reason: mod.reason || "Flagged", reportedByUserId: req.session.userId });
