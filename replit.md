@@ -69,13 +69,25 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 
 ## Design System
 - Primary color: amber/orange (24 85% 45%)
-- Professional, calm, neutral
+- Professional, calm, neutral — "quietly confident" aesthetic
 - No emoji in UI; text-based reactions (Agree, Thanks, Noted, Helpful, Important, Insightful)
 - All interactive elements have `data-testid` attributes
-- Inter font, warm off-white bg, deep charcoal text, subtle tonal card shadows
+- Inter font (serif Georgia for accent taglines), warm off-white bg, deep charcoal text, subtle tonal card shadows
 - No uppercase labels — sentence case throughout
 - No bright blues — warm neutral chart/badge palette
-- No gradients as primary identity
+- No gradients as primary identity (subtle warm gradient on focus card only)
+
+### Visual Polish (Creative Director Pass)
+- **Animations**: `animate-fade-in-up`, `animate-fade-in`, `animate-slide-in-right`, `animate-scale-in` with stagger classes (stagger-1 through stagger-6)
+- **Glass effects**: top bar `bg-background/60 backdrop-blur-md`, assistant drawer `bg-background/90 backdrop-blur-xl`, focus selector modal `bg-card/80 backdrop-blur-xl`
+- **Typography**: `heading-rule` class adds 40px decorative accent line under major page headings; time-of-day greeting on dashboard; serif italic on tagline moments
+- **Focus card**: left border accent (3px primary/40), warm gradient bg, p-8 padding, size="lg" CTA button
+- **Auth pages**: `auth-dots` CSS dot grid texture, `auth-glow` radial gradient behind logo, bordered card container with shadow
+- **Sidebar**: fade gradient separators (not hard borders), subtle active state (2px primary accent bar at 60% opacity + 5% bg tint), avatar hover ring
+- **Empty states**: radial gradient glow behind icon (primary/8%), increased padding (p-10), prominent action buttons
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations
+- **Cards**: hover shadow lift (`hover:shadow-md transition-shadow duration-200`) on dashboard grid
+- **Message bubbles**: `rounded-2xl` with `px-3.5 py-2.5` for warmer feel
 
 ## UX Architecture (Focus-First Redesign)
 - Dashboard: Single "Your current focus" hero card → one primary CTA (Open table) → secondary 3-column grid (My tables, Upcoming moments, Messages) with max 3 items each + "View all" links

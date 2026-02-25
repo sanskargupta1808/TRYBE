@@ -226,7 +226,7 @@ export default function Onboarding() {
         </div>
         <div>
           <p className="text-sm font-semibold text-foreground">TRYBE Assistant</p>
-          <p className="text-xs text-muted-foreground">Let's tailor this to you</p>
+          <p className="text-xs text-muted-foreground font-serif italic">Let's tailor this to you</p>
         </div>
       </div>
 

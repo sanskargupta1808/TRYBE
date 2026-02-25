@@ -35,8 +35,8 @@ export function AppSidebar() {
   const isAdmin = user?.role === "ADMIN" || user?.role === "MODERATOR";
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
+    <Sidebar className="bg-sidebar/80">
+      <SidebarHeader className="p-4 sidebar-fade-separator">
         <div className="flex items-center gap-2.5">
           <img src="/trybe-logo.png" alt="TRYBE" className="h-[84px] w-auto" />
           <p className="text-xs text-muted-foreground">Alpha</p>
@@ -48,16 +48,19 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {appNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location === item.url || (item.url !== "/app" && location.startsWith(item.url))}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {appNavItems.map((item) => {
+                const isActive = location === item.url || (item.url !== "/app" && location.startsWith(item.url));
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive} className={isActive ? "sidebar-nav-active" : ""}>
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -70,25 +73,28 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={location === item.url || location.startsWith(item.url)}>
-                      <Link href={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminNavItems.map((item) => {
+                  const isActive = location === item.url || location.startsWith(item.url);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive} className={isActive ? "sidebar-nav-active" : ""}>
+                        <Link href={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
+      <SidebarFooter className="p-4 sidebar-fade-separator-top">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 sidebar-avatar-ring cursor-default">
             <span className="text-primary text-xs font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">

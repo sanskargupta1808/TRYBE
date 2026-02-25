@@ -20,8 +20,8 @@ function FocusSelector({ tables, currentId, onSelect, onClose }: {
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-card/80 backdrop-blur-xl border border-border rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-foreground mb-1">Change your focus</h2>
         <p className="text-sm text-muted-foreground mb-5">Select the table you'd like to work in.</p>
         <div className="space-y-2 max-h-[320px] overflow-y-auto">
@@ -78,30 +78,32 @@ export default function Dashboard() {
   };
 
   const firstName = user?.name?.split(" ")[0] || "";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <p className="text-muted-foreground text-sm">Welcome back{firstName ? `, ${firstName}` : ""}.</p>
+      <div className="mb-8 animate-fade-in-up">
+        <p className="text-lg text-foreground font-medium">{greeting}{firstName ? `, ${firstName}` : ""}.</p>
       </div>
 
       {tablesLoading ? (
         <Skeleton className="h-48 rounded-lg mb-8" />
       ) : focusTable ? (
-        <section className="mb-10" data-testid="section-focus">
-          <h2 className="text-sm font-medium text-muted-foreground mb-2">Your current focus</h2>
-          <div className="bg-card border border-card-border rounded-lg p-6 shadow-sm">
-            <p className="text-xl font-semibold text-foreground mb-1" data-testid="text-focus-title">{focusTable.title}</p>
+        <section className="mb-10 animate-fade-in-up stagger-1" data-testid="section-focus">
+          <h2 className="text-sm font-medium text-muted-foreground mb-2 heading-rule">Your current focus</h2>
+          <div className="relative overflow-hidden bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-lg p-8 shadow-sm mt-4" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
+            <p className="text-2xl font-semibold text-foreground mb-1 tracking-tight" data-testid="text-focus-title">{focusTable.title}</p>
             {focusTable.purpose && (
               <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the collaboration space you're most active in.</p>
             )}
-            <div className="flex flex-wrap gap-2 mb-5">
+            <div className="flex flex-wrap gap-2 mb-6">
               {(focusTable.tags || []).slice(0, 3).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
               ))}
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <Button onClick={() => navigate(`/app/tables/${focusTable.id}`)} data-testid="button-open-focus">
+              <Button size="lg" onClick={() => navigate(`/app/tables/${focusTable.id}`)} data-testid="button-open-focus">
                 Open collaboration space <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               {myTables.length > 1 && (
@@ -113,19 +115,21 @@ export default function Dashboard() {
           </div>
         </section>
       ) : (
-        <section className="mb-10" data-testid="section-get-started">
-          <div className="bg-card border border-card-border rounded-lg p-8 text-center shadow-sm">
-            <Table2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+        <section className="mb-10 animate-fade-in-up stagger-1" data-testid="section-get-started">
+          <div className="bg-card border border-card-border rounded-lg p-10 text-center shadow-sm">
+            <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+              <Table2 className="h-8 w-8 text-muted-foreground" />
+            </div>
             <h2 className="text-lg font-semibold text-foreground mb-1">Get started</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-md mx-auto">
-              You're not in any tables yet. Join a suggested table or request a new one.
+              You're not in any collaboration spaces yet. Join a suggested space or request a new one.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link href="/app/tables">
-                <Button data-testid="button-browse-tables">Browse tables</Button>
+                <Button data-testid="button-browse-tables">Browse spaces</Button>
               </Link>
               <Link href="/app/tables/request">
-                <Button variant="outline" data-testid="button-request-table">Request a table</Button>
+                <Button variant="outline" data-testid="button-request-table">Request a space</Button>
               </Link>
             </div>
           </div>
@@ -133,7 +137,7 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm" data-testid="section-my-tables">
+        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-2" data-testid="section-my-tables">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Table2 className="h-4 w-4 text-muted-foreground" />
@@ -163,7 +167,7 @@ export default function Dashboard() {
           )}
         </section>
 
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm" data-testid="section-moments">
+        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-3" data-testid="section-moments">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -191,7 +195,7 @@ export default function Dashboard() {
           </Link>
         </section>
 
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm" data-testid="section-messages">
+        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-4" data-testid="section-messages">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -224,7 +228,7 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <div className="border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
+      <div className="border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20 animate-fade-in-up stagger-5" data-testid="section-assistant-callout">
         <p className="text-sm text-muted-foreground">Need guidance?</p>
         <Button variant="ghost" size="sm" onClick={() => {
           const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;

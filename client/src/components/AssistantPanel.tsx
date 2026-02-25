@@ -168,7 +168,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background border-l border-border">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2">

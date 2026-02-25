@@ -55,7 +55,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto relative">
-          <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 backdrop-blur-sm px-4 py-2">
+          <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/60 backdrop-blur-md px-4 py-2">
             <SidebarTrigger />
             <div className="flex-1" />
             <button
@@ -73,8 +73,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
         {assistantOpen && (
           <>
-            <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => setAssistantOpen(false)} />
-            <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-xl">
+            <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setAssistantOpen(false)} />
+            <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-2xl bg-background/90 backdrop-blur-xl border-l border-border animate-slide-in-right">
               <AssistantPanel onClose={() => setAssistantOpen(false)} />
             </div>
           </>

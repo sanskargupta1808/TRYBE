@@ -6,7 +6,7 @@ import { CheckCircle, Shield, Calendar, Bot, Users, X } from "lucide-react";
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="border-b border-border">
+      <nav className="sticky top-0 z-10 border-b border-border bg-background/60 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/trybe-logo.png" alt="TRYBE" className="h-[84px] w-auto" />
@@ -24,18 +24,18 @@ export default function Landing() {
       </nav>
 
       <section className="relative overflow-hidden bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-24 text-center">
-          <Badge variant="secondary" className="mb-6">Invite-only Alpha</Badge>
-          <h1 className="text-5xl font-semibold tracking-tight text-foreground leading-tight mb-6">
+        <div className="max-w-4xl mx-auto px-6 py-28 text-center">
+          <Badge variant="secondary" className="mb-6 animate-fade-in">Invite-only Alpha</Badge>
+          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 animate-fade-in-up">
             A private space for serious<br />health collaboration
           </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed mb-4 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground leading-relaxed mb-4 max-w-2xl mx-auto font-medium animate-fade-in-up stagger-1" style={{ fontWeight: 400 }}>
             TRYBE is an invite-only working environment for people across global health.
             No feeds. No noise. Just focused collaboration, supported by intelligent assistance.
           </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap mt-10">
+          <div className="flex items-center justify-center gap-4 flex-wrap mt-10 animate-fade-in-up stagger-2">
             <Link href="/request-invite">
-              <Button size="lg" data-testid="button-hero-request">Request an invitation</Button>
+              <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow" data-testid="button-hero-request">Request an invitation</Button>
             </Link>
             <a href="#how">
               <Button size="lg" variant="outline" data-testid="button-hero-learn">Learn how it works</Button>
@@ -44,8 +44,8 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="why" className="max-w-4xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-semibold mb-6">Why TRYBE exists</h2>
+      <section id="why" className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50">
+        <h2 className="text-3xl font-semibold mb-6 heading-rule">Why TRYBE exists</h2>
         <p className="text-muted-foreground leading-relaxed text-lg mb-8 max-w-3xl">
           Global health work is often fragmented.
         </p>
@@ -64,7 +64,7 @@ export default function Landing() {
       </section>
 
       <section id="how" className="bg-muted/30 border-y border-border">
-        <div className="max-w-5xl mx-auto px-6 py-20">
+        <div className="max-w-5xl mx-auto px-6 py-24">
           <h2 className="text-3xl font-semibold text-center mb-4">What makes TRYBE different</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
             There are no public feeds. No follower counts. No popularity algorithms.
@@ -77,8 +77,8 @@ export default function Landing() {
               { icon: Bot, title: "A personal assistant that supports your work", desc: "Suggests, summarises, and drafts — but never acts without your approval." },
               { icon: CheckCircle, title: "Full user control", desc: "You decide what to join. You decide who to connect with. The system supports you — it doesn't direct you." },
               { icon: Shield, title: "Invite-only access", desc: "Curated membership to preserve trust and professional quality." },
-            ].map((f) => (
-              <div key={f.title} className="bg-card border border-card-border rounded-md p-5 hover-elevate">
+            ].map((f, i) => (
+              <div key={f.title} className="bg-card border border-card-border rounded-md p-6 hover-elevate hover:shadow-md transition-shadow duration-200">
                 <f.icon className="h-5 w-5 text-primary mb-3" />
                 <h3 className="font-medium text-foreground mb-2">{f.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
@@ -88,11 +88,11 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-6 py-20">
+      <section className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50">
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div>
-            <h2 className="text-3xl font-semibold mb-4">TRYBE Assistant</h2>
-            <p className="text-muted-foreground mb-6 leading-relaxed">Every member has access to TRYBE Assistant. It can:</p>
+            <h2 className="text-3xl font-semibold mb-4 heading-rule">TRYBE Assistant</h2>
+            <p className="text-muted-foreground mb-6 leading-relaxed mt-4">Every member has access to TRYBE Assistant. It can:</p>
             <div className="space-y-3">
               {[
                 "Suggest relevant collaboration spaces",
@@ -123,13 +123,13 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <p className="text-sm font-medium text-foreground mt-6">Human-led. AI-supported.</p>
+            <p className="text-sm font-medium text-foreground mt-6 font-serif italic">Human-led. AI-supported.</p>
           </div>
         </div>
       </section>
 
       <section className="bg-primary/5 border-y border-border">
-        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+        <div className="max-w-4xl mx-auto px-6 py-20 text-center">
           <h2 className="text-3xl font-semibold mb-4">Who it's for</h2>
           <p className="text-muted-foreground mb-8">TRYBE is designed for people working across global health, including:</p>
           <div className="flex flex-wrap justify-center gap-3">
@@ -141,11 +141,11 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="max-w-2xl mx-auto px-6 py-20 text-center">
+      <section className="max-w-2xl mx-auto px-6 py-24 text-center">
         <h2 className="text-3xl font-semibold mb-4">Ready to request access?</h2>
         <p className="text-muted-foreground mb-8">We review each request carefully to maintain a trusted and purposeful environment.</p>
         <Link href="/request-invite">
-          <Button size="lg" data-testid="button-cta-request">Request an invitation</Button>
+          <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow" data-testid="button-cta-request">Request an invitation</Button>
         </Link>
       </section>
 

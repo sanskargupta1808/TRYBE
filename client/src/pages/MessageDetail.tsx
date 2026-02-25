@@ -413,7 +413,7 @@ export default function MessageDetail() {
                   <div className="relative max-w-[75%]">
                     {/* Message bubble */}
                     <div
-                      className={`rounded-xl px-3 py-2 ${
+                      className={`rounded-2xl px-3.5 py-2.5 ${
                         isMe
                           ? "bg-primary text-primary-foreground rounded-br-sm"
                           : "bg-card border border-card-border text-foreground rounded-bl-sm"

@@ -48,9 +48,9 @@ export default function Moments() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Health milestones</h1>
-        <p className="text-muted-foreground text-sm mt-1">A curated calendar of awareness days, congresses, and policy windows.</p>
+      <div className="mb-6 animate-fade-in-up">
+        <h1 className="text-2xl font-semibold text-foreground heading-rule">Health milestones</h1>
+        <p className="text-muted-foreground text-sm mt-2">A curated calendar of awareness days, congresses, and policy windows.</p>
       </div>
 
       <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-xs text-muted-foreground">
@@ -60,10 +60,12 @@ export default function Moments() {
       {isLoading ? (
         <div className="space-y-6">{[1,2,3].map(i => <div key={i}><Skeleton className="h-5 w-24 mb-3" /><div className="space-y-3">{[1,2].map(j => <Skeleton key={j} className="h-24 rounded-md" />)}</div></div>)}</div>
       ) : events.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
-          <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">No moments match your focus yet. Update your interests or ask for suggestions.</p>
-          <Button size="sm" variant="outline" onClick={() => {
+        <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+            <Calendar className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground mb-5">No milestones match your focus yet. Update your interests or ask for suggestions.</p>
+          <Button onClick={() => {
             const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
             btn?.click();
           }} data-testid="button-ask-assistant-moments">Ask TRYBE Assistant</Button>

@@ -230,16 +230,18 @@ export default function TableDetail() {
         )}
 
         {(data.threads || []).length === 0 ? (
-          <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
-            <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm mb-1">No threads yet.</p>
-            <p className="text-muted-foreground text-xs">Start the first discussion to set direction for this table.</p>
+          <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+              <MessageSquare className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground text-sm mb-1">No discussions yet.</p>
+            <p className="text-muted-foreground text-xs">Start the first discussion to set direction for this space.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {(data.threads || []).slice(0, showAllThreads ? undefined : 5).map((thread: any) => (
               <Link key={thread.id} href={`/app/tables/${id}/threads/${thread.id}`}>
-                <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-thread-${thread.id}`}>
+                <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-5 py-4 hover-elevate hover:shadow-sm transition-shadow duration-200" data-testid={`card-thread-${thread.id}`}>
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-foreground">{thread.title}</p>

@@ -39,10 +39,10 @@ export default function Tables() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Collaboration spaces</h1>
-          <p className="text-muted-foreground text-sm mt-1">Focused working areas organised by topic or initiative</p>
+          <h1 className="text-2xl font-semibold text-foreground heading-rule">Collaboration spaces</h1>
+          <p className="text-muted-foreground text-sm mt-2">Focused working areas organised by topic or initiative</p>
         </div>
         <Link href="/app/tables/request">
           <Button size="sm" data-testid="button-request-table">
@@ -84,8 +84,11 @@ export default function Tables() {
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
           ) : (data?.all || []).filter((t: any) => myIds.has(t.id)).length === 0 ? (
-            <div className="bg-muted/30 border border-border rounded-md p-5 text-center">
-              <p className="text-muted-foreground text-sm">You haven't joined any tables yet.</p>
+            <div className="bg-muted/30 border border-border rounded-md p-8 text-center animate-fade-in">
+              <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+                <Table2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm">You haven't joined any collaboration spaces yet.</p>
             </div>
           ) : (
             <div className="space-y-3">

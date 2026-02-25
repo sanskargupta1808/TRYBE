@@ -73,8 +73,9 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 py-12 relative overflow-hidden">
+      <div className="auth-glow absolute inset-0 pointer-events-none" />
+      <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
           <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-semibold">Welcome to TRYBE</h1>
@@ -85,6 +86,7 @@ export default function Register() {
           </p>
         </div>
 
+        <div className="border border-border rounded-md bg-card/60 p-6 shadow-md">
         {isPreFilled && (
           <div className="flex items-center gap-2.5 bg-muted/60 border border-border rounded-md px-3 py-2.5 mb-5" data-testid="status-invite-prefilled">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -218,6 +220,7 @@ export default function Register() {
             Create account
           </Button>
         </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}

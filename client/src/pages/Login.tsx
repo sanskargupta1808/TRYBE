@@ -51,30 +51,33 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 relative overflow-hidden">
+      <div className="auth-glow absolute inset-0 pointer-events-none" />
+      <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
           <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-semibold">Sign in</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email" className="mb-1.5">Email</Label>
-            <Input id="email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required autoFocus data-testid="input-email" />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-muted-foreground hover-elevate">Forgot password?</Link>
+        <div className="border border-border rounded-md bg-card/60 p-6 shadow-md">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email" className="mb-1.5">Email</Label>
+              <Input id="email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required autoFocus data-testid="input-email" />
             </div>
-            <Input id="password" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required data-testid="input-password" />
-          </div>
-          <Button type="submit" disabled={loading} className="w-full" data-testid="button-signin">
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Sign in
-          </Button>
-        </form>
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-muted-foreground hover-elevate">Forgot password?</Link>
+              </div>
+              <Input id="password" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required data-testid="input-password" />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full" data-testid="button-signin">
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Sign in
+            </Button>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           Don't have an account?{" "}

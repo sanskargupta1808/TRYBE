@@ -59,10 +59,10 @@ export default function Messages() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Private conversations</h1>
-          <p className="text-muted-foreground text-sm mt-1">Conversations with approved contacts</p>
+          <h1 className="text-2xl font-semibold text-foreground heading-rule">Private conversations</h1>
+          <p className="text-muted-foreground text-sm mt-2">Conversations with approved contacts</p>
         </div>
         <Button size="sm" onClick={() => setShowNewConv(v => !v)} data-testid="button-new-conversation">
           {showNewConv ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
@@ -152,11 +152,13 @@ export default function Messages() {
       {isLoading ? (
         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
       ) : !conversations || conversations.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
-          <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">You don't have any private conversations yet. You can request a conversation from within a collaboration space.</p>
+        <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+            <MessageSquare className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground mb-5">You don't have any private conversations yet. You can start a conversation from within a collaboration space.</p>
           <Link href="/app/tables">
-            <Button size="sm" variant="outline" data-testid="button-view-tables-from-messages">View tables</Button>
+            <Button data-testid="button-view-tables-from-messages">Browse spaces</Button>
           </Link>
         </div>
       ) : (
