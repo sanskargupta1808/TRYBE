@@ -1,0 +1,238 @@
+Replit Update Prompt — Add Trusted Invites + Tiered Approval (Viral but Safe)
+
+You are updating the existing TRYBE Alpha codebase. Keep all existing routes, moderation, assistant behaviour, and core product scope. This change is focused on invites + approval flow to enable trusted viral growth without losing curation.
+
+Goal
+
+Implement three entry paths with tiered approval:
+
+Member Invite (Trusted) → auto-approved after email verification
+
+Admin Issued Code → manual approval required
+
+Public Request Access form → (optional for now) remains request-based; no change unless already implemented
+
+New Rule (must implement exactly)
+
+Anyone invited by an ACTIVE member is automatically approved (after email verification), subject to guardrails.
+
+Anyone using an ADMIN-issued invite code remains manually approved.
+
+Keep the feeling of exclusivity in messaging, even for auto-approvals (“Your access has been confirmed”).
+
+1) Database / Schema Updates
+Update Invite model
+
+Add fields to the existing Invite table/model:
+
+inviteType: MEMBER_INVITE | ADMIN_CODE | REQUEST_LINK (enum)
+
+createdByUserId: nullable FK to User (already present or add)
+
+autoApproveOnUse: boolean
+
+requiresManualApproval: boolean
+
+maxUses: int (default 1)
+
+usesCount: int (default 0)
+
+Rules:
+
+For MEMBER_INVITE: autoApproveOnUse=true, requiresManualApproval=false
+
+For ADMIN_CODE: autoApproveOnUse=false, requiresManualApproval=true
+
+Add InvitePolicy fields on User (or store in profile)
+
+Add to User or UserProfile:
+
+inviteQuotaMonthly (default 5)
+
+inviteQuotaUsedThisMonth (default 0)
+
+inviteQuotaResetAt (date)
+
+canInvite (bool default true)
+
+If you prefer not to alter schema heavily, store quota counters in UserProfile.
+
+2) New Feature: “Invite a Colleague” (In-app)
+Add UI entry points
+
+Add nav item in app: Invites
+
+Add shortcut button on dashboard: Invite a colleague
+
+Route:
+
+/app/invites
+
+Invite page copy (use exactly)
+
+Headline: Invite a colleague
+Body:
+TRYBE is a trusted environment. Please invite only professionals aligned with its purpose.
+Invitations from active members are confirmed automatically after email verification.
+
+Form fields:
+
+Email address
+
+Optional note (why you’re inviting them)
+
+Button:
+Send invitation
+
+Success state:
+Invitation sent. They’ll receive an email with a link to join.
+
+Invite mechanics
+
+Only ACTIVE users can send invites.
+
+User must not be SUSPENDED.
+
+Enforce monthly quota (default 5/month).
+
+Store invite record with:
+
+inviteType = MEMBER_INVITE
+
+createdByUserId = inviter
+
+token = secure random
+
+expiresAt = now + 14 days
+
+maxUses = 1
+
+Send email (for Alpha, if email provider not configured, show the invite link in UI and store it; still implement email adapter interface for later).
+
+3) Registration Flow Updates (/register)
+Current registration likely: invite code + register → verify email → pending approval
+
+Update logic:
+
+When a user registers with invite token:
+
+Validate invite token
+
+Create user with status:
+
+If invite.autoApproveOnUse == true → ACTIVE_PENDING_EMAIL (or keep PENDING_APPROVAL but mark a flag)
+
+If invite.requiresManualApproval == true → PENDING_APPROVAL
+
+After email verification:
+
+If invite.autoApproveOnUse == true:
+
+Set user.status = ACTIVE immediately
+
+Show success page: “Your access has been confirmed.”
+
+If invite.requiresManualApproval == true:
+
+Keep as pending approval
+
+Show existing pending approval page
+
+Also:
+
+Increment invite.usesCount and set invite status to USED when maxUses reached.
+
+4) Admin-issued Codes remain manual
+
+In Admin Console:
+
+Keep ability to create invite codes (ADMIN_CODE)
+
+These codes must continue to require manual approval.
+
+Add a label in admin UI:
+
+“Admin Code (Manual approval)”
+
+“Member Invite (Auto-confirm)”
+
+5) Guardrails (must implement)
+Invite limits
+
+Default 5 invites per active member per month
+
+Reset monthly automatically
+
+Admin can override per user in Admin Console
+
+Abuse controls
+
+If an invited user becomes SUSPENDED, record it and reduce inviter privileges:
+
+Decrease quota next month OR set canInvite=false for inviter (admin configurable)
+
+Rate limit invite creation endpoint (per user + per IP)
+
+Audit logging
+
+Log:
+
+Invite created (actor = inviter/admin)
+
+Invite used (actor = new user)
+
+Auto-approval applied
+
+Manual approval actions
+
+Invite privileges removed
+
+6) Messaging / UX Updates (keep “special” feeling)
+Auto-confirmed invite success page
+
+Headline: Welcome to TRYBE
+Body:
+Your access has been confirmed.
+Please take a moment to set up your workspace.
+
+Button: Continue
+
+Manual approval page remains:
+
+Your account is being reviewed…
+
+Also add subtle line:
+“We approve a limited number of new members during Alpha to protect focus and trust.”
+
+7) TRYBE Assistant (small integration)
+
+Do not change assistant logic, but add one capability:
+
+If user asks: “Invite someone” or “Can I invite a colleague?”
+Assistant responds with:
+
+Brief explanation + link/button to /app/invites
+
+No autonomous inviting.
+
+8) Acceptance Criteria
+
+An ACTIVE user can generate an invite link and share it.
+
+A new user using that link:
+
+registers → verifies email → becomes ACTIVE automatically
+
+A user using an ADMIN code:
+
+registers → verifies email → remains pending until admin approves
+
+Invite quotas enforced
+
+Admin can view invites list and inviter chains
+
+All actions logged to audit_log
+
+No other product behaviour changes
+
+Implement these changes now, update README with the new invite/approval rules, and add basic admin UI sections for viewing invites and adjusting invite quotas per user.
