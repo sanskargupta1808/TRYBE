@@ -243,6 +243,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(profile);
   });
   app.put("/api/profile", requireActive, async (req, res) => {
+    const { profileSnapshot, currentGoal, ...rest } = req.body;
+    const textToCheck = [profileSnapshot, currentGoal].filter(Boolean).join(" ");
+    if (textToCheck.trim()) {
+      const mod = await moderateContent(textToCheck);
+      if (mod.flagged) return res.status(400).json({ error: "Profile content may not meet TRYBE's professional conduct standards. Please rephrase." });
+    }
     const profile = await storage.upsertUserProfile(req.session.userId!, req.body);
     res.json(profile);
   });
@@ -567,6 +573,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(signal);
   });
   app.post("/api/admin/calendar", requireAdmin, async (req, res) => {
+    const { title, organiser, sourceNote } = req.body;
+    const textToCheck = [title, organiser, sourceNote].filter(Boolean).join(" ");
+    if (textToCheck.trim()) {
+      const mod = await moderateContent(textToCheck);
+      if (mod.flagged) return res.status(400).json({ error: "Event content may not meet TRYBE's professional conduct standards. Please rephrase." });
+    }
     const event = await storage.createCalendarEvent(req.body);
     res.json(event);
   });
@@ -580,6 +592,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/feedback", requireActive, async (req, res) => {
     const { contextType, contextId, category, rating, message } = req.body;
     if (!message || !category) return res.status(400).json({ error: "Required fields missing" });
+    const mod = await moderateContent(message);
+    if (mod.flagged) return res.status(400).json({ error: "Feedback content may not meet TRYBE's professional conduct standards. Please rephrase." });
     const fb = await storage.createFeedback({ userId: req.session.userId, contextType: contextType || "GENERAL", contextId, category, rating, message });
     res.json(fb);
   });
