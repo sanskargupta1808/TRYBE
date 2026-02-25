@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, desc, ne, inArray, count } from "drizzle-orm";
+import { eq, and, or, desc, ne, inArray, count, max, gte } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
@@ -540,4 +540,26 @@ export async function createAuditEntry(data: { actorUserId?: string; action: str
 }
 export async function getAuditLog() {
   return db.select().from(schema.auditLog).orderBy(desc(schema.auditLog.createdAt)).limit(500);
+}
+
+export async function getTableLastActivity(tableIds: string[]) {
+  if (tableIds.length === 0) return [];
+  return db
+    .select({
+      tableId: schema.threads.tableId,
+      lastPostAt: max(schema.posts.createdAt),
+    })
+    .from(schema.threads)
+    .leftJoin(schema.posts, eq(schema.threads.id, schema.posts.threadId))
+    .where(inArray(schema.threads.tableId, tableIds))
+    .groupBy(schema.threads.tableId);
+}
+
+export async function getRecentActivityCount(userId: string, daysSince: number) {
+  const since = new Date(Date.now() - daysSince * 86400000);
+  const posts = await db
+    .select({ id: schema.posts.id })
+    .from(schema.posts)
+    .where(and(eq(schema.posts.userId, userId), gte(schema.posts.createdAt, since)));
+  return posts.length;
 }

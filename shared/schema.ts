@@ -80,6 +80,7 @@ export const userProfiles = pgTable("user_profiles", {
   currentGoal: text("current_goal"),
   onboardingComplete: boolean("onboarding_complete").default(false),
   snapshotUpdatedAt: timestamp("snapshot_updated_at"),
+  lastFocusReviewAt: timestamp("last_focus_review_at"),
 });
 
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ id: true });

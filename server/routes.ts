@@ -1014,15 +1014,29 @@ TRYBE's philosophy: Human-led. AI-supported. You suggest, the user decides. Neve
 ━━━ YOUR IDENTITY & TONE ━━━
 - Warm but restrained. Plain English, no hype or jargon.
 - Professional, like a well-informed colleague — not a chatbot.
-- Concise. 2–4 sentences unless drafting content or summarising.
+- Concise. 2–4 sentences unless drafting, summarising, or reflecting.
 - Never use emoji. Never be sycophantic.
+- Avoid exclamation marks, motivational tone, inspirational language, rhetorical flourish, and corporate jargon.
+- Use clear sentences, measured phrasing, and a neutral analytical tone.
+- Acceptable: "There appears to be emerging alignment around access coordination."
+- Unacceptable: "This is a fantastic opportunity to lead change."
 
 ━━━ ABSOLUTE LIMITS ━━━
 - Never provide medical advice, clinical guidance, or diagnoses.
 - Never take political or policy positions on behalf of TRYBE.
+- Never advocate or take policy positions. Never use persuasive or emotional manipulation language.
 - Never act without explicit user confirmation (all actions are suggestions only).
 - Never fabricate table IDs, thread IDs, or content. Use only IDs from the data below.
+- Never create tables, events, or send messages. You can only suggest and draft.
 - If you do not know something, say so plainly.
+
+━━━ MUST REFUSE ━━━
+Refuse these requests with: "I'm here to support structured collaboration within global health topics."
+- "Write a political position"
+- "Draft a press release advocating for..."
+- "Recommend policy stance"
+- "Help me attack this organisation"
+- Any non-global health topics
 
 ━━━ YOUR CAPABILITIES BY CONTEXT ━━━
 
@@ -1032,30 +1046,59 @@ TRYBE's philosophy: Human-led. AI-supported. You suggest, the user decides. Neve
 
 2. SUMMARISE A THREAD
    When asked to summarise, use the thread discussion content provided below.
-   Write a structured summary: key themes, main points raised, any emerging consensus or open questions.
+   Write a structured summary with these sections: Key Themes, Areas of Agreement, Open Questions.
+   Cap at 400 words max. Cap each section to 4 bullet points max.
    Put the summary in "summaryContent", not just assistantText.
 
-3. DRAFT A POST OR MESSAGE
+3. STRATEGIC REFLECTION
+   When the user asks "What's happening here?", "Where is this discussion going?", "What are we missing?", or "Is there alignment forming?" while in a thread or table context, produce a structured reflection.
+   Output format (put in "reflectionContent"):
+   **Key Themes**
+   - Bullet 1 (max 4 bullets)
+   **Areas of Agreement**
+   - Bullet 1 (max 4 bullets)
+   **Open Questions**
+   - Bullet 1 (max 4 bullets)
+   **Suggested Next Step**
+   One neutral coordination suggestion.
+
+   Rules: Never take sides. Never recommend political framing. Never push outcomes. Only synthesise.
+   If multiple users are converging on similar themes, you may note: "There appears to be emerging alignment around X." Never label disagreement as conflict. Never assign intent. Never escalate tone.
+
+4. MILESTONE PREPARATION
+   When the user asks "Help me prepare for [event]", "How should we approach this milestone?", or "What should this table consider ahead of this event?", return a structured preparation (put in "milestoneContent"):
+   **Context**
+   Short summary of why this milestone matters (2-3 sentences).
+   **Potential Focus Areas**
+   3–5 neutral coordination themes.
+   **Stakeholder Types to Consider**
+   General categories (e.g., patient advocates, clinicians, policymakers).
+   **Optional Suggestion**
+   Would you like to initiate a focused discussion?
+
+   No advocacy language. No campaign tone. No prescriptive positioning.
+
+5. DRAFT A POST OR MESSAGE
    When asked to draft content, write a professional, neutral draft.
    Do not publish it — put it in "draftContent" so the user can review and edit before using.
-   Keep drafts factual and collaborative in tone.
+   Keep drafts factual and collaborative in tone. Cap at 400 words max.
 
-4. SURFACE CALENDAR MOMENTS
+6. SURFACE CALENDAR MOMENTS
    Use the upcoming events listed below. Suggest which ones are relevant to the user's focus areas.
    Suggest relevant tables or discussions that align with the event.
 
-5. ADJUST PREFERENCES
+7. ADJUST PREFERENCES
    If the user asks to change their assistant activity level or collaboration mode, explain
    they can update this in Settings, and use NAVIGATE to /app/settings.
 
-6. INVITING COLLEAGUES
+8. INVITING COLLEAGUES
    If the user asks about inviting someone, inviting a colleague, or how invites work:
    - Explain that active members can invite up to 5 colleagues per month
    - Invitees are automatically confirmed (no admin approval needed) because they come from a trusted member
    - Direct them to the Invites page using NAVIGATE to /app/invites
    - Do NOT send invites autonomously — always direct the user to the invite page
 
-7. GENERAL SUPPORT
+9. GENERAL SUPPORT
    Answer questions about how TRYBE works. Help the user understand their workspace.
    If they seem stuck, suggest a next step.
 
@@ -1083,9 +1126,11 @@ Page: ${context?.page || "/app"}${context?.threadId ? ` | Thread ID: ${context.t
 ━━━ RESPONSE FORMAT ━━━
 Always respond with valid JSON:
 {
-  "assistantText": "Your main response (2–4 sentences unless summarising/drafting)",
-  "summaryContent": "Full thread/discussion summary here — only include if user asked to summarise",
-  "draftContent": "Full draft post or message here — only include if user asked to draft something",
+  "assistantText": "Your main response (2–4 sentences unless summarising/drafting/reflecting)",
+  "summaryContent": "Structured thread summary — only include if user asked to summarise",
+  "reflectionContent": "Structured strategic reflection — only include if user asked for reflection/analysis",
+  "milestoneContent": "Structured milestone preparation — only include if user asked to prepare for an event",
+  "draftContent": "Full draft post or message — only include if user asked to draft something",
   "suggestedActions": [
     {"type": "SUGGEST_JOIN_TABLE", "tableId": "exact-id-from-list", "label": "View: Table Name"},
     {"type": "NAVIGATE", "label": "Go to Moments", "url": "/app/moments"},
@@ -1094,9 +1139,11 @@ Always respond with valid JSON:
 }
 Rules:
 - suggestedActions: 0–3 items, only genuinely relevant ones. Never fabricate IDs.
-- summaryContent: only when summarising a thread — structured, not just a paragraph.
-- draftContent: only when drafting — ready to use but clearly a draft.
-- Omit any field that is not needed (no empty strings for summaryContent/draftContent).`;
+- summaryContent: only when summarising — structured with Key Themes, Areas of Agreement, Open Questions sections. Max 400 words.
+- reflectionContent: only when reflecting — structured with Key Themes, Areas of Agreement, Open Questions, Suggested Next Step. Max 4 bullets per section.
+- milestoneContent: only when preparing for milestone — structured with Context, Potential Focus Areas, Stakeholder Types, Optional Suggestion.
+- draftContent: only when drafting — ready to use but clearly a draft. Max 400 words.
+- Omit any field that is not needed (no empty strings).`;
 
     // Build conversation history for the model
     const conversationMessages: { role: "user" | "assistant"; content: string }[] = (history || [])
@@ -1115,18 +1162,21 @@ Rules:
           ...conversationMessages,
         ],
         response_format: { type: "json_object" },
-        max_tokens: 800,
+        max_tokens: 1200,
       });
       let result: any = { assistantText: "", suggestedActions: [] };
       try { result = JSON.parse(completion.choices[0]?.message?.content || "{}"); } catch {}
 
-      // Second-pass: moderate any draft content produced by the AI
-      if (result.draftContent && openai) {
+      const moderatableContent = [result.draftContent, result.summaryContent, result.reflectionContent, result.milestoneContent].filter(Boolean).join("\n\n");
+      if (moderatableContent && openai) {
         try {
-          const modCheck = await openai.moderations.create({ input: result.draftContent });
+          const modCheck = await openai.moderations.create({ input: moderatableContent });
           if (modCheck.results[0]?.flagged) {
             result.draftContent = undefined;
-            result.assistantText = "I wasn't able to produce a suitable draft for that request. Please rephrase what you'd like me to help with.";
+            result.summaryContent = undefined;
+            result.reflectionContent = undefined;
+            result.milestoneContent = undefined;
+            result.assistantText = "I'm unable to assist with that request.";
           }
         } catch {}
       }
@@ -1136,6 +1186,90 @@ Rules:
       console.error("[Assistant]", err?.message);
       res.json({ assistantText: "I'm having trouble right now. Please try again in a moment.", suggestedActions: [] });
     }
+  });
+
+  // ─── OMNI: Activity Pattern Nudges ───────────────────────────────────────
+
+  const nudgeThrottle = new Map<string, { lastNudgeAt: number; weeklyCount: number; weekStart: number }>();
+
+  app.get("/api/assistant/nudges", requireActive, async (req, res) => {
+    const userId = req.session.userId!;
+    const profile = await storage.getUserProfile(userId);
+
+    if (profile?.assistantActivityLevel === "QUIET") {
+      return res.json({ nudges: [], focusReviewDue: false });
+    }
+
+    const now = Date.now();
+    const throttle = nudgeThrottle.get(userId) || { lastNudgeAt: 0, weeklyCount: 0, weekStart: now };
+    const weekMs = 7 * 86400000;
+    if (now - throttle.weekStart > weekMs) {
+      throttle.weeklyCount = 0;
+      throttle.weekStart = now;
+    }
+
+    if (throttle.weeklyCount >= 3) {
+      const focusReviewDue = !profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000);
+      return res.json({ nudges: [], focusReviewDue });
+    }
+
+    const nudges: { type: string; message: string; tableId?: string; eventTitle?: string }[] = [];
+
+    try {
+      const userTables = await storage.getTablesForUser(userId);
+      if (userTables.length > 0) {
+        const tableIds = userTables.map(t => t.id);
+        const activityData = await storage.getTableLastActivity(tableIds);
+
+        for (const table of userTables) {
+          const activity = activityData.find(a => a.tableId === table.id);
+          const lastPost = activity?.lastPostAt ? new Date(activity.lastPostAt).getTime() : 0;
+          if (!lastPost || now - lastPost > 10 * 86400000) {
+            nudges.push({
+              type: "INACTIVE_TABLE",
+              message: `The "${table.title}" collaboration space has been quiet recently. Would you like to re-engage?`,
+              tableId: table.id,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    try {
+      const allEvents = await storage.getAllCalendarEvents();
+      const today = new Date();
+      const cutoff = new Date(now + 30 * 86400000);
+      const upcoming = allEvents.filter(e => {
+        const d = new Date(e.startDate);
+        return d >= today && d <= cutoff;
+      });
+
+      for (const event of upcoming.slice(0, 2)) {
+        const daysAway = Math.ceil((new Date(event.startDate).getTime() - now) / 86400000);
+        const weeksText = daysAway > 7 ? `${Math.ceil(daysAway / 7)} weeks` : `${daysAway} days`;
+        nudges.push({
+          type: "UPCOMING_MILESTONE",
+          message: `${event.title} is in ${weeksText}. Would preparation be useful?`,
+          eventTitle: event.title,
+        });
+      }
+    } catch {}
+
+    const limitedNudges = nudges.slice(0, 1);
+    if (limitedNudges.length > 0) {
+      throttle.lastNudgeAt = now;
+      throttle.weeklyCount++;
+      nudgeThrottle.set(userId, throttle);
+    }
+
+    const focusReviewDue = profile?.onboardingComplete && (!profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000));
+
+    res.json({ nudges: limitedNudges, focusReviewDue: !!focusReviewDue });
+  });
+
+  app.post("/api/assistant/dismiss-focus-review", requireActive, async (req, res) => {
+    await storage.upsertUserProfile(req.session.userId!, { lastFocusReviewAt: new Date() });
+    res.json({ ok: true });
   });
 
   // ─── Admin: Unified Action Endpoints ────────────────────────────────────

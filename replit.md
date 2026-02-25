@@ -7,7 +7,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Frontend**: React + Vite + TypeScript, shadcn/ui, TanStack Query, wouter routing
 - **Backend**: Express.js + TypeScript, session-based auth
 - **Database**: PostgreSQL via Drizzle ORM
-- **AI**: OpenAI GPT-4o-mini (TRYBE Assistant, falls back gracefully without key)
+- **AI**: OpenAI GPT-4o-mini (TRYBE Assistant OMNI — strategic coordination assistant, falls back gracefully without key)
 
 ## Key Files
 - `shared/schema.ts` — Drizzle schema + Zod types for all tables
@@ -100,6 +100,29 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - Member invite page at `/app/invites`: quota display, send form (email + optional note), sent invite history
 - Welcome page at `/app/welcome`: auto-approved member landing with onboarding prompt
 - Assistant knows about invites and can direct users to `/app/invites`
+
+## TRYBE Assistant OMNI (Phase 2 — Strategic Coordination)
+- **Core identity**: Calm, professional, neutral. Human-led, AI-supported. Suggestion-only.
+- **Capabilities**:
+  1. Suggest Tables — profile-matched table recommendations
+  2. Summarise Threads — structured Key Themes / Areas of Agreement / Open Questions (max 400 words, 4 bullets/section)
+  3. Strategic Reflection — "What's happening here?", "Is there alignment forming?" → structured analysis with Suggested Next Step
+  4. Milestone Preparation — "Help me prepare for World TB Day" → Context, Focus Areas, Stakeholder Types, Optional Suggestion
+  5. Draft Posts/Messages — professional, neutral, moderation-checked (max 400 words)
+  6. Surface Calendar Moments — relevance-matched upcoming events
+  7. Inviting Colleagues — directs to /app/invites, explains 5/month quota
+  8. General Support — platform navigation and guidance
+- **Activity Pattern Nudges** (GET /api/assistant/nudges):
+  - Inactive tables (10+ days no activity) → subtle re-engagement suggestion
+  - Upcoming milestones (within 30 days) → preparation prompt
+  - Throttled: max 1/session, max 3/week; suppressed for QUIET activity level
+- **Personal Focus Review**: Every 30 days, prompts "Has your professional focus shifted?" with Update/Keep options
+- **Guardrails**: Refuses political positions, advocacy drafts, off-topic requests, medical advice
+- **Moderation**: All structured outputs (drafts, summaries, reflections, milestone content) run through OpenAI moderation API
+- **Tone rules**: No exclamation marks, no emoji, no motivational/inspirational language, no corporate jargon
+- **Frontend**: Collapsible sections for structured content (reflection, milestone, summary), nudge cards, focus review prompt
+- **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, suggestedActions
+- **Max tokens**: 1200 (up from 800)
 
 ## UX Architecture (Focus-First Redesign)
 - Dashboard: Single "Your current focus" hero card → one primary CTA (Open table) → secondary 3-column grid (My tables, Upcoming moments, Messages) with max 3 items each + "View all" links
