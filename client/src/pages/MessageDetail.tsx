@@ -35,11 +35,24 @@ export default function MessageDetail() {
     </div>
   );
 
+  const other = data?.otherUser;
+
   return (
     <div className="p-6 max-w-2xl mx-auto flex flex-col h-full" style={{ minHeight: "calc(100vh - 60px)" }}>
       <Link href="/app/messages" className="flex items-center gap-1 text-muted-foreground text-sm mb-4 hover-elevate">
         <ArrowLeft className="h-4 w-4" />Back to messages
       </Link>
+      {other && (
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-primary text-sm font-medium">{other.name?.charAt(0)}</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{other.name}</p>
+            {other.organisation && <p className="text-xs text-muted-foreground">{other.organisation}</p>}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 space-y-3 mb-4">
         {(!data?.messages || data.messages.length === 0) ? (

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, desc, ne } from "drizzle-orm";
+import { eq, and, or, desc, ne, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
@@ -215,6 +215,41 @@ export async function updatePostModeration(id: string, status: string) {
 }
 
 // ─── DMs ─────────────────────────────────────────────────────────────────────
+
+// Returns all active users who share at least one table with the given user
+export async function getSharedTableMembersForUser(userId: string) {
+  const myMemberships = await db.select({ tableId: schema.tableMembers.tableId })
+    .from(schema.tableMembers)
+    .where(eq(schema.tableMembers.userId, userId));
+  const myTableIds = myMemberships.map(m => m.tableId);
+  if (myTableIds.length === 0) return [];
+  const coMembers = await db.select({ userId: schema.tableMembers.userId })
+    .from(schema.tableMembers)
+    .where(and(
+      inArray(schema.tableMembers.tableId, myTableIds),
+      ne(schema.tableMembers.userId, userId)
+    ));
+  const uniqueIds = [...new Set(coMembers.map(m => m.userId))];
+  if (uniqueIds.length === 0) return [];
+  return db.select().from(schema.users)
+    .where(and(inArray(schema.users.id, uniqueIds), eq(schema.users.status, "ACTIVE")));
+}
+
+// Returns whether two users share at least one table
+export async function doUsersShareTable(userAId: string, userBId: string): Promise<boolean> {
+  const aMemberships = await db.select({ tableId: schema.tableMembers.tableId })
+    .from(schema.tableMembers).where(eq(schema.tableMembers.userId, userAId));
+  const aTableIds = aMemberships.map(m => m.tableId);
+  if (aTableIds.length === 0) return false;
+  const shared = await db.select({ tableId: schema.tableMembers.tableId })
+    .from(schema.tableMembers)
+    .where(and(
+      eq(schema.tableMembers.userId, userBId),
+      inArray(schema.tableMembers.tableId, aTableIds)
+    ));
+  return shared.length > 0;
+}
+
 export async function getDmConversationsForUser(userId: string) {
   return db.select().from(schema.dmConversations).where(
     or(eq(schema.dmConversations.userAId, userId), eq(schema.dmConversations.userBId, userId))

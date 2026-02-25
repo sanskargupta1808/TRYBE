@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail } from "lucide-react";
 
 export default function TableDetail() {
   const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
   const qc = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
   const [newThread, setNewThread] = useState("");
   const [showNewThread, setShowNewThread] = useState(false);
+  const [messagingUserId, setMessagingUserId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/tables", id],
@@ -40,6 +42,26 @@ export default function TableDetail() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", id] }); setNewThread(""); setShowNewThread(false); toast({ title: "Thread started" }); },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
+
+  const messageMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      const res = await apiRequest("POST", "/api/messages", { targetUserId });
+      return res.json();
+    },
+    onSuccess: (conv) => {
+      setMessagingUserId(null);
+      navigate(`/app/messages/${conv.id}`);
+    },
+    onError: (err: any) => {
+      setMessagingUserId(null);
+      toast({ title: "Cannot start conversation", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleMessage = (memberId: string) => {
+    setMessagingUserId(memberId);
+    messageMutation.mutate(memberId);
+  };
 
   if (isLoading) return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
@@ -86,14 +108,31 @@ export default function TableDetail() {
       {/* Members */}
       <section className="mb-6">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Members</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
           {(data.members || []).map(({ user: u, member }: any) => (
-            <div key={u.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-1.5" data-testid={`badge-member-${u.id}`}>
-              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-primary text-xs font-medium">{u.name?.charAt(0)}</span>
+            <div key={u.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2" data-testid={`badge-member-${u.id}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-primary text-xs font-medium">{u.name?.charAt(0)}</span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-sm text-foreground font-medium">{u.name}</span>
+                  {u.organisation && <span className="text-xs text-muted-foreground ml-2">{u.organisation}</span>}
+                </div>
+                {member.memberRole === "HOST" && <Badge variant="secondary" className="text-xs ml-1">Host</Badge>}
               </div>
-              <span className="text-xs text-foreground">{u.name}</span>
-              {member.memberRole === "HOST" && <Badge variant="secondary" className="text-xs">Host</Badge>}
+              {u.id !== user?.id && data.isMember && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-shrink-0 h-7 px-2"
+                  onClick={() => handleMessage(u.id)}
+                  disabled={messagingUserId === u.id}
+                  data-testid={`button-message-member-${u.id}`}
+                >
+                  {messagingUserId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Mail className="h-3 w-3 mr-1" /><span className="text-xs">Message</span></>}
+                </Button>
+              )}
             </div>
           ))}
         </div>

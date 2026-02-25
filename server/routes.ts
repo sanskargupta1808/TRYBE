@@ -204,7 +204,25 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const allTables = await storage.getAllTables();
     const myTables = await storage.getTablesForUser(req.session.userId!);
     const myIds = new Set(myTables.map(t => t.id));
-    res.json({ all: allTables, myTableIds: Array.from(myIds) });
+    // Rank suggested tables by overlap with user's profile
+    const profile = await storage.getUserProfile(req.session.userId!);
+    const userInterests = new Set([
+      ...(profile?.interests || []).map((s: string) => s.toLowerCase()),
+      ...(profile?.regions || []).map((s: string) => s.toLowerCase()),
+      ...(profile?.healthRole ? [profile.healthRole.toLowerCase()] : []),
+    ]);
+    const scored = allTables.map(t => {
+      const tableTags = (t.tags || []).map((s: string) => s.toLowerCase());
+      const overlap = tableTags.filter(tag => userInterests.has(tag)).length;
+      return { ...t, _score: overlap };
+    });
+    scored.sort((a, b) => {
+      const aMember = myIds.has(a.id) ? 0 : 1;
+      const bMember = myIds.has(b.id) ? 0 : 1;
+      if (aMember !== bMember) return aMember - bMember;
+      return b._score - a._score;
+    });
+    res.json({ all: scored, myTableIds: Array.from(myIds) });
   });
   app.get("/api/tables/my", requireActive, async (req, res) => {
     const tables = await storage.getTablesForUser(req.session.userId!);
@@ -337,20 +355,49 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/messages", requireActive, async (req, res) => {
     const convs = await storage.getDmConversationsForUser(req.session.userId!);
-    res.json(convs);
+    const enriched = await Promise.all(convs.map(async (conv) => {
+      const otherId = conv.userAId === req.session.userId ? conv.userBId : conv.userAId;
+      const other = otherId ? await storage.getUserById(otherId) : null;
+      return { ...conv, otherUser: other ? { id: other.id, name: other.name, organisation: other.organisation } : null };
+    }));
+    res.json(enriched);
   });
+
+  app.get("/api/messages/eligible-contacts", requireActive, async (req, res) => {
+    const sharedMembers = await storage.getSharedTableMembersForUser(req.session.userId!);
+    const existingConvs = await storage.getDmConversationsForUser(req.session.userId!);
+    const existingPartnerIds = new Set(existingConvs.map(c =>
+      c.userAId === req.session.userId ? c.userBId : c.userAId
+    ));
+    const allIds = new Set([...sharedMembers.map(u => u.id), ...existingPartnerIds]);
+    allIds.delete(req.session.userId!);
+    if (allIds.size === 0) return res.json([]);
+    const allContacts = await Promise.all([...allIds].map(id => storage.getUserById(id)));
+    res.json(allContacts.filter(Boolean).map(u => ({ id: u!.id, name: u!.name, organisation: u!.organisation, roleTitle: u!.roleTitle })));
+  });
+
   app.post("/api/messages", requireActive, async (req, res) => {
     const { targetUserId } = req.body;
     if (!targetUserId) return res.status(400).json({ error: "Target user required" });
+    if (targetUserId === req.session.userId) return res.status(400).json({ error: "Cannot message yourself" });
+    const existingConvs = await storage.getDmConversationsForUser(req.session.userId!);
+    const alreadyConnected = existingConvs.some(c => c.userAId === targetUserId || c.userBId === targetUserId);
+    if (!alreadyConnected) {
+      const sharesTable = await storage.doUsersShareTable(req.session.userId!, targetUserId);
+      if (!sharesTable) return res.status(403).json({ error: "You can only message people you share a table with." });
+    }
     const conv = await storage.createDmConversation(req.session.userId!, targetUserId);
     res.json(conv);
   });
+
   app.get("/api/messages/:id", requireActive, async (req, res) => {
     const conv = await storage.getDmConversationById(req.params.id);
     if (!conv) return res.status(404).json({ error: "Not found" });
     if (conv.userAId !== req.session.userId && conv.userBId !== req.session.userId) return res.status(403).json({ error: "Forbidden" });
     const messages = await storage.getDmMessages(req.params.id);
-    res.json({ ...conv, messages });
+    const otherId = conv.userAId === req.session.userId ? conv.userBId : conv.userAId;
+    const other = otherId ? await storage.getUserById(otherId) : null;
+    res.json({ ...conv, messages, otherUser: other ? { id: other.id, name: other.name, organisation: other.organisation } : null });
   });
   app.post("/api/messages/:id/send", requireActive, async (req, res) => {
     const { content } = req.body;
