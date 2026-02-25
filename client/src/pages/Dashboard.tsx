@@ -228,21 +228,35 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up stagger-5">
-        <div className="flex-1 border border-border rounded-xl p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
-          <p className="text-sm text-muted-foreground">Need guidance?</p>
-          <Button variant="ghost" size="sm" onClick={() => {
+      <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up stagger-5">
+        <div
+          className="flex-1 rounded-xl p-5 flex items-center justify-between border border-primary/20"
+          style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.06), hsl(var(--primary) / 0.02) 70%)' }}
+          data-testid="section-assistant-callout"
+        >
+          <div>
+            <p className="text-sm font-medium text-foreground">Need guidance?</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Get tailored suggestions for your focus</p>
+          </div>
+          <Button size="sm" onClick={() => {
             const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
             btn?.click();
           }} data-testid="button-callout-assistant">
             <Bot className="h-3.5 w-3.5 mr-1.5" />Ask TRYBE Assistant
           </Button>
         </div>
-        <div className="flex-1 border border-border rounded-xl p-4 flex items-center justify-between bg-muted/20" data-testid="section-invite-callout">
-          <p className="text-sm text-muted-foreground">Know someone who should be here?</p>
+        <div
+          className="flex-1 rounded-xl p-5 flex items-center justify-between border border-primary/20"
+          style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.06), hsl(var(--primary) / 0.02) 70%)' }}
+          data-testid="section-invite-callout"
+        >
+          <div>
+            <p className="text-sm font-medium text-foreground">Know someone who should be here?</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Invite a trusted colleague to TRYBE</p>
+          </div>
           <Link href="/app/invites">
-            <Button variant="ghost" size="sm" data-testid="button-invite-colleague">
-              <UserPlus className="h-3.5 w-3.5 mr-1.5" />Invite a colleague
+            <Button size="sm" data-testid="button-invite-colleague">
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />Invite
             </Button>
           </Link>
         </div>
