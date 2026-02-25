@@ -24,12 +24,10 @@ export default function Login() {
       await refetch();
       if (data.user?.status === "PENDING_APPROVAL") {
         navigate("/pending-approval");
+      } else if (data.user?.role === "ADMIN" || data.user?.role === "MODERATOR" || data.profile?.onboardingComplete) {
+        navigate("/app");
       } else {
-        if (data.profile?.onboardingComplete) {
-          navigate("/app");
-        } else {
-          navigate("/app/onboarding");
-        }
+        navigate("/app/onboarding");
       }
     } catch (err: any) {
       toast({ title: "Sign in failed", description: err.message, variant: "destructive" });
