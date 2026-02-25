@@ -100,11 +100,11 @@ export default function ThreadDetail() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <Link href={`/app/tables/${tableId}`} className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate">
+      <Link href={`/app/tables/${tableId}`} className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate animate-fade-in">
         <ArrowLeft className="h-4 w-4" />Back to table
       </Link>
 
-      <div className="mb-6">
+      <div className="mb-6 animate-fade-in-up">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -124,14 +124,14 @@ export default function ThreadDetail() {
       </div>
 
       {/* Posts */}
-      <div className="space-y-3 mb-6">
+      <div className="space-y-3 mb-6 animate-fade-in-up stagger-1">
         {(!data?.posts || data.posts.length === 0) ? (
-          <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
+          <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
             <p className="text-muted-foreground text-sm">No posts yet. Be the first to contribute.</p>
           </div>
         ) : (
           (data.posts || []).map(({ post, user: u }: any) => (
-            <div key={post.id} className="bg-card border border-card-border rounded-md p-4" data-testid={`post-${post.id}`}>
+            <div key={post.id} className="bg-card border border-card-border rounded-xl p-4" data-testid={`post-${post.id}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -192,14 +192,14 @@ export default function ThreadDetail() {
 
       {/* Composer or status notice */}
       {isClosed ? (
-        <div className="bg-muted/30 border border-border rounded-md p-4 text-center" data-testid="notice-thread-closed">
+        <div className="bg-muted/30 border border-border rounded-xl p-4 text-center" data-testid="notice-thread-closed">
           <Lock className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
           <p className="text-sm text-muted-foreground">This thread has been closed. No new posts can be added.</p>
         </div>
       ) : data?.isMember ? (
-        <div className="bg-card border border-card-border rounded-md p-4">
+        <div className="bg-card border border-card-border rounded-xl p-4">
           {showGenPrompt && (
-            <div className="mb-3 bg-primary/5 border border-primary/20 rounded-md p-3">
+            <div className="mb-3 bg-primary/5 border border-primary/20 rounded-lg p-3">
               <p className="text-xs text-muted-foreground mb-2 font-medium">Optional: give AI a direction for your draft</p>
               <div className="flex gap-2">
                 <input
@@ -244,7 +244,7 @@ export default function ThreadDetail() {
           </div>
         </div>
       ) : (
-        <div className="bg-muted/30 border border-border rounded-md p-4 text-center" data-testid="notice-join-to-post">
+        <div className="bg-muted/30 border border-border rounded-xl p-4 text-center" data-testid="notice-join-to-post">
           <p className="text-sm text-muted-foreground">Join this table to contribute to the discussion.</p>
         </div>
       )}

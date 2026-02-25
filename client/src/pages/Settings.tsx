@@ -63,9 +63,9 @@ export default function Settings() {
 
   return (
     <div className="p-6 max-w-xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground mb-1">Settings</h1>
-        <p className="text-muted-foreground text-sm">Account, assistant preferences, and privacy.</p>
+      <div className="animate-fade-in-up">
+        <h1 className="text-2xl font-semibold text-foreground mb-1 heading-rule">Settings</h1>
+        <p className="text-muted-foreground text-sm mt-2">Account, assistant preferences, and privacy.</p>
       </div>
 
       {/* Account info */}
@@ -74,7 +74,7 @@ export default function Settings() {
           <User className="h-4 w-4 text-muted-foreground" />
           <h2 className="font-semibold text-foreground">Account</h2>
         </div>
-        <div className="bg-card border border-card-border rounded-md p-4 space-y-3">
+        <div className="bg-card border border-card-border rounded-xl p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Name</Label>
@@ -207,7 +207,7 @@ export default function Settings() {
           <Trash2 className="h-4 w-4 text-muted-foreground" />
           <h2 className="font-semibold text-foreground">Privacy</h2>
         </div>
-        <div className="bg-card border border-card-border rounded-md p-4">
+        <div className="bg-card border border-card-border rounded-xl p-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
             Deleting your account removes your data from TRYBE systems, subject to legal requirements.
           </p>

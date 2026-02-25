@@ -61,7 +61,7 @@ export default function AdminTables() {
       </div>
 
       {showForm && (
-        <div className="bg-card border border-card-border rounded-md p-5 mb-6">
+        <div className="bg-card border border-card-border rounded-xl p-5 mb-6">
           <h2 className="font-semibold text-foreground mb-4">Create table directly</h2>
           <div className="space-y-4">
             <div>
@@ -108,14 +108,14 @@ export default function AdminTables() {
       {isLoading ? (
         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
       ) : allTables.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <Table2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-muted-foreground text-sm">No tables yet. Create the first one above.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {allTables.map((table: any) => (
-            <div key={table.id} className="bg-card border border-card-border rounded-md p-4" data-testid={`card-admin-table-${table.id}`}>
+            <div key={table.id} className="bg-card border border-card-border rounded-xl p-4" data-testid={`card-admin-table-${table.id}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

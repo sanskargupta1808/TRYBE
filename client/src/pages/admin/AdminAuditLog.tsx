@@ -25,14 +25,14 @@ export default function AdminAuditLog() {
       {isLoading ? (
         <div className="space-y-2">{[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-12 rounded-md" />)}</div>
       ) : logs.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <ScrollText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-muted-foreground text-sm">No audit log entries yet.</p>
         </div>
       ) : (
         <div className="space-y-1">
           {logs.map((log: any) => (
-            <div key={log.id} className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-2.5" data-testid={`row-audit-${log.id}`}>
+            <div key={log.id} className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-2.5" data-testid={`row-audit-${log.id}`}>
               <div className="flex items-center gap-3">
                 <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${ACTION_COLORS[log.action] || "bg-muted text-muted-foreground"}`}>{log.action?.replace(/_/g, " ")}</span>
                 <p className="text-sm text-foreground">{log.description || log.metadata?.summary || "—"}</p>

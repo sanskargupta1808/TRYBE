@@ -82,7 +82,7 @@ export default function AdminCalendar() {
       </div>
 
       {creating && (
-        <div className="bg-card border border-card-border rounded-md p-4 mb-6">
+        <div className="bg-card border border-card-border rounded-xl p-4 mb-6">
           <h3 className="font-medium mb-4">Add calendar event</h3>
 
           <div className="mb-4 bg-primary/5 border border-primary/20 rounded-md p-3">
@@ -128,7 +128,7 @@ export default function AdminCalendar() {
       ) : (
         <div className="space-y-2">
           {events.map((event: any) => (
-            <div key={event.id} className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3" data-testid={`row-event-${event.id}`}>
+            <div key={event.id} className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3" data-testid={`row-event-${event.id}`}>
               <div>
                 <p className="text-sm font-medium text-foreground">{event.title}</p>
                 <p className="text-xs text-muted-foreground">{event.startDate} {event.organiser && `· ${event.organiser}`}</p>

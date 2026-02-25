@@ -78,7 +78,7 @@ export default function AdminInvites() {
       </div>
 
       {creating && (
-        <div className="bg-card border border-border rounded-md p-5 mb-4">
+        <div className="bg-card border border-border rounded-xl p-5 mb-4">
           <h3 className="font-semibold text-foreground mb-1">Create invite</h3>
           <p className="text-xs text-muted-foreground mb-4">
             A cryptographically secure token will be generated. If an email is provided, TRYBE will attempt to send a personalised invitation automatically.
@@ -171,7 +171,7 @@ export default function AdminInvites() {
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
       ) : invites.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
           <p className="text-muted-foreground text-sm">No invite codes yet. Create one above to get started.</p>
         </div>
       ) : (
@@ -183,7 +183,7 @@ export default function AdminInvites() {
             const isActive = !isExpired && !isRevoked && !isUsed;
             const link = inviteLink(invite.token);
             return (
-              <div key={invite.id} className="bg-card border border-border rounded-md px-4 py-3" data-testid={`row-invite-${invite.id}`}>
+              <div key={invite.id} className="bg-card border border-border rounded-xl px-4 py-3" data-testid={`row-invite-${invite.id}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap mb-1">

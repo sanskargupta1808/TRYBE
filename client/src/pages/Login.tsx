@@ -53,13 +53,13 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 relative overflow-hidden">
       <div className="auth-glow absolute inset-0 pointer-events-none" />
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-8">
-          <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold">Sign in</h1>
+          <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4 animate-fade-in" />
+          <h1 className="text-2xl font-semibold stagger-1 animate-fade-in-up">Sign in</h1>
         </div>
 
-        <div className="border border-border rounded-md bg-card/60 p-6 shadow-md">
+        <div className="border border-border rounded-xl bg-card/60 p-6 shadow-md stagger-2 animate-fade-in-up">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="email" className="mb-1.5">Email</Label>

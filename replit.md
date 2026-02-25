@@ -77,21 +77,23 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - No bright blues — warm neutral chart/badge palette
 - No gradients as primary identity (subtle warm gradient on focus card only)
 
-### Visual Polish (Creative Director Pass)
-- **Animations**: `animate-fade-in-up`, `animate-fade-in`, `animate-slide-in-right`, `animate-scale-in` with stagger classes (stagger-1 through stagger-6)
-- **Glass effects**: top bar `bg-background/60 backdrop-blur-md`, assistant drawer `bg-background/90 backdrop-blur-xl`, focus selector modal `bg-card/80 backdrop-blur-xl`
-- **Typography**: `heading-rule` class adds 40px decorative accent line under major page headings; time-of-day greeting on dashboard; serif italic on tagline moments
-- **Focus card**: left border accent (3px primary/40), warm gradient bg, p-8 padding, size="lg" CTA button
-- **Auth pages**: `auth-dots` CSS dot grid texture, `auth-glow` radial gradient behind logo, bordered card container with shadow
-- **Sidebar**: fade gradient separators (not hard borders), subtle active state (2px primary accent bar at 60% opacity + 5% bg tint), avatar hover ring
-- **Empty states**: radial gradient glow behind icon (primary/8%), increased padding (p-10), prominent action buttons
+### Visual Polish (Creative Director Pass — Complete)
+- **Entrance animations**: Every page has `animate-fade-in-up` and/or `animate-fade-in` entrance animations. Stagger classes (`stagger-1` through `stagger-6`) used on Dashboard, Landing, auth pages, detail pages, and Invites for sequential reveal.
+- **Glass effects**: top bar `bg-background/60 backdrop-blur-md`, assistant drawer `bg-background/90 backdrop-blur-xl rounded-l-[2.5rem]`, focus selector modal `bg-card/80 backdrop-blur-xl`
+- **Typography**: `heading-rule` class on all major page headings (Dashboard, Tables, Messages, Moments, Settings, Invites, Feedback, RequestTable, Landing); time-of-day greeting on dashboard; serif italic on brand tagline and onboarding subtitle
+- **Focus card**: left border accent (3px primary/40), warm gradient bg, `rounded-2xl`, p-8 padding, `text-2xl tracking-tight`, size="lg" CTA button
+- **Auth pages**: `auth-dots` CSS dot grid texture, `auth-glow` radial gradient behind logo, bordered card container with shadow, `animate-fade-in-up` with stagger on logo/heading/form
+- **Sidebar**: fade gradient separators (not hard borders), subtle active state (2px primary accent bar + 5% bg tint), avatar hover ring, `hover-elevate` on nav items
+- **Empty states**: radial gradient glow behind icon (primary/8%), increased padding (p-10), prominent action buttons, `animate-fade-in` entrance
 - **Button micro-interactions**: primary buttons `hover:scale-[1.015]` + all buttons `active:scale-[0.98]` with 150ms transition-transform
 - **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations and button transforms
-- **Cards**: hover shadow lift (`hover:shadow-md transition-shadow duration-200`) on dashboard grid
+- **Card radius system**: `rounded-xl` (standard cards across all pages and admin), `rounded-2xl` (focus card, modals), `rounded-l-[2.5rem]` (assistant drawer)
+- **Cards**: hover shadow lift (`hover:shadow-md transition-shadow duration-200`) on dashboard grid cards
 - **Message bubbles**: `rounded-2xl` with `px-3.5 py-2.5` for warmer feel
 - **CTA glow**: `cta-glow` class adds warm box-shadow on hover (primary/15%) for hero buttons
 - **Chip press**: `chip-press` class adds `active:scale(0.95)` for tactile feedback on filter/signal chips
 - **Moment accent bar**: `moment-accent-bar` class adds a 3px left accent bar (primary/35%) on milestone cards
+- **Admin pages**: All 10 admin pages upgraded to `rounded-xl` card containers (24 surfaces total)
 
 ### Trusted Invites & Tiered Approval
 - **Invite types**: `ADMIN_CODE` (requires manual admin approval) and `MEMBER_INVITE` (auto-approves on use, 14-day expiry, 5/month quota)

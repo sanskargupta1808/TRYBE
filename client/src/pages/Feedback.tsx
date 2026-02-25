@@ -37,7 +37,7 @@ export default function Feedback() {
 
   if (submitted) {
     return (
-      <div className="p-6 max-w-xl mx-auto flex flex-col items-center text-center pt-16">
+      <div className="p-6 max-w-xl mx-auto flex flex-col items-center text-center pt-16 animate-fade-in-up">
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="h-7 w-7 text-primary" />
         </div>
@@ -50,8 +50,8 @@ export default function Feedback() {
 
   return (
     <div className="p-6 max-w-xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Help improve TRYBE</h1>
+      <div className="mb-6 animate-fade-in-up">
+        <h1 className="text-2xl font-semibold mb-2 heading-rule">Help improve TRYBE</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
           Your feedback during Alpha helps us refine clarity, safety, and usefulness.
         </p>

@@ -76,7 +76,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         {assistantOpen && (
           <>
             <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setAssistantOpen(false)} />
-            <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-2xl bg-background/90 backdrop-blur-xl border-l border-border animate-slide-in-right">
+            <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-2xl bg-background/90 backdrop-blur-xl border-l border-border animate-slide-in-right rounded-l-[2.5rem] overflow-hidden">
               <AssistantPanel onClose={() => setAssistantOpen(false)} />
             </div>
           </>

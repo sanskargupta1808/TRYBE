@@ -53,14 +53,14 @@ export default function Moments() {
         <p className="text-muted-foreground text-sm mt-2">A curated calendar of awareness days, congresses, and policy windows.</p>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-xs text-muted-foreground">
+      <div className="bg-muted/30 border border-border rounded-xl p-3 mb-6 text-xs text-muted-foreground">
         Your responses are visible only to relevant connections.
       </div>
 
       {isLoading ? (
         <div className="space-y-6">{[1,2,3].map(i => <div key={i}><Skeleton className="h-5 w-24 mb-3" /><div className="space-y-3">{[1,2].map(j => <Skeleton key={j} className="h-24 rounded-md" />)}</div></div>)}</div>
       ) : events.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+        <div className="bg-muted/30 border border-border rounded-xl p-10 text-center animate-fade-in">
           <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
             <Calendar className="h-8 w-8 text-muted-foreground" />
           </div>
@@ -82,7 +82,7 @@ export default function Moments() {
                   {monthEvents.map((event: any) => {
                     const currentSignal = getSignal(event.id);
                     return (
-                      <div key={event.id} className="bg-card border border-card-border rounded-md p-4 pl-5 hover-elevate moment-accent-bar" data-testid={`card-event-${event.id}`}>
+                      <div key={event.id} className="bg-card border border-card-border rounded-xl p-4 pl-5 hover-elevate moment-accent-bar" data-testid={`card-event-${event.id}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start gap-3">

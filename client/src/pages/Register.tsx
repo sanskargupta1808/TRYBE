@@ -80,10 +80,10 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 py-12 relative overflow-hidden">
       <div className="auth-glow absolute inset-0 pointer-events-none" />
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-8">
-          <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold">Welcome to TRYBE</h1>
+          <img src="/trybe-logo.png" alt="TRYBE" className="h-[96px] w-auto mx-auto mb-4 animate-fade-in" />
+          <h1 className="text-2xl font-semibold stagger-1 animate-fade-in-up">Welcome to TRYBE</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {isPreFilled
               ? "Your invitation has been recognised. Complete the form to create your account."
@@ -91,9 +91,9 @@ export default function Register() {
           </p>
         </div>
 
-        <div className="border border-border rounded-md bg-card/60 p-6 shadow-md">
+        <div className="border border-border rounded-xl bg-card/60 p-6 shadow-md stagger-2 animate-fade-in-up">
         {isPreFilled && (
-          <div className="flex items-center gap-2.5 bg-muted/60 border border-border rounded-md px-3 py-2.5 mb-5" data-testid="status-invite-prefilled">
+          <div className="flex items-center gap-2.5 bg-muted/60 border border-border rounded-lg px-3 py-2.5 mb-5" data-testid="status-invite-prefilled">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
             <div>
               <p className="text-xs font-medium text-foreground">Invitation recognised</p>

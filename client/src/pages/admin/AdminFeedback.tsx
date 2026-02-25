@@ -24,13 +24,13 @@ export default function AdminFeedback() {
       {isLoading ? (
         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-md" />)}</div>
       ) : items.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <p className="text-muted-foreground text-sm">No feedback submitted yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item: any) => (
-            <div key={item.id} className="bg-card border border-card-border rounded-md p-4" data-testid={`card-feedback-${item.id}`}>
+            <div key={item.id} className="bg-card border border-card-border rounded-xl p-4" data-testid={`card-feedback-${item.id}`}>
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">{CATEGORY_LABELS[item.category] || item.category}</Badge>

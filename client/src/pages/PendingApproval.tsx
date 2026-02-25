@@ -9,8 +9,8 @@ export default function PendingApproval() {
   return (
     <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 relative overflow-hidden">
       <div className="auth-glow absolute inset-0 pointer-events-none" />
-      <div className="max-w-md w-full text-center relative z-10">
-        <div className="border border-border rounded-md bg-card/60 p-8 shadow-md">
+      <div className="max-w-md w-full text-center relative z-10 animate-fade-in-up">
+        <div className="border border-border rounded-xl bg-card/60 p-8 shadow-md stagger-1 animate-fade-in-up">
           <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock className="h-7 w-7 text-muted-foreground" />
           </div>

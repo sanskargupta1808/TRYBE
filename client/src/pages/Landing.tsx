@@ -50,7 +50,7 @@ export default function Landing() {
           Global health work is often fragmented.
         </p>
         <div className="space-y-4 max-w-3xl">
-          <div className="bg-card border border-card-border rounded-md p-5">
+          <div className="bg-card border border-card-border rounded-xl p-5">
             <p className="text-muted-foreground leading-relaxed">
               Conversations happen in silos.
               Important milestones pass without coordination.
@@ -78,7 +78,7 @@ export default function Landing() {
               { icon: CheckCircle, title: "Full user control", desc: "You decide what to join. You decide who to connect with. The system supports you — it doesn't direct you." },
               { icon: Shield, title: "Invite-only access", desc: "Curated membership to preserve trust and professional quality." },
             ].map((f, i) => (
-              <div key={f.title} className="bg-card border border-card-border rounded-md p-6 hover-elevate hover:shadow-md transition-shadow duration-200">
+              <div key={f.title} className="bg-card border border-card-border rounded-xl p-6 hover-elevate hover:shadow-md transition-shadow duration-200">
                 <f.icon className="h-5 w-5 text-primary mb-3" />
                 <h3 className="font-medium text-foreground mb-2">{f.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>

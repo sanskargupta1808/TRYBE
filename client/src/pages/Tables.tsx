@@ -84,7 +84,7 @@ export default function Tables() {
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
           ) : (data?.all || []).filter((t: any) => myIds.has(t.id)).length === 0 ? (
-            <div className="bg-muted/30 border border-border rounded-md p-8 text-center animate-fade-in">
+            <div className="bg-muted/30 border border-border rounded-xl p-8 text-center animate-fade-in">
               <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
                 <Table2 className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -94,7 +94,7 @@ export default function Tables() {
             <div className="space-y-3">
               {(data?.all || []).filter((t: any) => myIds.has(t.id)).map((table: any) => (
                 <Link key={table.id} href={`/app/tables/${table.id}`}>
-                  <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-mytable-${table.id}`}>
+                  <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate" data-testid={`card-mytable-${table.id}`}>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{table.title}</p>
                       <div className="flex flex-wrap gap-1 mt-1 items-center">
@@ -123,13 +123,13 @@ export default function Tables() {
         {isLoading ? (
           <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-28 rounded-md" />)}</div>
         ) : tables.filter((t: any) => !myIds.has(t.id)).length === 0 && !search && !tagFilter ? (
-          <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
+          <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
             <p className="text-muted-foreground text-sm">You're in all available tables! Check back as new ones are added.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {tables.filter((t: any) => search || tagFilter ? true : !myIds.has(t.id)).map((table: any) => (
-              <div key={table.id} className="bg-card border border-card-border rounded-md p-4 hover-elevate" data-testid={`card-table-${table.id}`}>
+              <div key={table.id} className="bg-card border border-card-border rounded-xl p-4 hover-elevate" data-testid={`card-table-${table.id}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-foreground text-sm">{table.title}</h3>

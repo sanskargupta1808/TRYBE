@@ -59,7 +59,7 @@ export default function Invites() {
       </div>
 
       {quota && (
-        <div className="flex items-center gap-3 bg-muted/30 border border-border rounded-md px-4 py-3 mb-6 animate-fade-in-up stagger-1" data-testid="status-invite-quota">
+        <div className="flex items-center gap-3 bg-muted/30 border border-border rounded-xl px-4 py-3 mb-6 animate-fade-in-up stagger-1" data-testid="status-invite-quota">
           <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <p className="text-sm text-muted-foreground">
             {quota.remaining} of {quota.total} invitations remaining this month
@@ -68,7 +68,7 @@ export default function Invites() {
       )}
 
       {lastSent && (
-        <div className="border border-border rounded-md mb-6 overflow-hidden animate-fade-in-up" data-testid="panel-invite-sent">
+        <div className="border border-border rounded-xl mb-6 overflow-hidden animate-fade-in-up" data-testid="panel-invite-sent">
           <div className={`px-4 py-3 flex items-center gap-2 text-sm font-medium ${lastSent.emailSent ? "bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 border-b border-green-200 dark:border-green-800" : "bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-b border-amber-200 dark:border-amber-800"}`}>
             {lastSent.emailSent
               ? <><CheckCircle className="h-4 w-4" /> Invitation sent to {lastSent.email}</>
@@ -96,7 +96,7 @@ export default function Invites() {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-md p-6 mb-8 animate-fade-in-up stagger-2" data-testid="form-invite">
+      <div className="bg-card border border-border rounded-xl p-6 mb-8 animate-fade-in-up stagger-2" data-testid="form-invite">
         <div className="space-y-4">
           <div>
             <Label htmlFor="invite-email" className="mb-1.5">Email address</Label>
@@ -146,7 +146,7 @@ export default function Invites() {
         {isLoading ? (
           <div className="space-y-2">{[1, 2].map(i => <Skeleton key={i} className="h-14 rounded-md" />)}</div>
         ) : invites.length === 0 ? (
-          <div className="bg-muted/20 border border-border rounded-md p-6 text-center">
+          <div className="bg-muted/20 border border-border rounded-xl p-6 text-center">
             <p className="text-sm text-muted-foreground">No invitations sent yet. Use the form above to invite a colleague.</p>
           </div>
         ) : (
@@ -156,7 +156,7 @@ export default function Invites() {
               const isExpired = inv.expiresAt && new Date(inv.expiresAt) < new Date();
               const isActive = !isUsed && !isExpired && inv.status !== "REVOKED";
               return (
-                <div key={inv.id} className="bg-card border border-border rounded-md px-4 py-3" data-testid={`row-invite-${inv.id}`}>
+                <div key={inv.id} className="bg-card border border-border rounded-xl px-4 py-3" data-testid={`row-invite-${inv.id}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">

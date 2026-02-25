@@ -70,13 +70,13 @@ export default function Messages() {
         </Button>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-sm text-muted-foreground">
+      <div className="bg-muted/30 border border-border rounded-xl p-3 mb-6 text-sm text-muted-foreground">
         All conversations must follow the Code of Conduct and are subject to moderation.
       </div>
 
       {/* New conversation picker */}
       {showNewConv && (
-        <div className="bg-card border border-card-border rounded-md p-4 mb-6">
+        <div className="bg-card border border-card-border rounded-xl p-4 mb-6">
           <h2 className="text-sm font-semibold text-foreground mb-3">Start a new conversation</h2>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -152,7 +152,7 @@ export default function Messages() {
       {isLoading ? (
         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
       ) : !conversations || conversations.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+        <div className="bg-muted/30 border border-border rounded-xl p-10 text-center animate-fade-in">
           <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
             <MessageSquare className="h-8 w-8 text-muted-foreground" />
           </div>
@@ -167,7 +167,7 @@ export default function Messages() {
             const other = conv.otherUser;
             return (
               <Link key={conv.id} href={`/app/messages/${conv.id}`}>
-                <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-conversation-${conv.id}`}>
+                <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate" data-testid={`card-conversation-${conv.id}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-primary text-sm font-medium">{other?.name?.charAt(0) || "?"}</span>

@@ -11,11 +11,11 @@ export default function Welcome() {
     <div className="min-h-screen bg-background auth-dots flex items-center justify-center px-6 relative overflow-hidden">
       <div className="auth-glow absolute inset-0 pointer-events-none" />
       <div className="max-w-md w-full text-center relative z-10 animate-fade-in-up">
-        <div className="border border-border rounded-md bg-card/60 p-8 shadow-md">
+        <div className="border border-border rounded-xl bg-card/60 p-8 shadow-md">
           <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-semibold mb-3" data-testid="text-welcome-heading">
+          <h1 className="text-2xl font-semibold mb-3 heading-rule" data-testid="text-welcome-heading">
             Welcome to TRYBE{firstName ? `, ${firstName}` : ""}
           </h1>
           <p className="text-muted-foreground leading-relaxed mb-8" data-testid="text-welcome-body">

@@ -21,7 +21,7 @@ function FocusSelector({ tables, currentId, onSelect, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-card/80 backdrop-blur-xl border border-border rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-foreground mb-1">Change your focus</h2>
         <p className="text-sm text-muted-foreground mb-5">Select the table you'd like to work in.</p>
         <div className="space-y-2 max-h-[320px] overflow-y-auto">
@@ -88,11 +88,11 @@ export default function Dashboard() {
       </div>
 
       {tablesLoading ? (
-        <Skeleton className="h-48 rounded-lg mb-8" />
+        <Skeleton className="h-48 rounded-xl mb-8" />
       ) : focusTable ? (
         <section className="mb-10 animate-fade-in-up stagger-1" data-testid="section-focus">
           <h2 className="text-sm font-medium text-muted-foreground mb-2 heading-rule">Your current focus</h2>
-          <div className="relative overflow-hidden bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-lg p-8 shadow-sm mt-4" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
+          <div className="relative overflow-hidden bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-2xl p-8 shadow-sm mt-4" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
             <p className="text-2xl font-semibold text-foreground mb-1 tracking-tight" data-testid="text-focus-title">{focusTable.title}</p>
             {focusTable.purpose && (
               <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the collaboration space you're most active in.</p>
@@ -116,7 +116,7 @@ export default function Dashboard() {
         </section>
       ) : (
         <section className="mb-10 animate-fade-in-up stagger-1" data-testid="section-get-started">
-          <div className="bg-card border border-card-border rounded-lg p-10 text-center shadow-sm">
+          <div className="bg-card border border-card-border rounded-xl p-10 text-center shadow-sm">
             <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
               <Table2 className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -137,7 +137,7 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-2" data-testid="section-my-tables">
+        <section className="bg-card border border-card-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-2" data-testid="section-my-tables">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Table2 className="h-4 w-4 text-muted-foreground" />
@@ -167,7 +167,7 @@ export default function Dashboard() {
           )}
         </section>
 
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-3" data-testid="section-moments">
+        <section className="bg-card border border-card-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-3" data-testid="section-moments">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -195,7 +195,7 @@ export default function Dashboard() {
           </Link>
         </section>
 
-        <section className="bg-card border border-card-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-4" data-testid="section-messages">
+        <section className="bg-card border border-card-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-4" data-testid="section-messages">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -229,7 +229,7 @@ export default function Dashboard() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up stagger-5">
-        <div className="flex-1 border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
+        <div className="flex-1 border border-border rounded-xl p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
           <p className="text-sm text-muted-foreground">Need guidance?</p>
           <Button variant="ghost" size="sm" onClick={() => {
             const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
@@ -238,7 +238,7 @@ export default function Dashboard() {
             <Bot className="h-3.5 w-3.5 mr-1.5" />Ask TRYBE Assistant
           </Button>
         </div>
-        <div className="flex-1 border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-invite-callout">
+        <div className="flex-1 border border-border rounded-xl p-4 flex items-center justify-between bg-muted/20" data-testid="section-invite-callout">
           <p className="text-sm text-muted-foreground">Know someone who should be here?</p>
           <Link href="/app/invites">
             <Button variant="ghost" size="sm" data-testid="button-invite-colleague">

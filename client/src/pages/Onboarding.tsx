@@ -220,7 +220,7 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="border-b border-border bg-card px-6 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="border-b border-border bg-card px-6 py-3 flex items-center gap-3 flex-shrink-0 animate-fade-in">
         <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
           <Bot className="h-4.5 w-4.5 text-primary" />
         </div>
@@ -273,7 +273,7 @@ export default function Onboarding() {
           {done && !suggestionsLoading && tableSuggestions.length > 0 && (
             <div className="space-y-3 ml-9">
               {tableSuggestions.map((table, i) => (
-                <div key={table.tableId} className="border border-border rounded-md p-4 bg-card" data-testid={`card-suggested-table-${i}`}>
+                <div key={table.tableId} className="border border-border rounded-xl p-4 bg-card" data-testid={`card-suggested-table-${i}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground">{table.title}</p>

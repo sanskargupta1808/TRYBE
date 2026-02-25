@@ -26,7 +26,7 @@ export default function AdminTableRequests() {
   const reviewed = requests.filter((r: any) => r.status !== "PENDING");
 
   const Card = ({ req }: { req: any }) => (
-    <div className="bg-card border border-card-border rounded-md p-4" data-testid={`card-tablereq-${req.id}`}>
+    <div className="bg-card border border-card-border rounded-xl p-4" data-testid={`card-tablereq-${req.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -64,7 +64,7 @@ export default function AdminTableRequests() {
       {isLoading ? (
         <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-32 rounded-md" />)}</div>
       ) : pending.length === 0 && reviewed.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <Inbox className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-muted-foreground text-sm">No table requests yet.</p>
         </div>

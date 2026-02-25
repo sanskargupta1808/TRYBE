@@ -71,11 +71,11 @@ export default function AdminUsers() {
       {isLoading ? (
         <div className="space-y-3">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-6 text-center text-muted-foreground text-sm">No users match your search.</div>
+        <div className="bg-muted/30 border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">No users match your search.</div>
       ) : (
         <div className="space-y-2">
           {filtered.map((u: any) => (
-            <div key={u.id} className="bg-card border border-card-border rounded-md px-4 py-3 flex items-center justify-between gap-3" data-testid={`row-user-${u.id}`}>
+            <div key={u.id} className="bg-card border border-card-border rounded-xl px-4 py-3 flex items-center justify-between gap-3" data-testid={`row-user-${u.id}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium text-foreground">{u.name}</p>

@@ -34,7 +34,7 @@ export default function AdminModeration() {
       {isLoading ? (
         <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-28 rounded-md" />)}</div>
       ) : open.length === 0 && resolved.length === 0 ? (
-        <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
+        <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <Shield className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="font-medium text-foreground mb-1">All clear</p>
           <p className="text-muted-foreground text-sm">No items in the moderation queue.</p>
@@ -46,7 +46,7 @@ export default function AdminModeration() {
               <h2 className="text-sm font-semibold text-muted-foreground mb-3">Open ({open.length})</h2>
               <div className="space-y-3">
                 {open.map((item: any) => (
-                  <div key={item.id} className="bg-card border border-card-border rounded-md p-4" data-testid={`card-mod-${item.id}`}>
+                  <div key={item.id} className="bg-card border border-card-border rounded-xl p-4" data-testid={`card-mod-${item.id}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -76,7 +76,7 @@ export default function AdminModeration() {
               <h2 className="text-sm font-semibold text-muted-foreground mb-3">Resolved</h2>
               <div className="space-y-2">
                 {resolved.slice(0, 10).map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between bg-muted/30 border border-border rounded-md px-4 py-2" data-testid={`card-mod-resolved-${item.id}`}>
+                  <div key={item.id} className="flex items-center justify-between bg-muted/30 border border-border rounded-xl px-4 py-2" data-testid={`card-mod-resolved-${item.id}`}>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">{item.contentType}</Badge>
                       <span className="text-xs text-muted-foreground">{item.resolution || item.status}</span>

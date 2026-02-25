@@ -58,7 +58,7 @@ export default function RequestTable() {
 
   if (submitted) {
     return (
-      <div className="p-6 max-w-xl mx-auto flex flex-col items-center text-center pt-20">
+      <div className="p-6 max-w-xl mx-auto flex flex-col items-center text-center pt-20 animate-fade-in-up">
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="h-7 w-7 text-primary" />
         </div>
@@ -71,12 +71,12 @@ export default function RequestTable() {
 
   return (
     <div className="p-6 max-w-xl mx-auto">
-      <Link href="/app/tables" className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate">
+      <Link href="/app/tables" className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate animate-fade-in">
         <ArrowLeft className="h-4 w-4" />Back to tables
       </Link>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Request a new table</h1>
+      <div className="mb-6 animate-fade-in-up">
+        <h1 className="text-2xl font-semibold mb-2 heading-rule">Request a new table</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
           Tables are intentionally curated during Alpha to protect focus and trust. Tell us what you want to create.
         </p>

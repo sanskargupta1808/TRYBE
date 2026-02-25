@@ -45,7 +45,7 @@ export default function AdminOverview() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {primaryStats.map(stat => (
             <Link key={stat.label} href={stat.link}>
-              <div className="bg-card border border-card-border rounded-md p-4 hover-elevate" data-testid={`stat-${stat.label}`}>
+              <div className="bg-card border border-card-border rounded-xl p-4 hover-elevate" data-testid={`stat-${stat.label}`}>
                 <stat.icon className="h-4 w-4 text-muted-foreground mb-2" />
                 {isLoading ? <Skeleton className="h-7 w-10 mb-1" /> : <p className="text-2xl font-semibold text-foreground">{stat.value ?? 0}</p>}
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -59,7 +59,7 @@ export default function AdminOverview() {
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Participation</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {participationStats.map(stat => (
-            <div key={stat.label} className="bg-card border border-card-border rounded-md p-4" data-testid={`stat-${stat.label}`}>
+            <div key={stat.label} className="bg-card border border-card-border rounded-xl p-4" data-testid={`stat-${stat.label}`}>
               <stat.icon className="h-4 w-4 text-muted-foreground mb-2" />
               {isLoading ? <Skeleton className="h-7 w-10 mb-1" /> : <p className="text-2xl font-semibold text-foreground">{stat.value ?? 0}</p>}
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -74,7 +74,7 @@ export default function AdminOverview() {
         <div className="space-y-2">
           {actions.map(action => (
             <Link key={action.label} href={action.link}>
-              <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`action-${action.label}`}>
+              <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate" data-testid={`action-${action.label}`}>
                 <div className="flex items-center gap-3">
                   <action.icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">{action.label}</span>

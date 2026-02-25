@@ -299,7 +299,7 @@ export default function MessageDetail() {
       <audio ref={remoteAudioRef} autoPlay className="hidden" />
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0 bg-background">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0 bg-background animate-fade-in">
         <div className="flex items-center gap-3">
           <Link href="/app/messages" className="text-muted-foreground hover-elevate">
             <ArrowLeft className="h-4 w-4" />
@@ -344,7 +344,7 @@ export default function MessageDetail() {
       {/* ── Incoming call overlay ── */}
       {incomingCall && (
         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center">
-          <div className="bg-background rounded-lg p-6 text-center shadow-xl border border-border max-w-xs w-full mx-4">
+          <div className="bg-background rounded-xl p-6 text-center shadow-xl border border-border max-w-xs w-full mx-4">
             <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
               <PhoneCall className="h-8 w-8 text-green-600" />
             </div>

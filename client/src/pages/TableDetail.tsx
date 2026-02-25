@@ -100,12 +100,12 @@ export default function TableDetail() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <Link href="/app/tables" className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate">
+      <Link href="/app/tables" className="flex items-center gap-1 text-muted-foreground text-sm mb-6 hover-elevate animate-fade-in">
         <ArrowLeft className="h-4 w-4" />Back to tables
       </Link>
 
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 animate-fade-in-up">
         <div className="flex items-start justify-between gap-3 mb-3">
           <h1 className="text-2xl font-semibold text-foreground">{data.title}</h1>
           <div className="flex gap-2 flex-shrink-0">
@@ -131,7 +131,7 @@ export default function TableDetail() {
       </div>
 
       {/* Members */}
-      <section className="mb-6">
+      <section className="mb-6 animate-fade-in-up stagger-1">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Members</h2>
         <div className="space-y-2">
           {(data.members || []).map(({ user: u, member }: any) => (
@@ -197,7 +197,7 @@ export default function TableDetail() {
       )}
 
       {/* Threads */}
-      <section>
+      <section className="animate-fade-in-up stagger-2">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="font-semibold text-foreground">Discussions</h2>
@@ -211,7 +211,7 @@ export default function TableDetail() {
         </div>
 
         {showNewThread && (
-          <div className="bg-card border border-card-border rounded-md p-4 mb-3">
+          <div className="bg-card border border-card-border rounded-xl p-4 mb-3">
             <Input
               value={newThread}
               onChange={e => setNewThread(e.target.value)}
@@ -230,7 +230,7 @@ export default function TableDetail() {
         )}
 
         {(data.threads || []).length === 0 ? (
-          <div className="bg-muted/30 border border-border rounded-md p-10 text-center animate-fade-in">
+          <div className="bg-muted/30 border border-border rounded-xl p-10 text-center animate-fade-in">
             <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
               <MessageSquare className="h-7 w-7 text-muted-foreground" />
             </div>
@@ -241,7 +241,7 @@ export default function TableDetail() {
           <div className="space-y-2">
             {(data.threads || []).slice(0, showAllThreads ? undefined : 5).map((thread: any) => (
               <Link key={thread.id} href={`/app/tables/${id}/threads/${thread.id}`}>
-                <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-5 py-4 hover-elevate hover:shadow-sm transition-shadow duration-200" data-testid={`card-thread-${thread.id}`}>
+                <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-5 py-4 hover-elevate hover:shadow-sm transition-shadow duration-200" data-testid={`card-thread-${thread.id}`}>
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-foreground">{thread.title}</p>
