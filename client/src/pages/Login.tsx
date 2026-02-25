@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,18 @@ import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const { refetch } = useAuth();
+  const { user, refetch } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pendingRedirect && user) {
+      navigate(pendingRedirect);
+      setPendingRedirect(null);
+    }
+  }, [user, pendingRedirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,14 +29,20 @@ export default function Login() {
     try {
       const res = await apiRequest("POST", "/api/auth/login", form);
       const data = await res.json();
-      await refetch();
+
       if (data.user?.status === "PENDING_APPROVAL") {
+        await refetch();
         navigate("/pending-approval");
-      } else if (data.user?.role === "ADMIN" || data.user?.role === "MODERATOR" || data.profile?.onboardingComplete) {
-        navigate("/app");
-      } else {
-        navigate("/app/onboarding");
+        return;
       }
+
+      const dest =
+        data.user?.role === "ADMIN" || data.user?.role === "MODERATOR" || data.profile?.onboardingComplete
+          ? "/app"
+          : "/app/onboarding";
+
+      await refetch();
+      setPendingRedirect(dest);
     } catch (err: any) {
       toast({ title: "Sign in failed", description: err.message, variant: "destructive" });
     } finally {
