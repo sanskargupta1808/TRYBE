@@ -1,0 +1,124 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Calendar, CheckCircle, Star, ThumbsUp } from "lucide-react";
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+const SIGNAL_TYPES = [
+  { type: "SUPPORT", label: "Support", icon: ThumbsUp },
+  { type: "INTERESTED", label: "Interested", icon: Star },
+  { type: "ATTENDING", label: "Attending", icon: CheckCircle },
+];
+
+export default function Moments() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  const { data, isLoading } = useQuery<any>({ queryKey: ["/api/calendar"] });
+
+  const signalMutation = useMutation({
+    mutationFn: async ({ eventId, signalType }: { eventId: string; signalType: string }) => {
+      const res = await apiRequest("POST", `/api/calendar/${eventId}/signal`, { signalType });
+      return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/calendar"] }),
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const events = data?.events || [];
+  const signals = data?.signals || [];
+  const getSignal = (eventId: string) => signals.find((s: any) => s.eventId === eventId)?.signalType;
+
+  // Group by month
+  const grouped: Record<string, any[]> = {};
+  events.forEach((event: any) => {
+    const month = event.startDate.slice(0, 7);
+    if (!grouped[month]) grouped[month] = [];
+    grouped[month].push(event);
+  });
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">Moments</h1>
+        <p className="text-muted-foreground text-sm mt-1">A curated set of 2026 health milestones. Lightweight, contextual, and purposeful.</p>
+      </div>
+
+      <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-xs text-muted-foreground">
+        Your actions (Support, Interested, Attending) are visible only to your approved connections and relevant tables.
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-6">{[1,2,3].map(i => <div key={i}><Skeleton className="h-5 w-24 mb-3" /><div className="space-y-3">{[1,2].map(j => <Skeleton key={j} className="h-24 rounded-md" />)}</div></div>)}</div>
+      ) : events.length === 0 ? (
+        <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
+          <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-muted-foreground text-sm">No moments match your current focus. Update your interests in Settings or ask TRYBE Assistant to suggest relevant moments.</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {Object.entries(grouped).sort().map(([month, monthEvents]) => {
+            const [year, m] = month.split("-");
+            const monthName = `${MONTHS[parseInt(m) - 1]} ${year}`;
+            return (
+              <section key={month}>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{monthName}</h2>
+                <div className="space-y-3">
+                  {monthEvents.map((event: any) => {
+                    const currentSignal = getSignal(event.id);
+                    return (
+                      <div key={event.id} className="bg-card border border-card-border rounded-md p-4 hover-elevate" data-testid={`card-event-${event.id}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 rounded-md px-2 py-1 text-center min-w-[48px] flex-shrink-0">
+                                <p className="text-xs font-semibold text-primary">{formatDate(event.startDate).slice(0, 6)}</p>
+                              </div>
+                              <div>
+                                <h3 className="font-medium text-foreground text-sm">{event.title}</h3>
+                                {event.organiser && <p className="text-xs text-muted-foreground mt-0.5">{event.organiser}</p>}
+                                {event.endDate && <p className="text-xs text-muted-foreground">Until {formatDate(event.endDate)}</p>}
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {(event.tags || []).slice(0, 4).map((tag: string) => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                  ))}
+                                  {event.regionScope && <Badge variant="outline" className="text-xs">{event.regionScope}</Badge>}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            {SIGNAL_TYPES.map(({ type, label, icon: Icon }) => (
+                              <button
+                                key={type}
+                                onClick={() => signalMutation.mutate({ eventId: event.id, signalType: type })}
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors ${currentSignal === type ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
+                                data-testid={`button-signal-${type}-${event.id}`}
+                              >
+                                <Icon className="h-3 w-3" />
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
