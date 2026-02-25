@@ -38,7 +38,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5">
-          <img src="/trybe-logo.png" alt="TRYBE" className="h-10 w-auto" />
+          <img src="/trybe-logo.png" alt="TRYBE" className="h-[30px] w-auto" />
           <p className="text-xs text-muted-foreground">Alpha</p>
         </div>
       </SidebarHeader>
