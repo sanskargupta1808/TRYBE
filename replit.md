@@ -85,7 +85,8 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Auth pages**: `auth-dots` CSS dot grid texture, `auth-glow` radial gradient behind logo, bordered card container with shadow
 - **Sidebar**: fade gradient separators (not hard borders), subtle active state (2px primary accent bar at 60% opacity + 5% bg tint), avatar hover ring
 - **Empty states**: radial gradient glow behind icon (primary/8%), increased padding (p-10), prominent action buttons
-- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations
+- **Button micro-interactions**: primary buttons `hover:scale-[1.015]` + all buttons `active:scale-[0.98]` with 150ms transition-transform
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations and button transforms
 - **Cards**: hover shadow lift (`hover:shadow-md transition-shadow duration-200`) on dashboard grid
 - **Message bubbles**: `rounded-2xl` with `px-3.5 py-2.5` for warmer feel
 - **CTA glow**: `cta-glow` class adds warm box-shadow on hover (primary/15%) for hero buttons

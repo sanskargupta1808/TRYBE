@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
 const APP_URL = process.env.APP_URL || `https://${process.env.REPLIT_DOMAINS?.split(",")[0] || "trybe.health"}`;
+const LOGO_URL = `${APP_URL}/trybe-logo.png`;
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
@@ -93,11 +94,7 @@ function buildInviteEmail(name: string | undefined, token: string): string {
   <style>
     body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
     .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
-    .header { background: #1a1a1a; padding: 32px 40px; }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-mark { width: 32px; height: 32px; background: #c2692e; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; line-height: 32px; text-align: center; }
-    .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-    .logo-tag { color: #9a9a9a; font-size: 11px; margin-top: 2px; }
+    .header { background: #1a1a1a; padding: 32px 40px; text-align: left; }
     .body { padding: 40px 40px 32px; }
     h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 12px; letter-spacing: -0.3px; }
     p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
@@ -113,13 +110,7 @@ function buildInviteEmail(name: string | undefined, token: string): string {
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="logo">
-        <div class="logo-mark">T</div>
-        <div>
-          <div class="logo-name">TRYBE</div>
-          <div class="logo-tag">Alpha</div>
-        </div>
-      </div>
+      <img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" />
     </div>
     <div class="body">
       <h1>You're invited to TRYBE${name ? `, ${name.split(" ")[0]}` : ""}</h1>
@@ -169,9 +160,7 @@ function buildApprovalEmail(name: string, token: string): string {
   <style>
     body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
     .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
-    .header { background: #1a1a1a; padding: 32px 40px; }
-    .logo-mark { width: 32px; height: 32px; background: #c2692e; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; line-height: 32px; text-align: center; }
-    .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+    .header { background: #1a1a1a; padding: 32px 40px; text-align: left; }
     .body { padding: 40px 40px 32px; }
     h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 12px; letter-spacing: -0.3px; }
     p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
@@ -187,13 +176,7 @@ function buildApprovalEmail(name: string, token: string): string {
 <body>
   <div class="wrapper">
     <div class="header">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="logo-mark">T</div>
-        <div>
-          <div class="logo-name">TRYBE</div>
-          <div style="color:#9a9a9a;font-size:11px;margin-top:2px;">Alpha</div>
-        </div>
-      </div>
+      <img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" />
     </div>
     <div class="body">
       <h1>Your invitation request has been approved${name ? `, ${name.split(" ")[0]}` : ""}</h1>
@@ -240,8 +223,7 @@ function buildApprovalPendingEmail(name: string): string {
   <style>
     body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
     .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
-    .header { background: #1a1a1a; padding: 32px 40px; }
-    .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; }
+    .header { background: #1a1a1a; padding: 32px 40px; text-align: left; }
     .body { padding: 40px; }
     h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 16px; }
     p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
@@ -252,7 +234,7 @@ function buildApprovalPendingEmail(name: string): string {
 </head>
 <body>
   <div class="wrapper">
-    <div class="header"><div class="logo-name">TRYBE</div></div>
+    <div class="header"><img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" /></div>
     <div class="body">
       <h1>Your account has been approved${name ? `, ${name.split(" ")[0]}` : ""}</h1>
       <p>
@@ -283,11 +265,7 @@ function buildMemberInviteEmail(inviterName: string, token: string, note?: strin
   <style>
     body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
     .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
-    .header { background: #1a1a1a; padding: 32px 40px; }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-mark { width: 32px; height: 32px; background: #c2692e; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; line-height: 32px; text-align: center; }
-    .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-    .logo-tag { color: #9a9a9a; font-size: 11px; margin-top: 2px; }
+    .header { background: #1a1a1a; padding: 32px 40px; text-align: left; }
     .body { padding: 40px 40px 32px; }
     h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 12px; letter-spacing: -0.3px; }
     p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
@@ -303,13 +281,7 @@ function buildMemberInviteEmail(inviterName: string, token: string, note?: strin
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="logo">
-        <div class="logo-mark">T</div>
-        <div>
-          <div class="logo-name">TRYBE</div>
-          <div class="logo-tag">Alpha</div>
-        </div>
-      </div>
+      <img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" />
     </div>
     <div class="body">
       <h1>${inviterName} has invited you to TRYBE</h1>
@@ -384,11 +356,11 @@ export async function sendTableJoinApprovedEmail(recipientEmail: string, recipie
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>TRYBE — Table Access Approved</title>
   <style>body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}
   .wrapper{max-width:560px;margin:48px auto;background:#fff;border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;}
-  .header{background:#1a1a1a;padding:32px 40px;}.logo-name{color:#fff;font-size:18px;font-weight:600;}
+  .header{background:#1a1a1a;padding:32px 40px;text-align:left;}
   .body{padding:40px;}.cta{display:block;background:#c2692e;color:#fff;text-decoration:none;text-align:center;font-size:15px;font-weight:600;padding:14px 24px;border-radius:6px;margin:28px 0;}
   h1{font-size:22px;font-weight:600;color:#111;margin:0 0 12px;}p{font-size:15px;line-height:1.65;color:#555;margin:0 0 20px;}
   .footer{padding:20px 40px;background:#f9f8f6;border-top:1px solid #e8e6e1;}.footer p{font-size:12px;color:#aaa;margin:0;}</style></head>
-  <body><div class="wrapper"><div class="header"><div class="logo-name">TRYBE</div></div>
+  <body><div class="wrapper"><div class="header"><img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" /></div>
   <div class="body"><h1>You've been approved to join a table${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
   <p>Your request to join <strong>${tableTitle}</strong> has been approved. You can now access the table and contribute to its discussions.</p>
   <a href="${APP_URL}/app/tables" class="cta">View your tables</a>

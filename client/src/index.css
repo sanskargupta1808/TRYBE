@@ -437,4 +437,8 @@
   .cta-glow:hover {
     box-shadow: none !important;
   }
+  button, [role="button"] {
+    transition-duration: 0ms !important;
+    transform: none !important;
+  }
 }
