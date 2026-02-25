@@ -415,15 +415,89 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ─── TRYBE Assistant ──────────────────────────────────────────────────────
 
+  app.post("/api/assistant/suggest-tables", requireActive, async (req, res) => {
+    const { profile: profileOverride } = req.body;
+    const user = await storage.getUserById(req.session.userId!);
+    const profile = profileOverride || await storage.getUserProfile(req.session.userId!);
+    const allTables = await storage.getAllTables();
+    const userTableIds = (await storage.getTablesForUser(req.session.userId!)).map(t => t.id);
+    const availableTables = allTables.filter(t => !userTableIds.includes(t.id));
+
+    if (!openai || availableTables.length === 0) {
+      const suggestions = availableTables.slice(0, 3).map(t => ({
+        tableId: t.id,
+        title: t.title,
+        purpose: t.purpose,
+        tags: t.tags,
+        reason: "Relevant to your areas of focus.",
+      }));
+      return res.json({ suggestions });
+    }
+
+    const tableList = availableTables.map(t =>
+      `ID: ${t.id} | Title: ${t.title} | Purpose: ${t.purpose} | Tags: ${(t.tags || []).join(", ")}`
+    ).join("\n");
+
+    const prompt = `You are TRYBE Assistant helping a new user find the most relevant collaboration tables.
+
+User profile:
+- Name: ${user?.name}
+- Organisation: ${user?.organisation || "Not specified"}
+- Role: ${user?.roleTitle || "Not specified"}
+- Health role: ${profile?.healthRole || "Not specified"}
+- Disease interests: ${(profile?.interests || []).join(", ") || "Not specified"}
+- Regions: ${(profile?.regions || []).join(", ") || "Not specified"}
+- Current goal: ${profile?.currentGoal || "Not specified"}
+- Collaboration mode: ${profile?.collaborationMode || "OBSERVE"}
+
+Available collaboration tables:
+${tableList}
+
+Select exactly 3 tables that best match this user's profile. Prefer tables that align with their disease interests and regions. Return JSON:
+{
+  "suggestions": [
+    {"tableId": "...", "title": "...", "reason": "One sentence explaining why this table suits them specifically."},
+    {"tableId": "...", "title": "...", "reason": "..."},
+    {"tableId": "...", "title": "...", "reason": "..."}
+  ]
+}`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 600,
+      });
+      let parsed: any = {};
+      try { parsed = JSON.parse(completion.choices[0]?.message?.content || "{}"); } catch {}
+      const suggestions = (parsed.suggestions || []).map((s: any) => {
+        const table = allTables.find(t => t.id === s.tableId);
+        return table ? { tableId: s.tableId, title: s.title || table.title, purpose: table.purpose, tags: table.tags, reason: s.reason } : null;
+      }).filter(Boolean);
+      res.json({ suggestions });
+    } catch (err: any) {
+      console.error("[Assistant/SuggestTables]", err?.message);
+      const fallback = availableTables.slice(0, 3).map(t => ({
+        tableId: t.id, title: t.title, purpose: t.purpose, tags: t.tags,
+        reason: "Relevant to your areas of focus.",
+      }));
+      res.json({ suggestions: fallback });
+    }
+  });
+
   app.post("/api/assistant", requireActive, async (req, res) => {
     const { message, context } = req.body;
     const user = await storage.getUserById(req.session.userId!);
     const profile = await storage.getUserProfile(req.session.userId!);
+    const allTables = await storage.getAllTables();
+    const userTables = await storage.getTablesForUser(req.session.userId!);
+    const userTableIds = userTables.map(t => t.id);
+    const availableTables = allTables.filter(t => !userTableIds.includes(t.id));
 
     if (!openai) {
-      // Fallback responses without OpenAI
       return res.json({
-        assistantText: "I'm here to support your work. My AI features require an OpenAI key to be configured. In the meantime, I can help you navigate the platform — explore the Tables section to find collaboration spaces relevant to your focus.",
+        assistantText: "I'm here to support your work. Explore the Tables section to find collaboration spaces relevant to your focus.",
         suggestedActions: [
           { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
           { type: "NAVIGATE", label: "View Moments", url: "/app/moments" },
@@ -431,48 +505,68 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
     }
 
-    const systemPrompt = `You are TRYBE Assistant — a calm, professional, neutral AI assistant for a private global health collaboration platform. 
+    const myTablesSummary = userTables.length > 0
+      ? userTables.map(t => `- ${t.title}`).join("\n")
+      : "None yet";
+    const availableTablesSummary = availableTables.slice(0, 10).map(t =>
+      `ID: ${t.id} | ${t.title} | Tags: ${(t.tags || []).join(", ")}`
+    ).join("\n");
 
-Your core principles:
-- Warm but restrained tone. Plain English. No jargon or hype language.
+    const systemPrompt = `You are TRYBE Assistant — a calm, professional, neutral AI assistant for a private global health collaboration platform called TRYBE.
+
+Core principles:
+- Warm but restrained. Plain English. No jargon or hype.
 - Never provide medical advice, never take policy positions, never act autonomously.
 - Always suggest actions for user confirmation — never execute without explicit user click.
-- Support: suggesting tables, drafting messages, summarising discussions, surfacing moments, adjusting preferences.
+- Capabilities: suggest tables to join, help draft posts or messages, summarise discussions, surface upcoming health moments, adjust preferences.
 
 User context:
 - Name: ${user?.name}
 - Organisation: ${user?.organisation || "Not specified"}
-- Role: ${user?.roleTitle || "Not specified"}
-- Interests: ${profile?.interests?.join(", ") || "Not specified"}
-- Regions: ${profile?.regions?.join(", ") || "Not specified"}
+- Role title: ${user?.roleTitle || "Not specified"}
+- Health role: ${profile?.healthRole || "Not specified"}
+- Disease interests: ${(profile?.interests || []).join(", ") || "Not specified"}
+- Regions: ${(profile?.regions || []).join(", ") || "Not specified"}
 - Collaboration mode: ${profile?.collaborationMode || "OBSERVE"}
+- Assistant activity level: ${profile?.assistantActivityLevel || "BALANCED"}
 - Current goal: ${profile?.currentGoal || "Not specified"}
 
-Current page context: ${context?.page || "Dashboard"}
+My tables (already a member):
+${myTablesSummary}
 
-Respond with JSON in this exact format:
+Available tables to suggest joining (not yet a member):
+${availableTablesSummary || "None available"}
+
+Current page: ${context?.page || "Dashboard"}
+
+Respond with JSON exactly:
 {
-  "assistantText": "Your response here",
+  "assistantText": "Your response here (2-4 sentences, calm and helpful)",
   "suggestedActions": [
-    {"type": "SUGGEST_JOIN_TABLE", "tableId": "...", "label": "Join table name"},
-    {"type": "NAVIGATE", "label": "...", "url": "..."},
-    {"type": "SUGGEST_SUMMARISE_THREAD", "threadId": "...", "label": "..."}
+    {"type": "SUGGEST_JOIN_TABLE", "tableId": "exact-id", "label": "View: Table Name"},
+    {"type": "NAVIGATE", "label": "Label", "url": "/app/path"},
+    {"type": "SUGGEST_SUMMARISE_THREAD", "threadId": "...", "label": "Summarise: Thread Name"}
   ]
 }
-Only include suggestedActions that are genuinely relevant. Keep suggestedActions to 1-3 max.`;
+Only include suggestedActions that are genuinely useful. Max 3. If suggesting a table, always use its exact ID from the available tables list above.`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    let result = { assistantText: "", suggestedActions: [] };
-    try { result = JSON.parse(completion.choices[0]?.message?.content || "{}"); } catch {}
-    res.json(result);
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 500,
+      });
+      let result: any = { assistantText: "", suggestedActions: [] };
+      try { result = JSON.parse(completion.choices[0]?.message?.content || "{}"); } catch {}
+      res.json(result);
+    } catch (err: any) {
+      console.error("[Assistant]", err?.message);
+      res.json({ assistantText: "I'm having trouble right now. Please try again in a moment.", suggestedActions: [] });
+    }
   });
 
   // ─── Admin: Unified Action Endpoints ────────────────────────────────────

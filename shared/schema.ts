@@ -60,6 +60,7 @@ export type InviteRequest = typeof inviteRequests.$inferSelect;
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  healthRole: text("health_role"),
   regions: text("regions").array().default(sql`'{}'::text[]`),
   interests: text("interests").array().default(sql`'{}'::text[]`),
   collaborationMode: text("collaboration_mode").default("OBSERVE"),
