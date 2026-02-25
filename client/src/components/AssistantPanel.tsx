@@ -177,7 +177,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
           </div>
           <div>
             <p className="text-sm font-semibold">TRYBE Assistant</p>
-            <p className="text-xs text-muted-foreground">Human-led. AI-supported.</p>
+            <p className="text-xs text-muted-foreground">Suggestions only. You stay in control.</p>
           </div>
         </div>
         {onClose && (

@@ -70,8 +70,20 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 ## Design System
 - Primary color: amber/orange (24 85% 45%)
 - Professional, calm, neutral
-- No emoji in UI
+- No emoji in UI; text-based reactions (Agree, Thanks, Noted, Helpful, Important, Insightful)
 - All interactive elements have `data-testid` attributes
+- Inter font, warm off-white bg, deep charcoal text, subtle tonal card shadows
+- No uppercase labels — sentence case throughout
+- No bright blues — warm neutral chart/badge palette
+- No gradients as primary identity
+
+## UX Architecture (Focus-First Redesign)
+- Dashboard: Single "Your current focus" hero card → one primary CTA (Open table) → secondary 3-column grid (My tables, Upcoming moments, Messages) with max 3 items each + "View all" links
+- Focus table stored in localStorage (`trybe_focus_table`); "Change focus" modal for switching
+- Assistant: floating drawer (right-side overlay with backdrop blur) triggered by "Ask TRYBE Assistant" top bar button; not permanently visible
+- Progressive disclosure: max 5 items in thread lists, "View all" toggle; max 3 items in dashboard previews
+- Empty states: 1-line explanation + 1 next action button (e.g., "Browse tables", "Ask TRYBE Assistant", "View tables")
+- Small assistant callout at bottom of dashboard: "Want suggestions tailored to your focus?"
 
 ## Environment Variables
 - `DATABASE_URL` — PostgreSQL connection

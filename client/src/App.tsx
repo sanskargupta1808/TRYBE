@@ -64,7 +64,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               data-testid="button-open-assistant"
             >
               <Bot className="h-3.5 w-3.5" />
-              TRYBE Assistant
+              Ask TRYBE Assistant
             </button>
           </div>
           <div className="relative">
@@ -72,7 +72,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
         {assistantOpen && (
-          <AssistantPanel onClose={() => setAssistantOpen(false)} />
+          <>
+            <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => setAssistantOpen(false)} />
+            <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-xl">
+              <AssistantPanel onClose={() => setAssistantOpen(false)} />
+            </div>
+          </>
         )}
       </div>
     </SidebarProvider>

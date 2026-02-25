@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ export default function TableDetail() {
   const { user } = useAuth();
   const [newThread, setNewThread] = useState("");
   const [showNewThread, setShowNewThread] = useState(false);
+  const [showAllThreads, setShowAllThreads] = useState(false);
   const [messagingUserId, setMessagingUserId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery<any>({
@@ -236,7 +237,7 @@ export default function TableDetail() {
           </div>
         ) : (
           <div className="space-y-2">
-            {(data.threads || []).map((thread: any) => (
+            {(data.threads || []).slice(0, showAllThreads ? undefined : 5).map((thread: any) => (
               <Link key={thread.id} href={`/app/tables/${id}/threads/${thread.id}`}>
                 <div className="flex items-center justify-between bg-card border border-card-border rounded-md px-4 py-3 hover-elevate" data-testid={`card-thread-${thread.id}`}>
                   <div>
@@ -254,6 +255,11 @@ export default function TableDetail() {
                 </div>
               </Link>
             ))}
+            {!showAllThreads && (data.threads || []).length > 5 && (
+              <button onClick={() => setShowAllThreads(true)} className="text-xs text-primary hover:underline mt-2" data-testid="button-view-all-threads">
+                View all {data.threads.length} threads
+              </button>
+            )}
           </div>
         )}
       </section>

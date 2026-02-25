@@ -61,8 +61,12 @@ export default function Moments() {
         <div className="space-y-6">{[1,2,3].map(i => <div key={i}><Skeleton className="h-5 w-24 mb-3" /><div className="space-y-3">{[1,2].map(j => <Skeleton key={j} className="h-24 rounded-md" />)}</div></div>)}</div>
       ) : events.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-md p-6 text-center">
-          <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground text-sm">No moments match your current focus. Update your interests in Settings or ask TRYBE Assistant to suggest relevant moments.</p>
+          <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground mb-4">No moments match your focus yet. Update your interests or ask for suggestions.</p>
+          <Button size="sm" variant="outline" onClick={() => {
+            const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
+            btn?.click();
+          }} data-testid="button-ask-assistant-moments">Ask TRYBE Assistant</Button>
         </div>
       ) : (
         <div className="space-y-8">

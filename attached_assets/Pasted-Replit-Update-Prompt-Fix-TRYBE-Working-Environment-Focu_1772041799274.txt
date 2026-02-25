@@ -1,0 +1,234 @@
+Replit Update Prompt — Fix TRYBE Working Environment (Focus-First Redesign)
+
+You are updating the existing TRYBE Alpha codebase. Do not change backend logic, database schema, routes, moderation, auth, assistant behaviour rules, or permissions. This is a UX + UI information architecture redesign to eliminate clutter and make the working environment feel calm, focused, and premium.
+
+Primary Goal
+
+When a user lands in /app, the interface must answer within 3 seconds:
+
+“What should I do right now?”
+
+The current design shows too much information with equal visual weight. Redesign to a Single Surface / Primary Focus model with progressive disclosure.
+
+1) Redesign Principles (non-negotiable)
+
+One dominant surface on the dashboard.
+
+One primary action visible above the fold.
+
+Everything else is secondary and hidden behind “View all” or small entry points.
+
+Assistant must not compete visually with primary content.
+
+Remove list-heavy admin/dashboard feel. Use calm cards with whitespace.
+
+Maximum 5 items shown in any preview list. Everything else behind “View all”.
+
+Reduce navigation noise: fewer sections visible by default.
+
+2) Layout Change: Remove Always-On Assistant Column
+Current likely layout
+
+Left nav + main content + right assistant panel.
+
+New required layout
+
+Top bar (sticky):
+
+Left: TRYBE logo
+
+Center: optional search (only if already implemented; otherwise omit)
+
+Right: “Ask TRYBE Assistant” button + user menu
+
+Main content: single centered column (max width ~1100px)
+
+Assistant panel:
+
+Opens as a floating drawer / modal when user clicks “Ask TRYBE Assistant”
+
+On mobile: opens as a bottom sheet
+
+The assistant is not permanently visible.
+
+Keep the assistant functionality identical, only change presentation.
+
+3) Dashboard Redesign /app (Single Surface Focus Card)
+
+Replace the dashboard with:
+
+3.1 Primary Focus Card (dominant hero card)
+
+At the top, show ONE of the following, chosen by priority:
+
+Priority logic (do not over-engineer):
+
+If the user has a “last active table” → use it
+
+Else if they are in any tables → use the most recently joined table
+
+Else show “Get Started” state
+
+Focus Card content
+
+Title: “Your current focus”
+
+Table name (large, prominent)
+
+One-line purpose (if available)
+
+2–3 compact status chips:
+
+Threads count
+
+“New activity” count (if you track; if not, omit)
+
+Next relevant “Moment” (if available; otherwise omit)
+
+Primary CTA button: Open table
+
+Secondary CTA (ghost): Ask TRYBE Assistant
+
+Tertiary link: Change focus (opens a small modal listing the user’s tables)
+
+This card must visually dominate and be the obvious next step.
+
+3.2 Secondary Section (minimal, not competing)
+
+Below the focus card, show three small cards in a 3-column grid (1-column on mobile):
+
+My Tables
+
+Show up to 3 tables only
+
+Link: “View all tables”
+
+Upcoming Moments
+
+Show up to 3 moments only
+
+Link: “View all moments”
+
+Messages
+
+Show up to 3 recent conversations only (or “No messages yet”)
+
+Link: “View all messages”
+
+No long lists. No dense cards. No duplicated metadata.
+
+3.3 Replace “Suggested for you” with one small prompt
+
+Do NOT show a big “Suggested” section.
+Instead show a small callout (one line) under the grid:
+
+“Want suggestions tailored to your focus? Ask TRYBE Assistant.”
+
+Button: Ask TRYBE Assistant
+
+4) Progressive Disclosure Everywhere
+
+Apply these rules across the app:
+
+Table page: show threads with good spacing, but only highlight the top 5 most recent threads with “View all threads” if needed.
+
+Moments page: default to clean timeline/agenda; avoid long scrolly feed feel.
+
+Tables list: show filters and search, but keep layout calm; no dense admin tables.
+
+Messages: clean, simple list, not mailbox-heavy.
+
+If a page has more than 5–7 items visible, redesign to preview + “View all”.
+
+5) Visual Hierarchy Fix (make things stand out)
+
+Implement:
+
+One clear page title
+
+One dominant card on dashboard
+
+One primary CTA above fold
+
+Secondary actions moved to “…” menus or subtle links
+
+Muted metadata (timestamps/tags) using subdued text color
+
+Increase whitespace:
+
+More padding in cards
+
+More gap between sections
+
+Larger line-height for readability
+
+6) Empty States (guided, calm)
+
+Replace generic empty states with:
+
+1 line explaining what this is
+
+1 next action button
+
+Examples:
+
+No tables:
+“You’re not in any tables yet. Join a suggested table or request a new one.”
+Buttons: Ask TRYBE Assistant / Request a table
+
+No moments:
+“No moments match your focus yet. Update your interests or ask for suggestions.”
+Button: Ask TRYBE Assistant
+
+No messages:
+“No private conversations yet. You can request a chat from within a table.”
+Button: View tables
+
+7) Assistant UI (do not change logic, only UX)
+
+Assistant trigger button in top bar:
+Label: “Ask TRYBE Assistant”
+
+Assistant drawer content:
+
+Title: “TRYBE Assistant”
+
+Short subtext: “Suggestions only. You stay in control.”
+
+Chat area
+
+Suggested action buttons under responses
+
+No emojis. No playful styling. Professional tool feel.
+
+8) Implementation Requirements (engineering)
+
+Refactor the dashboard component to the new layout.
+
+Implement a “Focus” selection modal to switch current focus table.
+
+Store “current focus table id” per user:
+
+Prefer localStorage for quick win OR user_profile field if already exists.
+
+Do not add new DB schema unless already present; prefer localStorage.
+
+Ensure responsive design is excellent:
+
+Mobile: top bar + single column + assistant bottom sheet.
+
+Keep all existing routes and functionality intact.
+
+9) Acceptance Criteria (must pass)
+
+On /app, a user sees ONE clear “Your current focus” card with ONE primary button above the fold.
+
+The assistant is not visible until invoked.
+
+No section shows more than 3–5 items without a “View all” link.
+
+The dashboard no longer feels like an admin panel or dense list.
+
+Users can change their focus table easily.
+
+All existing auth, moderation, and admin tools still function unchanged.

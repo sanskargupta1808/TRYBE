@@ -153,9 +153,11 @@ export default function Messages() {
         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
       ) : !conversations || conversations.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
-          <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="font-medium text-foreground mb-2">No conversations yet</h3>
-          <p className="text-muted-foreground text-sm">Start a conversation with a table member using the button above.</p>
+          <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground mb-4">No private conversations yet. You can start a chat from within a table.</p>
+          <Link href="/app/tables">
+            <Button size="sm" variant="outline" data-testid="button-view-tables-from-messages">View tables</Button>
+          </Link>
         </div>
       ) : (
         <div className="space-y-2">
