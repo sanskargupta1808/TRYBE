@@ -28,10 +28,32 @@ export function emailProvider(): string {
   return "none";
 }
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&mdash;/g, "—")
+    .replace(/&middot;/g, "·")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 async function sendEmail(to: string, subject: string, html: string): Promise<{ sent: boolean; error?: string }> {
   if (gmailTransport) {
     try {
-      await gmailTransport.sendMail({ from: FROM_ADDRESS, to, subject, html });
+      await gmailTransport.sendMail({
+        from: FROM_ADDRESS,
+        to,
+        subject,
+        html,
+        text: htmlToPlainText(html),
+        headers: {
+          "X-Mailer": "TRYBE Platform",
+          "Precedence": "bulk",
+        },
+      });
       console.log(`[Email/Gmail] Sent to ${to}`);
       return { sent: true };
     } catch (err: any) {
