@@ -43,7 +43,7 @@ export default function AdminModeration() {
         <div className="space-y-6">
           {open.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Open ({open.length})</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Open ({open.length})</h2>
               <div className="space-y-3">
                 {open.map((item: any) => (
                   <div key={item.id} className="bg-card border border-card-border rounded-md p-4" data-testid={`card-mod-${item.id}`}>
@@ -73,7 +73,7 @@ export default function AdminModeration() {
           )}
           {resolved.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Resolved</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Resolved</h2>
               <div className="space-y-2">
                 {resolved.slice(0, 10).map((item: any) => (
                   <div key={item.id} className="flex items-center justify-between bg-muted/30 border border-border rounded-md px-4 py-2" data-testid={`card-mod-resolved-${item.id}`}>

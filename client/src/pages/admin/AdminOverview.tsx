@@ -41,7 +41,7 @@ export default function AdminOverview() {
       </div>
 
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Platform metrics</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Platform metrics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {primaryStats.map(stat => (
             <Link key={stat.label} href={stat.link}>
@@ -56,7 +56,7 @@ export default function AdminOverview() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Participation</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Participation</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {participationStats.map(stat => (
             <div key={stat.label} className="bg-card border border-card-border rounded-md p-4" data-testid={`stat-${stat.label}`}>
@@ -70,7 +70,7 @@ export default function AdminOverview() {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Actions required</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Actions required</h2>
         <div className="space-y-2">
           {actions.map(action => (
             <Link key={action.label} href={action.link}>

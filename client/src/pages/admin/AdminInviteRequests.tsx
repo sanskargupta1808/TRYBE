@@ -68,13 +68,13 @@ export default function AdminInviteRequests() {
         <div className="space-y-6">
           {pending.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pending ({pending.length})</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Pending ({pending.length})</h2>
               <div className="space-y-3">{pending.map(r => <Card key={r.id} req={r} />)}</div>
             </section>
           )}
           {reviewed.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Reviewed</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Reviewed</h2>
               <div className="space-y-3">{reviewed.slice(0, 20).map(r => <Card key={r.id} req={r} />)}</div>
             </section>
           )}

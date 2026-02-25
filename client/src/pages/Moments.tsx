@@ -71,7 +71,7 @@ export default function Moments() {
             const monthName = `${MONTHS[parseInt(m) - 1]} ${year}`;
             return (
               <section key={month}>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{monthName}</h2>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">{monthName}</h2>
                 <div className="space-y-3">
                   {monthEvents.map((event: any) => {
                     const currentSignal = getSignal(event.id);

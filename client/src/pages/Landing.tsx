@@ -116,7 +116,7 @@ export default function Landing() {
             </div>
           </div>
           <div>
-            <p className="text-muted-foreground mb-4 font-medium text-sm uppercase tracking-wide">It does not:</p>
+            <p className="text-muted-foreground mb-4 font-medium text-sm">It does not:</p>
             <div className="space-y-2">
               {[
                 "Act without your consent",

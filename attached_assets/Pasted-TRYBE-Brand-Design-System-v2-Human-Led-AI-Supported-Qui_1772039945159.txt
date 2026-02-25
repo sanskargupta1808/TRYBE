@@ -1,0 +1,394 @@
+TRYBE
+Brand & Design System v2
+
+Human-Led. AI-Supported. Quietly Confident.
+
+1. Brand Essence
+
+TRYBE is not a startup vibe brand.
+It is not expressive.
+It is not creative-chaotic.
+
+It is:
+
+Structured
+
+Calm
+
+Intelligent
+
+Institutional but modern
+
+Trust-first
+
+Designed for serious work
+
+The logo (rounded uppercase, geometric, square over Y) communicates:
+
+Precision
+
+Stability
+
+Confidence
+
+Soft authority
+
+Human warmth without softness
+
+2. Brand Positioning
+
+TRYBE is:
+
+Neutral collaboration infrastructure for global health.
+
+It does not shout.
+It does not persuade.
+It does not disrupt.
+
+It facilitates.
+
+3. Visual Identity
+3.1 Logo
+
+Primary Logo:
+
+Uppercase TRYBE
+
+Rounded modern sans-serif
+
+Slightly softened geometric forms
+
+Square accent above the Y (core identifier)
+
+The square is:
+
+A structural marker
+
+A “signal” of intelligence
+
+A visual anchor
+
+A symbol of coordination / connection
+
+It must:
+
+Always remain perfectly square
+
+Match brand accent color
+
+Never become rounded
+
+Never become circular
+
+Clear space:
+
+Minimum clear space = height of the square above the Y
+
+Do not:
+
+Stretch logo
+
+Apply drop shadows
+
+Apply gradients to logo
+
+Use glow effects
+
+Place on busy backgrounds
+
+3.2 Color System
+Primary Palette
+
+TRYBE Orange (Primary Accent)
+
+Warm, confident, modern
+
+Used sparingly for:
+
+Primary buttons
+
+Key highlights
+
+Square above Y
+
+Active states
+
+Deep Charcoal (Primary Text)
+
+Nearly black
+
+Trust-building
+
+Warm Off-White (Base Background)
+
+Not pure white
+
+Slight warmth to feel human
+
+Slate Grey (Secondary Text)
+
+Used for metadata, timestamps, subtle UI
+
+Extended Neutral System
+
+Surface Layers:
+
+Page background
+
+Card background
+
+Elevated panel background
+
+Use subtle tonal shifts, not heavy borders.
+
+No bright blues.
+No gradients as primary identity.
+No flashy UI colors.
+
+4. Typography
+
+Primary Font Style:
+
+Modern geometric sans-serif
+
+Rounded terminals
+
+Confident spacing
+
+Style rules:
+
+Uppercase for logo only
+
+Sentence case everywhere else
+
+No all-caps UI labels
+
+Generous line-height
+
+Calm vertical rhythm
+
+Headlines:
+
+Large but not aggressive
+
+Balanced weight
+
+Body:
+
+Highly readable
+
+Slightly increased letter spacing for clarity
+
+5. UI Personality
+
+TRYBE should feel like:
+
+A well-lit meeting room.
+A polished working environment.
+A thoughtful product built by adults.
+
+Not:
+
+Silicon Valley hype
+
+Creative agency chaos
+
+Tech bro dashboard energy
+
+Startup neon aesthetic
+
+6. Layout Philosophy
+
+Three-column system:
+
+Left: Navigation
+Center: Work surface
+Right: TRYBE Assistant
+
+This mirrors:
+A table with a facilitator beside you.
+
+Spacing:
+
+Generous margins
+
+No cramped UI
+
+No clutter
+
+Cards:
+
+Soft corners
+
+Light shadow
+
+Clear hierarchy
+
+Strong internal spacing
+
+7. Motion Design
+
+Motion should feel:
+
+Subtle.
+Intelligent.
+Intentional.
+
+Use:
+
+150–200ms transitions
+
+Slight lift on hover
+
+Gentle fade transitions
+
+Micro-movement on panel open
+
+Never use:
+
+Bounce
+
+Overshoot
+
+Dramatic easing
+
+Pulsing animations
+
+Attention-grabbing transitions
+
+8. Assistant Visual Treatment
+
+TRYBE Assistant must feel:
+
+Integrated.
+Professional.
+Not chatty.
+Not playful.
+
+Avoid:
+
+Chat bubble emoji styling
+
+Friendly cartoon cues
+
+Typing dots animation drama
+
+Instead:
+
+Clean panel
+
+Structured suggestions
+
+Calm message spacing
+
+Action buttons clearly separated
+
+The assistant should feel like:
+A strategic analyst — not a chatbot.
+
+9. Iconography
+
+Icons must be:
+
+Simple line icons
+
+Thin stroke
+
+Minimal detail
+
+Consistent weight
+
+Neutral in tone
+
+Avoid:
+
+Filled cartoon icons
+
+Playful illustrations
+
+Emoji-heavy UI
+
+10. Moments (Calendar) Visual Language
+
+Calendar view should feel:
+
+Structured.
+Intentional.
+Agenda-like.
+
+Use:
+
+Timeline layout
+
+Month dividers
+
+Tag pills
+
+Clean date typography
+
+No:
+
+Colorful event blocks
+
+Event chaos
+
+Social feed styling
+
+11. Emotional Tone
+
+TRYBE should evoke:
+
+Trust
+Stability
+Clarity
+Safety
+Professional dignity
+
+It should not evoke:
+
+Excitement
+Addiction
+Performance pressure
+Competition
+
+12. Design Principles (Core Rules)
+
+Remove noise.
+
+Reduce options.
+
+Clarify hierarchy.
+
+Respect attention.
+
+Keep power with the user.
+
+Never gamify.
+
+Never exaggerate AI capability.
+
+13. Future-Proofing
+
+The brand is designed to scale into:
+
+Enterprise deployments
+
+Government collaborations
+
+NGO partnerships
+
+International institutions
+
+It must feel credible in:
+
+WHO-level environments
+
+UN-level environments
+
+Policy advisory contexts
+
+14. Brand One-Liner
+
+TRYBE
+Structured health collaboration.
+Human-led. AI-supported.

@@ -129,7 +129,7 @@ export default function AdminInvites() {
           </div>
           <div className="p-4 bg-card space-y-3">
             <div>
-              <p className="text-xs text-muted-foreground mb-1.5 font-medium uppercase tracking-wide">One-click registration link</p>
+              <p className="text-xs text-muted-foreground mb-1.5 font-medium">One-click registration link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs bg-muted px-3 py-2 rounded border border-border font-mono truncate" data-testid="text-invite-link">
                   {inviteLink(lastCreated.token)}
@@ -143,7 +143,7 @@ export default function AdminInvites() {
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1.5 font-medium uppercase tracking-wide">Invite code (manual entry)</p>
+              <p className="text-xs text-muted-foreground mb-1.5 font-medium">Invite code (manual entry)</p>
               <div className="flex items-center gap-2">
                 <code className="bg-muted px-3 py-2 rounded border border-border font-mono text-sm tracking-widest" data-testid="text-invite-token">
                   {lastCreated.token}

@@ -80,7 +80,7 @@ export default function Tables() {
       {/* My Tables */}
       {!search && !tagFilter && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">My Tables</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">My tables</h2>
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
           ) : (data?.all || []).filter((t: any) => myIds.has(t.id)).length === 0 ? (
@@ -114,8 +114,8 @@ export default function Tables() {
 
       {/* All / Suggested Tables */}
       <section>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          {search || tagFilter ? `Results (${tables.length})` : "Suggested Tables"}
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
+          {search || tagFilter ? `Results (${tables.length})` : "Suggested tables"}
         </h2>
         {isLoading ? (
           <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-28 rounded-md" />)}</div>

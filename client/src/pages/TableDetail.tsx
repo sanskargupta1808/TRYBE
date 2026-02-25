@@ -131,7 +131,7 @@ export default function TableDetail() {
 
       {/* Members */}
       <section className="mb-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Members</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Members</h2>
         <div className="space-y-2">
           {(data.members || []).map(({ user: u, member }: any) => (
             <div key={u.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2" data-testid={`badge-member-${u.id}`}>
@@ -167,7 +167,7 @@ export default function TableDetail() {
         <section className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <UserCheck className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Join requests ({pendingRequests.length})</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground">Join requests ({pendingRequests.length})</h2>
           </div>
           <div className="space-y-2">
             {pendingRequests.map(({ request, user: u }: any) => (
