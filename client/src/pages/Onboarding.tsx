@@ -225,7 +225,7 @@ export default function Onboarding() {
           <Bot className="h-4.5 w-4.5 text-primary" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">TRYBE Assistant</p>
+          <p className="text-sm font-semibold text-foreground">TRYBE Assistant <span className="text-muted-foreground font-normal">OMNI</span></p>
           <p className="text-xs text-muted-foreground font-serif italic">Let's tailor this to you</p>
         </div>
       </div>

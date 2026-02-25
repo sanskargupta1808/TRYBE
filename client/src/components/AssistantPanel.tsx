@@ -182,7 +182,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
             <Bot className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold">TRYBE Assistant</p>
+            <p className="text-sm font-semibold">TRYBE Assistant <span className="text-muted-foreground font-normal">OMNI</span></p>
             <p className="text-xs text-muted-foreground">Suggestions only. You stay in control.</p>
           </div>
         </div>
