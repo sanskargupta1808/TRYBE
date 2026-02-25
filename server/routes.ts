@@ -253,6 +253,74 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(profile);
   });
 
+  // ─── Onboarding NLP ──────────────────────────────────────────────────────
+
+  app.post("/api/onboarding/process", requireActive, async (req, res) => {
+    const { message, currentStep, currentProfile } = req.body;
+    if (!message?.trim() || !currentStep) return res.status(400).json({ error: "Message and step required" });
+    const user = await storage.getUserById(req.session.userId!);
+
+    const VALID_ROLES = ["Patient Advocate","Public Health Professional","Policymaker / Advisor","Clinical Researcher","Industry Medical Team","Health NGO / Foundation","Academic / Educator","Journalist / Communications","Other"];
+    const VALID_DISEASES = ["Cancer","Rare Disease","Diabetes","Mental Health","HIV/AIDS","TB","AMR","Cardiovascular","Respiratory","NCD Prevention","Neurology","Paediatrics","Maternal Health","Infectious Disease"];
+    const VALID_REGIONS = ["Global","Europe","North America","Asia Pacific","Africa","Latin America","Middle East","South Asia"];
+
+    if (!openai) {
+      return res.json({
+        profile: currentProfile || {},
+        response: "I understand. Let's continue.",
+        nextStep: currentStep,
+      });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are TRYBE Assistant, onboarding a new member named ${user?.name || "there"} to a private global health collaboration platform.
+Parse the user's message to extract structured profile data for the current onboarding step.
+
+Current step: "${currentStep}"
+Current profile so far: ${JSON.stringify(currentProfile || {})}
+
+EXTRACTION RULES:
+- step "role": Match to ONE of these roles: ${JSON.stringify(VALID_ROLES)}. Pick the closest match. If unclear, use "Other".
+- step "interests": Match to disease areas from: ${JSON.stringify(VALID_DISEASES)}. Extract ALL mentioned topics, even if phrased differently (e.g. "antimicrobial resistance" → "AMR", "heart disease" → "Cardiovascular"). Return as array.
+- step "regions": Match to regions from: ${JSON.stringify(VALID_REGIONS)}. Interpret broadly (e.g. "Europe and Africa" → ["Europe", "Africa"], "worldwide" → ["Global"]). Return as array.
+- step "goal": Extract a brief goal statement (1-2 sentences). If they mention specifics, include them.
+- step "preferences": Extract collaborationMode (OBSERVE/CONTRIBUTE/LEAD) and assistantActivityLevel (QUIET/BALANCED/ACTIVE). Default to CONTRIBUTE and BALANCED if not specified.
+
+Also write a brief, warm, professional acknowledgement (1-2 sentences, no emojis) that naturally transitions to the next topic. Do NOT ask the next question — just acknowledge.
+
+Return ONLY valid JSON:
+{
+  "extracted": { ... only the fields relevant to this step ... },
+  "response": "your acknowledgement text"
+}`,
+        },
+        { role: "user", content: message },
+      ],
+      temperature: 0.4,
+      max_tokens: 300,
+      response_format: { type: "json_object" },
+    });
+
+    try {
+      const raw = completion.choices[0]?.message?.content || "{}";
+      const parsed = JSON.parse(raw);
+      const merged = { ...(currentProfile || {}), ...(parsed.extracted || {}) };
+      res.json({
+        profile: merged,
+        response: parsed.response || "Understood. Let's continue.",
+      });
+    } catch {
+      res.json({
+        profile: currentProfile || {},
+        response: "Thank you. Let's continue.",
+      });
+    }
+  });
+
   // ─── Tables ───────────────────────────────────────────────────────────────
 
   app.get("/api/tables", requireActive, async (req, res) => {

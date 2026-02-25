@@ -1,23 +1,16 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Input } from "@/components/ui/input";
-import { Bot, ChevronRight, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Bot, Send, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const HEALTH_ROLES = [
-  "Patient Advocate",
-  "Public Health Professional",
-  "Policymaker / Advisor",
-  "Clinical Researcher",
-  "Industry Medical Team",
-  "Health NGO / Foundation",
-  "Academic / Educator",
-  "Journalist / Communications",
-  "Other",
+  "Patient Advocate", "Public Health Professional", "Policymaker / Advisor",
+  "Clinical Researcher", "Industry Medical Team", "Health NGO / Foundation",
+  "Academic / Educator", "Journalist / Communications", "Other",
 ];
 
 const DISEASE_AREAS = [
@@ -31,6 +24,13 @@ const REGIONS = [
   "Africa", "Latin America", "Middle East", "South Asia",
 ];
 
+interface ChatMsg {
+  role: "assistant" | "user";
+  content: string;
+  chips?: string[];
+  chipType?: "single" | "multi";
+}
+
 interface TableSuggestion {
   tableId: string;
   title: string;
@@ -39,115 +39,247 @@ interface TableSuggestion {
   reason: string;
 }
 
+const STEPS = ["role", "interests", "regions", "goal", "preferences"] as const;
+type Step = typeof STEPS[number];
+
+const STEP_QUESTIONS: Record<Step, string> = {
+  role: "What role do you play in health? You can pick from the options below or simply describe what you do.",
+  interests: "Which disease areas or health topics matter most to your work? Select as many as apply, or describe them in your own words.",
+  regions: "Which regions are most relevant to you? Pick from the list or tell me.",
+  goal: "Are you working on anything specific right now? A brief note helps me surface relevant tables and moments for you.",
+  preferences: "Last question — how would you like to work in TRYBE? Pick your preferred collaboration style and how active you'd like me to be, or just tell me in your own words.",
+};
+
+const STEP_CHIPS: Record<Step, string[]> = {
+  role: HEALTH_ROLES,
+  interests: DISEASE_AREAS,
+  regions: REGIONS,
+  goal: [],
+  preferences: ["Active + Lead", "Balanced + Contribute", "Quiet + Observe"],
+};
+
+const STEP_CHIP_TYPE: Record<Step, "single" | "multi"> = {
+  role: "single",
+  interests: "multi",
+  regions: "multi",
+  goal: "single",
+  preferences: "single",
+};
+
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { refetch, user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [tableSuggestions, setTableSuggestions] = useState<TableSuggestion[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [profile, setProfile] = useState({
-    healthRole: "",
-    interests: [] as string[],
-    regions: [] as string[],
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [inputValue, setInputValue] = useState("");
+  const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [profile, setProfile] = useState<Record<string, any>>({
     collaborationMode: "CONTRIBUTE",
     assistantActivityLevel: "BALANCED",
     introPreference: "SUGGEST_ONLY",
-    currentGoal: "",
   });
+  const [done, setDone] = useState(false);
+  const [tableSuggestions, setTableSuggestions] = useState<TableSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
-  const toggleItem = (arr: string[], item: string) =>
-    arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item];
+  const currentStep = STEPS[stepIndex] as Step | undefined;
 
-  const TOTAL_STEPS = 5;
+  useEffect(() => {
+    const firstName = user?.name?.split(" ")[0] || "";
+    const welcome = `Welcome to TRYBE${firstName ? `, ${firstName}` : ""}. I'm here to support your work across the platform. To personalise your experience, I'd like to ask you a few questions. You're in control — answer in your own words or use the quick options below.`;
+    setMessages([
+      { role: "assistant", content: welcome },
+      { role: "assistant", content: STEP_QUESTIONS.role, chips: STEP_CHIPS.role, chipType: "single" },
+    ]);
+  }, [user?.name]);
 
-  const assistantMessages = [
-    `Welcome to TRYBE, ${user?.name?.split(" ")[0] || ""}. I'm here to support your work across the platform. To get started, tell me a bit about yourself — I'll use this to personalise your experience. You stay in control at every step.`,
-    "Which disease areas or health topics matter most to your work?",
-    "Which regions are most relevant to you?",
-    "Are you working on anything specific right now? This helps me surface relevant tables and moments.",
-    "Finally — how active would you like me to be? You can change this at any time.",
-  ];
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, processing]);
 
-  const questions = [
-    "What role do you play in health?",
-    "Which disease areas matter most to you?",
-    "Which regions are most relevant to you?",
-    "Are you working on anything specific right now?",
-    "How would you like to work in TRYBE?",
-  ];
+  const addMessages = (...msgs: ChatMsg[]) => {
+    setMessages(prev => [...prev, ...msgs]);
+  };
 
-  const handleSaveAndSuggest = async () => {
-    setLoading(true);
+  const advanceToStep = (nextIdx: number) => {
+    if (nextIdx >= STEPS.length) {
+      finishOnboarding();
+      return;
+    }
+    const step = STEPS[nextIdx] as Step;
+    setStepIndex(nextIdx);
+    setSelectedChips([]);
+    setInputValue("");
+    setTimeout(() => {
+      addMessages({
+        role: "assistant",
+        content: STEP_QUESTIONS[step],
+        chips: STEP_CHIPS[step].length > 0 ? STEP_CHIPS[step] : undefined,
+        chipType: STEP_CHIP_TYPE[step],
+      });
+    }, 400);
+  };
+
+  const processUserMessage = async (userText: string) => {
+    if (!currentStep) return;
+    addMessages({ role: "user", content: userText });
+    setProcessing(true);
+
+    try {
+      const res = await apiRequest("POST", "/api/onboarding/process", {
+        message: userText,
+        currentStep,
+        currentProfile: profile,
+      });
+      const data = await res.json();
+      const updatedProfile = data.profile || profile;
+      setProfile(updatedProfile);
+
+      if (data.response) {
+        addMessages({ role: "assistant", content: data.response });
+      }
+
+      await new Promise(r => setTimeout(r, 600));
+      advanceToStep(stepIndex + 1);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+      advanceToStep(stepIndex + 1);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleChipClick = (chip: string) => {
+    if (!currentStep) return;
+    const chipType = STEP_CHIP_TYPE[currentStep];
+
+    if (chipType === "multi") {
+      setSelectedChips(prev =>
+        prev.includes(chip) ? prev.filter(c => c !== chip) : [...prev, chip]
+      );
+    } else {
+      processUserMessage(chip);
+    }
+  };
+
+  const handleSendMultiChips = () => {
+    if (selectedChips.length > 0) {
+      processUserMessage(selectedChips.join(", "));
+    }
+  };
+
+  const handleSend = () => {
+    const text = inputValue.trim();
+    if (!text) return;
+    setInputValue("");
+    processUserMessage(text);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const finishOnboarding = async () => {
+    setDone(true);
     setSuggestionsLoading(true);
+    addMessages({ role: "assistant", content: "Thank you. I'm setting up your workspace and finding tables that match your profile..." });
+
     try {
       await apiRequest("PUT", "/api/profile", { ...profile, onboardingComplete: true });
       await refetch();
       const res = await apiRequest("POST", "/api/assistant/suggest-tables", { profile });
       const data = await res.json();
       setTableSuggestions(data.suggestions || []);
-      setStep(TOTAL_STEPS);
+
+      const firstName = user?.name?.split(" ")[0] || "";
+      const suggCount = data.suggestions?.length || 0;
+      const finalMsg = suggCount > 0
+        ? `Your workspace is ready, ${firstName}. Based on your profile, I've found ${suggCount} table${suggCount > 1 ? "s" : ""} that align well with your work. You can view them below or explore all tables from the dashboard.`
+        : `Your workspace is ready, ${firstName}. You can explore all collaboration tables from the dashboard.`;
+      addMessages({ role: "assistant", content: finalMsg });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      addMessages({ role: "assistant", content: "Your workspace is set up. You can explore tables from the dashboard." });
     } finally {
-      setLoading(false);
       setSuggestionsLoading(false);
     }
   };
 
-  const handleNext = () => {
-    if (step < TOTAL_STEPS - 1) {
-      setStep(s => s + 1);
-    } else {
-      handleSaveAndSuggest();
-    }
-  };
+  const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
+  const showChips = lastAssistantMsg?.chips && !processing && !done;
+  const isMultiChip = lastAssistantMsg?.chipType === "multi";
 
-  const canProceed = () => {
-    if (step === 0) return !!profile.healthRole;
-    if (step === 1) return profile.interests.length > 0;
-    if (step === 2) return profile.regions.length > 0;
-    return true;
-  };
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="border-b border-border bg-card px-6 py-3 flex items-center gap-3 flex-shrink-0">
+        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+          <Bot className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">TRYBE Assistant</p>
+          <p className="text-xs text-muted-foreground">Setting up your workspace</p>
+        </div>
+      </div>
 
-  if (step === TOTAL_STEPS) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="max-w-lg w-full">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Bot className="h-5 w-5 text-primary" />
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full">
+        <div className="space-y-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] ${msg.role === "user" ? "order-1" : ""}`}>
+                {msg.role === "assistant" && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Bot className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="bg-muted/60 border border-border rounded-lg rounded-tl-sm px-4 py-2.5 text-sm text-foreground leading-relaxed" data-testid={`msg-assistant-${i}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                )}
+                {msg.role === "user" && (
+                  <div className="bg-primary text-primary-foreground rounded-lg rounded-tr-sm px-4 py-2.5 text-sm leading-relaxed" data-testid={`msg-user-${i}`}>
+                    {msg.content}
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">Your workspace is ready</h1>
-              <p className="text-sm text-muted-foreground">TRYBE Assistant</p>
-            </div>
-          </div>
+          ))}
 
-          <div className="bg-muted/50 rounded-md p-4 mb-6 text-sm text-foreground leading-relaxed">
-            {suggestionsLoading
-              ? "Finding the most relevant collaboration tables for you..."
-              : tableSuggestions.length > 0
-                ? `Based on your profile, here are three tables that align well with your work, ${user?.name?.split(" ")[0] || ""}. You can join or browse them now, or explore all tables from the dashboard.`
-                : `Your workspace is set up, ${user?.name?.split(" ")[0] || ""}. You can explore all collaboration tables from the dashboard.`
-            }
-          </div>
-
-          {suggestionsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          {processing && (
+            <div className="flex justify-start">
+              <div className="flex items-start gap-2">
+                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div className="bg-muted/60 border border-border rounded-lg rounded-tl-sm px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-3 mb-6">
+          )}
+
+          {done && !suggestionsLoading && tableSuggestions.length > 0 && (
+            <div className="space-y-3 ml-9">
               {tableSuggestions.map((table, i) => (
-                <div key={table.tableId} className="border border-border rounded-md p-4 bg-background" data-testid={`card-suggested-table-${i}`}>
+                <div key={table.tableId} className="border border-border rounded-md p-4 bg-card" data-testid={`card-suggested-table-${i}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground">{table.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{table.reason}</p>
-                      {table.tags && table.tags.length > 0 && (
+                      {table.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {table.tags.slice(0, 3).map(tag => (
                             <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
@@ -155,13 +287,7 @@ export default function Onboarding() {
                         </div>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-shrink-0 text-xs"
-                      onClick={() => navigate(`/app/tables/${table.tableId}`)}
-                      data-testid={`button-view-table-${i}`}
-                    >
+                    <Button size="sm" variant="outline" className="flex-shrink-0 text-xs" onClick={() => navigate(`/app/tables/${table.tableId}`)} data-testid={`button-view-table-${i}`}>
                       View <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                   </div>
@@ -170,177 +296,71 @@ export default function Onboarding() {
             </div>
           )}
 
-          <Button
-            className="w-full"
-            onClick={() => navigate("/app")}
-            data-testid="button-go-to-dashboard"
-          >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Go to dashboard
-          </Button>
-          <p className="text-xs text-center text-muted-foreground mt-3">
-            You can update your preferences at any time in Settings.
-          </p>
+          {done && !suggestionsLoading && (
+            <div className="ml-9 pt-2">
+              <Button className="w-full" onClick={() => navigate("/app")} data-testid="button-go-to-dashboard">
+                <CheckCircle2 className="h-4 w-4 mr-2" />Go to dashboard
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                You can update your preferences at any time in Settings.
+              </p>
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      <div className="max-w-lg w-full">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Bot className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Let's set up your workspace</h1>
-            <p className="text-sm text-muted-foreground">TRYBE Assistant</p>
-          </div>
-        </div>
-
-        <div className="bg-muted/50 rounded-md p-4 mb-6 text-sm text-foreground leading-relaxed">
-          {assistantMessages[step]}
-        </div>
-
-        <div className="mb-6">
-          <h2 className="font-medium text-foreground mb-4">{questions[step]}</h2>
-
-          {step === 0 && (
-            <div className="flex flex-wrap gap-2">
-              {HEALTH_ROLES.map(role => (
-                <button
-                  key={role}
-                  onClick={() => setProfile(p => ({ ...p, healthRole: role }))}
-                  className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${profile.healthRole === role ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                  data-testid={`button-role-${role}`}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="flex flex-wrap gap-2">
-              {DISEASE_AREAS.map(area => (
-                <button
-                  key={area}
-                  onClick={() => setProfile(p => ({ ...p, interests: toggleItem(p.interests, area) }))}
-                  className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${profile.interests.includes(area) ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                  data-testid={`button-disease-${area}`}
-                >
-                  {area}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="flex flex-wrap gap-2">
-              {REGIONS.map(region => (
-                <button
-                  key={region}
-                  onClick={() => setProfile(p => ({ ...p, regions: toggleItem(p.regions, region) }))}
-                  className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${profile.regions.includes(region) ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                  data-testid={`button-region-${region}`}
-                >
-                  {region}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {step === 3 && (
-            <Input
-              value={profile.currentGoal}
-              onChange={e => setProfile(p => ({ ...p, currentGoal: e.target.value }))}
-              placeholder="e.g. coordinating for World Health Day 2026..."
-              className="max-w-md"
-              data-testid="input-goal"
-            />
-          )}
-
-          {step === 4 && (
-            <div className="space-y-3 max-w-md">
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Assistant activity</p>
-                <div className="flex gap-2">
-                  {[["QUIET", "Quiet"], ["BALANCED", "Balanced"], ["ACTIVE", "Active"]].map(([val, label]) => (
+      {!done && (
+        <div className="border-t border-border bg-card px-4 py-3 flex-shrink-0">
+          <div className="max-w-2xl mx-auto">
+            {showChips && (
+              <div className="mb-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {lastAssistantMsg.chips!.map(chip => (
                     <button
-                      key={val}
-                      onClick={() => setProfile(p => ({ ...p, assistantActivityLevel: val }))}
-                      className={`px-3 py-1.5 rounded-md text-sm border flex-1 ${profile.assistantActivityLevel === val ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                      data-testid={`button-activity-${val}`}
+                      key={chip}
+                      onClick={() => handleChipClick(chip)}
+                      className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                        isMultiChip && selectedChips.includes(chip)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:bg-muted"
+                      }`}
+                      disabled={processing}
+                      data-testid={`chip-${chip}`}
                     >
-                      {label}
+                      {chip}
                     </button>
                   ))}
                 </div>
+                {isMultiChip && selectedChips.length > 0 && (
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-muted-foreground">{selectedChips.length} selected</p>
+                    <Button size="sm" onClick={handleSendMultiChips} disabled={processing} data-testid="button-send-chips">
+                      <Send className="h-3 w-3 mr-1" />Confirm
+                    </Button>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Collaboration mode</p>
-                <div className="flex gap-2">
-                  {[["OBSERVE", "Observe"], ["CONTRIBUTE", "Contribute"], ["LEAD", "Lead"]].map(([val, label]) => (
-                    <button
-                      key={val}
-                      onClick={() => setProfile(p => ({ ...p, collaborationMode: val }))}
-                      className={`px-3 py-1.5 rounded-md text-sm border flex-1 ${profile.collaborationMode === val ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                      data-testid={`button-mode-${val}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Introductions</p>
-                <div className="flex gap-2">
-                  {[["SUGGEST_ONLY", "Suggest only"], ["ASK_BEFORE_CONNECT", "Ask first"]].map(([val, label]) => (
-                    <button
-                      key={val}
-                      onClick={() => setProfile(p => ({ ...p, introPreference: val }))}
-                      className={`px-3 py-1.5 rounded-md text-sm border flex-1 ${profile.introPreference === val ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
-                      data-testid={`button-intro-${val}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-1">
-            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-primary" : i < step ? "w-3 bg-primary/40" : "w-3 bg-muted"}`}
+            )}
+            <div className="flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={currentStep === "goal" ? "e.g. coordinating for World Health Day 2026..." : "Type your answer or use the options above..."}
+                className="flex-1 bg-background border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                disabled={processing}
+                data-testid="input-onboarding-message"
               />
-            ))}
+              <Button size="sm" onClick={handleSend} disabled={!inputValue.trim() || processing} data-testid="button-send-onboarding">
+                {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5 text-center">You can type freely — I'll understand natural language.</p>
           </div>
-          <p className="text-xs text-muted-foreground">{step + 1} of {TOTAL_STEPS}</p>
         </div>
-
-        <div className="flex items-center justify-between">
-          {step > 0 ? (
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)} data-testid="button-back">Back</Button>
-          ) : (
-            <div />
-          )}
-          <Button
-            onClick={handleNext}
-            disabled={loading || !canProceed()}
-            data-testid={step === TOTAL_STEPS - 1 ? "button-finish" : "button-next"}
-          >
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {step === TOTAL_STEPS - 1 ? "Find my tables" : "Continue"}
-            {!loading && <ChevronRight className="h-4 w-4 ml-1" />}
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

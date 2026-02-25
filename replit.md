@@ -13,7 +13,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - `shared/schema.ts` — Drizzle schema + Zod types for all tables
 - `server/db.ts` — Database connection
 - `server/storage.ts` — All CRUD operations
-- `server/routes.ts` — All API endpoints (~575 lines)
+- `server/routes.ts` — All API endpoints (includes onboarding NLP at POST /api/onboarding/process)
 - `server/seed.ts` — Seed script (admin user, invites, tables, calendar events)
 - `client/src/App.tsx` — Full routing with auth guards
 - `client/src/contexts/AuthContext.tsx` — Session auth context
@@ -33,7 +33,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - `/privacy`, `/terms`, `/code-of-conduct`, `/ai-transparency` — Policy pages
 
 ### App (authenticated)
-- `/app/onboarding` — Onboarding flow
+- `/app/onboarding` — Conversational NLP-driven onboarding (chat UI with TRYBE Assistant)
 - `/app` — Dashboard
 - `/app/tables` — Browse & join tables
 - `/app/tables/:id` — Table detail + threads
