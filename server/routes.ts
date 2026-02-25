@@ -487,7 +487,7 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
   });
 
   app.post("/api/assistant", requireActive, async (req, res) => {
-    const { message, context } = req.body;
+    const { message, context, history } = req.body;
     const user = await storage.getUserById(req.session.userId!);
     const profile = await storage.getUserProfile(req.session.userId!);
     const allTables = await storage.getAllTables();
@@ -505,63 +505,174 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
       });
     }
 
+    // ── Fetch page-specific context ──────────────────────────────────────────
+    let threadContext = "";
+    let tableContext = "";
+    let calendarContext = "";
+
+    if (context?.threadId) {
+      try {
+        const thread = await storage.getThreadById(context.threadId);
+        const posts = await storage.getPostsByThread(context.threadId);
+        if (thread) {
+          const postLines = posts
+            .filter(p => p.post.moderationStatus === "CLEAN")
+            .slice(-20)
+            .map(p => `[${p.user?.name || "Member"}]: ${p.post.content}`)
+            .join("\n");
+          threadContext = `\nCurrent thread: "${thread.title}"${postLines ? `\nDiscussion so far:\n${postLines}` : " (no posts yet)"}`;
+        }
+      } catch {}
+    }
+
+    if (context?.tableId) {
+      try {
+        const table = await storage.getTableById(context.tableId);
+        const threads = await storage.getThreadsByTable(context.tableId);
+        if (table) {
+          tableContext = `\nCurrent table: "${table.title}"\nPurpose: ${table.purpose}\nActive threads: ${threads.map(t => `"${t.title}"`).join(", ") || "None yet"}`;
+        }
+      } catch {}
+    }
+
+    // Fetch upcoming calendar events (next 90 days)
+    try {
+      const allEvents = await storage.getAllCalendarEvents();
+      const today = new Date().toISOString().slice(0, 10);
+      const cutoff = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+      const upcoming = allEvents
+        .filter(e => e.startDate >= today && e.startDate <= cutoff)
+        .slice(0, 5)
+        .map(e => `- ${e.title} (${e.startDate})${e.organiser ? ` — ${e.organiser}` : ""}${e.tags?.length ? ` [${e.tags.join(", ")}]` : ""}`)
+        .join("\n");
+      if (upcoming) calendarContext = `\nUpcoming health moments (next 90 days):\n${upcoming}`;
+    } catch {}
+
+    // ── Build system prompt ──────────────────────────────────────────────────
     const myTablesSummary = userTables.length > 0
-      ? userTables.map(t => `- ${t.title}`).join("\n")
+      ? userTables.map(t => `- ${t.title} (ID: ${t.id})`).join("\n")
       : "None yet";
-    const availableTablesSummary = availableTables.slice(0, 10).map(t =>
-      `ID: ${t.id} | ${t.title} | Tags: ${(t.tags || []).join(", ")}`
+    const availableTablesSummary = availableTables.slice(0, 12).map(t =>
+      `- ${t.title} (ID: ${t.id}) | Tags: ${(t.tags || []).join(", ")}`
     ).join("\n");
 
-    const systemPrompt = `You are TRYBE Assistant — a calm, professional, neutral AI assistant for a private global health collaboration platform called TRYBE.
+    const systemPrompt = `You are TRYBE Assistant — a calm, professional, neutral AI assistant embedded in TRYBE, a private invite-only global health collaboration platform.
 
-Core principles:
-- Warm but restrained. Plain English. No jargon or hype.
-- Never provide medical advice, never take policy positions, never act autonomously.
-- Always suggest actions for user confirmation — never execute without explicit user click.
-- Capabilities: suggest tables to join, help draft posts or messages, summarise discussions, surface upcoming health moments, adjust preferences.
+TRYBE's philosophy: Human-led. AI-supported. You suggest, the user decides. Never act autonomously.
 
-User context:
+━━━ YOUR IDENTITY & TONE ━━━
+- Warm but restrained. Plain English, no hype or jargon.
+- Professional, like a well-informed colleague — not a chatbot.
+- Concise. 2–4 sentences unless drafting content or summarising.
+- Never use emoji. Never be sycophantic.
+
+━━━ ABSOLUTE LIMITS ━━━
+- Never provide medical advice, clinical guidance, or diagnoses.
+- Never take political or policy positions on behalf of TRYBE.
+- Never act without explicit user confirmation (all actions are suggestions only).
+- Never fabricate table IDs, thread IDs, or content. Use only IDs from the data below.
+- If you do not know something, say so plainly.
+
+━━━ YOUR CAPABILITIES BY CONTEXT ━━━
+
+1. SUGGEST TABLES
+   When the user wants table recommendations, use the "Available tables" list below.
+   Explain in one sentence why each matches their profile. Use SUGGEST_JOIN_TABLE action.
+
+2. SUMMARISE A THREAD
+   When asked to summarise, use the thread discussion content provided below.
+   Write a structured summary: key themes, main points raised, any emerging consensus or open questions.
+   Put the summary in "summaryContent", not just assistantText.
+
+3. DRAFT A POST OR MESSAGE
+   When asked to draft content, write a professional, neutral draft.
+   Do not publish it — put it in "draftContent" so the user can review and edit before using.
+   Keep drafts factual and collaborative in tone.
+
+4. SURFACE CALENDAR MOMENTS
+   Use the upcoming events listed below. Suggest which ones are relevant to the user's focus areas.
+   Suggest relevant tables or discussions that align with the event.
+
+5. ADJUST PREFERENCES
+   If the user asks to change their assistant activity level or collaboration mode, explain
+   they can update this in Settings, and use NAVIGATE to /app/settings.
+
+6. GENERAL SUPPORT
+   Answer questions about how TRYBE works. Help the user understand their workspace.
+   If they seem stuck, suggest a next step.
+
+━━━ USER PROFILE ━━━
 - Name: ${user?.name}
 - Organisation: ${user?.organisation || "Not specified"}
-- Role title: ${user?.roleTitle || "Not specified"}
-- Health role: ${profile?.healthRole || "Not specified"}
+- Role: ${user?.roleTitle || "Not specified"} ${profile?.healthRole ? `(${profile.healthRole})` : ""}
 - Disease interests: ${(profile?.interests || []).join(", ") || "Not specified"}
 - Regions: ${(profile?.regions || []).join(", ") || "Not specified"}
 - Collaboration mode: ${profile?.collaborationMode || "OBSERVE"}
-- Assistant activity level: ${profile?.assistantActivityLevel || "BALANCED"}
+- Assistant activity: ${profile?.assistantActivityLevel || "BALANCED"}
 - Current goal: ${profile?.currentGoal || "Not specified"}
 
-My tables (already a member):
-${myTablesSummary}
+━━━ PLATFORM DATA ━━━
+Tables I belong to:
+${myTablesSummary || "None yet"}
 
-Available tables to suggest joining (not yet a member):
+Available tables to suggest (not yet a member):
 ${availableTablesSummary || "None available"}
+${calendarContext}${threadContext}${tableContext}
 
-Current page: ${context?.page || "Dashboard"}
+━━━ CURRENT CONTEXT ━━━
+Page: ${context?.page || "/app"}${context?.threadId ? ` | Thread ID: ${context.threadId}` : ""}${context?.tableId ? ` | Table ID: ${context.tableId}` : ""}
 
-Respond with JSON exactly:
+━━━ RESPONSE FORMAT ━━━
+Always respond with valid JSON:
 {
-  "assistantText": "Your response here (2-4 sentences, calm and helpful)",
+  "assistantText": "Your main response (2–4 sentences unless summarising/drafting)",
+  "summaryContent": "Full thread/discussion summary here — only include if user asked to summarise",
+  "draftContent": "Full draft post or message here — only include if user asked to draft something",
   "suggestedActions": [
-    {"type": "SUGGEST_JOIN_TABLE", "tableId": "exact-id", "label": "View: Table Name"},
-    {"type": "NAVIGATE", "label": "Label", "url": "/app/path"},
-    {"type": "SUGGEST_SUMMARISE_THREAD", "threadId": "...", "label": "Summarise: Thread Name"}
+    {"type": "SUGGEST_JOIN_TABLE", "tableId": "exact-id-from-list", "label": "View: Table Name"},
+    {"type": "NAVIGATE", "label": "Go to Moments", "url": "/app/moments"},
+    {"type": "NAVIGATE", "label": "Go to Settings", "url": "/app/settings"}
   ]
 }
-Only include suggestedActions that are genuinely useful. Max 3. If suggesting a table, always use its exact ID from the available tables list above.`;
+Rules:
+- suggestedActions: 0–3 items, only genuinely relevant ones. Never fabricate IDs.
+- summaryContent: only when summarising a thread — structured, not just a paragraph.
+- draftContent: only when drafting — ready to use but clearly a draft.
+- Omit any field that is not needed (no empty strings for summaryContent/draftContent).`;
+
+    // Build conversation history for the model
+    const conversationMessages: { role: "user" | "assistant"; content: string }[] = (history || [])
+      .slice(-8)
+      .map((m: { role: string; content: string }) => ({
+        role: m.role === "user" ? "user" : "assistant",
+        content: m.content,
+      }));
+    conversationMessages.push({ role: "user", content: message });
 
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: message },
+          ...conversationMessages,
         ],
         response_format: { type: "json_object" },
-        max_tokens: 500,
+        max_tokens: 800,
       });
       let result: any = { assistantText: "", suggestedActions: [] };
       try { result = JSON.parse(completion.choices[0]?.message?.content || "{}"); } catch {}
+
+      // Second-pass: moderate any draft content produced by the AI
+      if (result.draftContent && openai) {
+        try {
+          const modCheck = await openai.moderations.create({ input: result.draftContent });
+          if (modCheck.results[0]?.flagged) {
+            result.draftContent = undefined;
+            result.assistantText = "I wasn't able to produce a suitable draft for that request. Please rephrase what you'd like me to help with.";
+          }
+        } catch {}
+      }
+
       res.json(result);
     } catch (err: any) {
       console.error("[Assistant]", err?.message);
