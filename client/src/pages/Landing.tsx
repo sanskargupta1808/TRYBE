@@ -25,7 +25,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/30">
+      <section className="relative overflow-hidden bg-background">
         <div className="max-w-4xl mx-auto px-6 py-24 text-center">
           <Badge variant="secondary" className="mb-6">Invite-only Alpha</Badge>
           <h1 className="text-5xl font-semibold tracking-tight text-foreground leading-tight mb-6">

@@ -15,7 +15,14 @@ import {
   Eye, EyeOff, Phone, PhoneOff, PhoneCall, CornerUpLeft, Square, SmilePlus
 } from "lucide-react";
 
-const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "💡"];
+const REACTIONS = [
+  { label: "Agree", value: "agree" },
+  { label: "Thanks", value: "thanks" },
+  { label: "Noted", value: "noted" },
+  { label: "Helpful", value: "helpful" },
+  { label: "Important", value: "important" },
+  { label: "Insightful", value: "insightful" },
+];
 const STUN_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 function formatDuration(s: number) {
@@ -392,7 +399,7 @@ export default function MessageDetail() {
                 {/* Reply-to quote */}
                 {replyToMsg && (
                   <div className={`text-xs border-l-2 border-primary/40 pl-2 mb-1 text-muted-foreground max-w-[70%] truncate ${isMe ? "text-right" : ""}`}>
-                    <span className="font-medium">{replyToMsg.sender?.name}</span>: {replyToMsg.message?.content || "📎 Attachment"}
+                    <span className="font-medium">{replyToMsg.sender?.name}</span>: {replyToMsg.message?.content || "Attachment"}
                   </div>
                 )}
 
@@ -515,15 +522,15 @@ export default function MessageDetail() {
 
                     {/* Quick reaction picker */}
                     {showReactionPicker === msg.id && (
-                      <div className={`absolute ${isMe ? "right-0" : "left-0"} -top-10 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-md z-10`}>
-                        {REACTION_EMOJIS.map(emoji => (
+                      <div className={`absolute ${isMe ? "right-0" : "left-0"} -top-10 flex gap-1 bg-background border border-border rounded-md px-1.5 py-1 shadow-md z-10`}>
+                        {REACTIONS.map(r => (
                           <button
-                            key={emoji}
-                            onClick={() => { reactionMutation.mutate({ messageId: msg.id, emoji }); setShowReactionPicker(null); }}
-                            className="text-base hover:scale-125 transition-transform"
-                            data-testid={`button-emoji-react-${msg.id}-${emoji}`}
+                            key={r.value}
+                            onClick={() => { reactionMutation.mutate({ messageId: msg.id, emoji: r.value }); setShowReactionPicker(null); }}
+                            className="text-xs px-2 py-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            data-testid={`button-react-option-${msg.id}-${r.value}`}
                           >
-                            {emoji}
+                            {r.label}
                           </button>
                         ))}
                       </div>
