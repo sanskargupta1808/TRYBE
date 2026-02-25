@@ -3,7 +3,7 @@ import { Resend } from "resend";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const APP_URL = process.env.APP_URL || `https://${process.env.REPLIT_DOMAINS?.split(",")[0] || "trybe.health"}`;
-const FROM_ADDRESS = process.env.FROM_EMAIL || "TRYBE <noreply@trybe.health>";
+const FROM_ADDRESS = process.env.FROM_EMAIL || "onboarding@resend.dev";
 
 export function emailEnabled(): boolean {
   return !!resend;
@@ -201,10 +201,10 @@ function buildApprovalPendingEmail(name: string): string {
   `.trim();
 }
 
-export async function sendInviteEmail(recipientEmail: string, recipientName: string | undefined, token: string): Promise<boolean> {
+export async function sendInviteEmail(recipientEmail: string, recipientName: string | undefined, token: string): Promise<{ sent: boolean; error?: string }> {
   if (!resend) {
     console.log(`[Email] RESEND_API_KEY not configured. Would have sent invite to ${recipientEmail} with token ${token}`);
-    return false;
+    return { sent: false, error: "Email not configured" };
   }
   try {
     const { error } = await resend.emails.send({
@@ -215,13 +215,13 @@ export async function sendInviteEmail(recipientEmail: string, recipientName: str
     });
     if (error) {
       console.error("[Email] Failed to send invite:", error);
-      return false;
+      return { sent: false, error: (error as any).message || "Send failed" };
     }
     console.log(`[Email] Invite sent to ${recipientEmail}`);
-    return true;
-  } catch (err) {
+    return { sent: true };
+  } catch (err: any) {
     console.error("[Email] Error sending invite:", err);
-    return false;
+    return { sent: false, error: err?.message || "Unknown error" };
   }
 }
 

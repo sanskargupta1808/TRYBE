@@ -487,10 +487,13 @@ Only include suggestedActions that are genuinely relevant. Keep suggestedActions
     const invite = await storage.createInvite({ email, createdByUserId: req.session.userId, expiresAt });
     await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: { email } });
     let emailSent = false;
+    let emailError: string | undefined;
     if (email) {
-      emailSent = await sendInviteEmail(email, recipientName, invite.token);
+      const result = await sendInviteEmail(email, recipientName, invite.token);
+      emailSent = result.sent;
+      emailError = result.error;
     }
-    res.json({ ...invite, emailSent });
+    res.json({ ...invite, emailSent, emailError });
   });
   app.delete("/api/admin/invites/:id", requireAdmin, async (req, res) => {
     const invite = await storage.revokeInvite(req.params.id);
