@@ -1,0 +1,348 @@
+🔶 PUBLIC LANDING PAGE — REWRITE
+Hero
+
+Headline:
+A private space for serious health collaboration
+
+Subheading:
+TRYBE is an invite-only working environment for people across global health.
+No feeds. No noise. Just focused collaboration, supported by intelligent assistance.
+
+Primary CTA:
+Request an invitation
+
+Secondary CTA:
+Learn how it works
+
+Why TRYBE exists
+
+Global health work is often fragmented.
+
+Conversations happen in silos.
+Important milestones pass without coordination.
+The right people don’t always connect at the right time.
+
+TRYBE provides a calm, structured place to bring the right people together around shared priorities.
+
+What makes TRYBE different
+
+There are no public feeds.
+No follower counts.
+No popularity algorithms.
+
+Instead, TRYBE is built around:
+
+Focused collaboration spaces
+
+A 2026 health milestone calendar
+
+Professional moderation
+
+A personal assistant that supports your work
+
+Full user control
+
+You decide what to join.
+You decide who to connect with.
+The system supports you — it doesn’t direct you.
+
+TRYBE Assistant
+
+Every member has access to TRYBE Assistant.
+
+It can:
+
+Suggest relevant collaboration spaces
+
+Highlight upcoming health milestones
+
+Help you draft or refine messages
+
+Summarise discussions
+
+Suggest introductions (with your approval)
+
+It does not:
+
+Act without your consent
+
+Provide medical advice
+
+Take policy positions
+
+Replace your judgement
+
+Human-led. AI-supported.
+
+Who it’s for
+
+TRYBE is designed for people working across global health, including:
+
+Patient advocates
+
+Public health professionals
+
+Policy advisors
+
+Clinical research teams
+
+NGOs
+
+Responsible industry medical teams
+
+Currently invite-only during Alpha.
+
+🔶 REQUEST INVITE PAGE — REWRITE
+
+Headline:
+Request access to TRYBE
+
+TRYBE is currently in private Alpha.
+
+We review each request carefully to maintain a trusted and purposeful environment.
+
+Please share a few details about your role and areas of focus.
+
+Submit button:
+Submit request
+
+Confirmation message:
+Thank you. We’ll review your request and be in touch shortly.
+
+🔶 REGISTRATION PAGE
+
+Headline:
+Welcome to TRYBE
+
+Enter your invitation code to create your account.
+
+Checkbox:
+I agree to the Code of Conduct and AI Transparency policy.
+
+Button:
+Create account
+
+🔶 PENDING APPROVAL PAGE
+
+Headline:
+Your account is being reviewed
+
+TRYBE is curated during Alpha to protect focus and trust.
+
+You’ll receive an email once your access has been approved.
+
+🔶 FIRST LOGIN (Onboarding)
+
+Headline:
+Let’s tailor this to you
+
+TRYBE Assistant will ask a few quick questions so your experience reflects your work.
+
+You can update these at any time.
+
+Assistant intro:
+
+Welcome to TRYBE.
+I’m here to support your work across the platform.
+I’ll make suggestions — but you stay in control.
+
+Questions remain similar, but wording becomes:
+
+What role do you currently hold?
+
+Which health areas are most relevant to you?
+
+Which regions matter most in your work?
+
+Are you currently working on a specific initiative?
+
+How active would you like me to be in suggesting opportunities?
+
+Completion message:
+
+Thank you. I’ll suggest a few relevant spaces and milestones to get started.
+
+Button:
+Go to your workspace
+
+🔶 DASHBOARD — REWRITE (Focus-first model)
+
+Headline:
+Your Current Focus
+
+Subtext:
+This is the collaboration space you’re most active in.
+
+Primary Button:
+Open collaboration space
+
+Secondary:
+Choose a different focus
+
+Below that:
+
+Your Collaboration Spaces
+
+Short description:
+Focused working areas organised by topic or initiative.
+
+Button:
+View all spaces
+
+Upcoming Health Milestones
+
+Short description:
+Key awareness days and policy windows related to your interests.
+
+Button:
+View all milestones
+
+Messages
+
+Short description:
+Private conversations with approved contacts.
+
+Button:
+View all messages
+
+Assistant prompt (small, subtle):
+
+Need guidance?
+Ask TRYBE Assistant
+
+🔶 COLLABORATION SPACE PAGE (formerly “Table”)
+
+Headline:
+Rare Disease Policy – EU 2026
+
+Subheading:
+A focused working space to coordinate discussion and preparation around rare disease policy across EU member states.
+
+Buttons:
+Request access
+Leave space
+Start a discussion
+Request private conversation
+Suggest an improvement
+
+Thread area intro:
+Members collaborate here through structured discussion threads.
+
+Composer placeholder:
+Share your thoughts. Keep contributions professional and relevant to this space.
+
+🔶 MOMENTS PAGE (Rename)
+
+Rename:
+Moments → Health Milestones
+
+Headline:
+Health Milestones (2026)
+
+Subtext:
+A curated calendar of awareness days, congresses, and policy windows.
+
+Event actions:
+Support
+Interested
+Attending
+
+Small note:
+Your responses are visible only to relevant connections.
+
+🔶 MESSAGES PAGE
+
+Headline:
+Private Conversations
+
+Notice:
+All conversations must follow the Code of Conduct and are subject to moderation.
+
+Empty state:
+You don’t have any private conversations yet.
+You can request a conversation from within a collaboration space.
+
+🔶 FEEDBACK PAGE
+
+Headline:
+Help improve TRYBE
+
+Your feedback during Alpha helps us refine clarity, safety, and usefulness.
+
+Confirmation:
+Thank you. We review all feedback carefully.
+
+🔶 SETTINGS PAGE
+
+Sections:
+
+Account
+Assistant preferences
+Privacy
+
+Delete warning:
+Deleting your account removes your data from TRYBE systems, subject to legal requirements.
+
+🔶 CODE OF CONDUCT (Simplified)
+
+Headline:
+Professional conduct standards
+
+TRYBE is a focused collaboration environment for global health.
+
+Please:
+
+Keep discussions respectful and relevant
+
+Avoid harassment or discriminatory language
+
+Avoid profanity
+
+Avoid misinformation
+
+Respect confidentiality
+
+Violations may result in suspension.
+
+🔶 AI TRANSPARENCY (Clearer + Human)
+
+Headline:
+How TRYBE Assistant works
+
+TRYBE Assistant uses artificial intelligence to:
+
+Suggest relevant collaboration spaces
+
+Highlight milestones
+
+Summarise discussions
+
+Help draft messages
+
+It does not:
+
+Provide medical advice
+
+Act on your behalf without approval
+
+Take policy positions
+
+All suggestions remain under your control.
+
+What This Rewrite Improves
+
+Removes abstract language
+
+Explains what “collaboration spaces” are
+
+Reduces metaphor overload
+
+Clarifies user benefit immediately
+
+Simplifies assistant messaging
+
+Removes internal-sounding phrasing
+
+Keeps neutrality intact
+
+Keeps sophistication intact

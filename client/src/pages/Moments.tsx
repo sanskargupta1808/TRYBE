@@ -49,12 +49,12 @@ export default function Moments() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Moments</h1>
-        <p className="text-muted-foreground text-sm mt-1">A curated set of 2026 health milestones. Lightweight, contextual, and purposeful.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Health milestones</h1>
+        <p className="text-muted-foreground text-sm mt-1">A curated calendar of awareness days, congresses, and policy windows.</p>
       </div>
 
       <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-xs text-muted-foreground">
-        Your actions (Support, Interested, Attending) are visible only to your approved connections and relevant tables.
+        Your responses are visible only to relevant connections.
       </div>
 
       {isLoading ? (

@@ -38,7 +38,7 @@ export default function RequestInvite() {
           </div>
           <h1 className="text-2xl font-semibold mb-3">Request received</h1>
           <p className="text-muted-foreground leading-relaxed mb-8">
-            Thank you. We'll review your request and follow up by email. During Alpha, approvals are intentionally limited to protect quality and trust.
+            Thank you. We'll review your request and be in touch shortly.
           </p>
           <Link href="/">
             <Button variant="outline">Return to home</Button>
@@ -59,7 +59,7 @@ export default function RequestInvite() {
         <div className="mb-8">
           <h1 className="text-3xl font-semibold mb-3">Request access to TRYBE</h1>
           <p className="text-muted-foreground leading-relaxed">
-            TRYBE is currently in private Alpha. We review requests carefully to protect a safe and purposeful environment.
+            TRYBE is currently in private Alpha. We review each request carefully to maintain a trusted and purposeful environment. Please share a few details about your role and areas of focus.
           </p>
         </div>
 

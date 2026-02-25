@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -200,12 +200,12 @@ export default function TableDetail() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="font-semibold text-foreground">Threads</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Chronological and moderated for professional relevance</p>
+            <h2 className="font-semibold text-foreground">Discussions</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Members collaborate here through structured discussion threads</p>
           </div>
           {data.isMember && (
             <Button size="sm" variant="outline" onClick={() => setShowNewThread(v => !v)} data-testid="button-start-thread">
-              <Plus className="h-3 w-3 mr-1" />Start a thread
+              <Plus className="h-3 w-3 mr-1" />Start a discussion
             </Button>
           )}
         </div>

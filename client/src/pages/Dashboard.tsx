@@ -89,11 +89,11 @@ export default function Dashboard() {
         <Skeleton className="h-48 rounded-lg mb-8" />
       ) : focusTable ? (
         <section className="mb-10" data-testid="section-focus">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">Your current focus</p>
+          <h2 className="text-sm font-medium text-muted-foreground mb-2">Your current focus</h2>
           <div className="bg-card border border-card-border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground mb-1" data-testid="text-focus-title">{focusTable.title}</h2>
+            <p className="text-xl font-semibold text-foreground mb-1" data-testid="text-focus-title">{focusTable.title}</p>
             {focusTable.purpose && (
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">{focusTable.purpose}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the collaboration space you're most active in.</p>
             )}
             <div className="flex flex-wrap gap-2 mb-5">
               {(focusTable.tags || []).slice(0, 3).map((tag: string) => (
@@ -102,11 +102,11 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <Button onClick={() => navigate(`/app/tables/${focusTable.id}`)} data-testid="button-open-focus">
-                Open table <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                Open collaboration space <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               {myTables.length > 1 && (
                 <Button variant="ghost" size="sm" onClick={() => setShowFocusSelector(true)} data-testid="button-change-focus">
-                  <Repeat2 className="h-3.5 w-3.5 mr-1.5" />Change focus
+                  <Repeat2 className="h-3.5 w-3.5 mr-1.5" />Choose a different focus
                 </Button>
               )}
             </div>
@@ -137,13 +137,13 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Table2 className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">My tables</h3>
+              <h3 className="text-sm font-semibold text-foreground">Your collaboration spaces</h3>
             </div>
           </div>
           {tablesLoading ? (
             <div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-10 rounded" />)}</div>
           ) : myTables.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No tables yet.</p>
+            <p className="text-xs text-muted-foreground">Focused working areas organised by topic or initiative.</p>
           ) : (
             <div className="space-y-1.5">
               {myTables.slice(0, 3).map((t: any) => (
@@ -158,7 +158,7 @@ export default function Dashboard() {
           )}
           {myTables.length > 3 && (
             <Link href="/app/tables">
-              <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-tables">View all tables</p>
+              <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-tables">View all spaces</p>
             </Link>
           )}
         </section>
@@ -167,13 +167,13 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Upcoming moments</h3>
+              <h3 className="text-sm font-semibold text-foreground">Upcoming health milestones</h3>
             </div>
           </div>
           {calLoading ? (
             <div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-10 rounded" />)}</div>
           ) : upcomingEvents.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No upcoming moments.</p>
+            <p className="text-xs text-muted-foreground">Key awareness days and policy windows related to your interests.</p>
           ) : (
             <div className="space-y-1.5">
               {upcomingEvents.map((e: any) => (
@@ -187,7 +187,7 @@ export default function Dashboard() {
             </div>
           )}
           <Link href="/app/moments">
-            <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-moments">View all moments</p>
+            <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-moments">View all milestones</p>
           </Link>
         </section>
 
@@ -201,7 +201,7 @@ export default function Dashboard() {
           {msgsLoading ? (
             <div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-10 rounded" />)}</div>
           ) : recentConvos.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No conversations yet. Start one from within a table.</p>
+            <p className="text-xs text-muted-foreground">Private conversations with approved contacts.</p>
           ) : (
             <div className="space-y-1.5">
               {recentConvos.map((c: any) => (
@@ -225,7 +225,7 @@ export default function Dashboard() {
       </div>
 
       <div className="border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
-        <p className="text-sm text-muted-foreground">Want suggestions tailored to your focus?</p>
+        <p className="text-sm text-muted-foreground">Need guidance?</p>
         <Button variant="ghost" size="sm" onClick={() => {
           const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
           btn?.click();

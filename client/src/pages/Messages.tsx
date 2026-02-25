@@ -61,8 +61,8 @@ export default function Messages() {
     <div className="p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Messages</h1>
-          <p className="text-muted-foreground text-sm mt-1">Private conversations with table members</p>
+          <h1 className="text-2xl font-semibold text-foreground">Private conversations</h1>
+          <p className="text-muted-foreground text-sm mt-1">Conversations with approved contacts</p>
         </div>
         <Button size="sm" onClick={() => setShowNewConv(v => !v)} data-testid="button-new-conversation">
           {showNewConv ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
@@ -71,7 +71,7 @@ export default function Messages() {
       </div>
 
       <div className="bg-muted/30 border border-border rounded-md p-3 mb-6 text-sm text-muted-foreground">
-        You can message people you share a table with. All conversations are subject to the Code of Conduct and safety moderation.
+        All conversations must follow the Code of Conduct and are subject to moderation.
       </div>
 
       {/* New conversation picker */}
@@ -154,7 +154,7 @@ export default function Messages() {
       ) : !conversations || conversations.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-md p-8 text-center">
           <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">No private conversations yet. You can start a chat from within a table.</p>
+          <p className="text-sm text-muted-foreground mb-4">You don't have any private conversations yet. You can request a conversation from within a collaboration space.</p>
           <Link href="/app/tables">
             <Button size="sm" variant="outline" data-testid="button-view-tables-from-messages">View tables</Button>
           </Link>

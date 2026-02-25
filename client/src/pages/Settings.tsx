@@ -65,7 +65,7 @@ export default function Settings() {
     <div className="p-6 max-w-xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-foreground mb-1">Settings</h1>
-        <p className="text-muted-foreground text-sm">Manage your profile and assistant preferences.</p>
+        <p className="text-muted-foreground text-sm">Account, assistant preferences, and privacy.</p>
       </div>
 
       {/* Account info */}
@@ -199,6 +199,18 @@ export default function Settings() {
               Clear assistant memory
             </Button>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Trash2 className="h-4 w-4 text-muted-foreground" />
+          <h2 className="font-semibold text-foreground">Privacy</h2>
+        </div>
+        <div className="bg-card border border-card-border rounded-md p-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Deleting your account removes your data from TRYBE systems, subject to legal requirements.
+          </p>
         </div>
       </section>
     </div>

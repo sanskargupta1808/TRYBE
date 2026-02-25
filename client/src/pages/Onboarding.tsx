@@ -43,11 +43,11 @@ const STEPS = ["role", "interests", "regions", "goal", "preferences"] as const;
 type Step = typeof STEPS[number];
 
 const STEP_QUESTIONS: Record<Step, string> = {
-  role: "What role do you play in health? You can pick from the options below or simply describe what you do.",
-  interests: "Which disease areas or health topics matter most to your work? Select as many as apply, or describe them in your own words.",
-  regions: "Which regions are most relevant to you? Pick from the list or tell me.",
-  goal: "Are you working on anything specific right now? A brief note helps me surface relevant tables and moments for you.",
-  preferences: "Last question — how would you like to work in TRYBE? Pick your preferred collaboration style and how active you'd like me to be, or just tell me in your own words.",
+  role: "What role do you currently hold? You can pick from the options below or simply describe what you do.",
+  interests: "Which health areas are most relevant to you? Select as many as apply, or describe them in your own words.",
+  regions: "Which regions matter most in your work? Pick from the list or tell me.",
+  goal: "Are you currently working on a specific initiative? A brief note helps me surface relevant spaces and milestones for you.",
+  preferences: "Last question — how active would you like me to be in suggesting opportunities? Pick your preferred style or just tell me in your own words.",
 };
 
 const STEP_CHIPS: Record<Step, string[]> = {
@@ -91,7 +91,7 @@ export default function Onboarding() {
 
   useEffect(() => {
     const firstName = user?.name?.split(" ")[0] || "";
-    const welcome = `Welcome to TRYBE${firstName ? `, ${firstName}` : ""}. I'm here to support your work across the platform. To personalise your experience, I'd like to ask you a few questions. You're in control — answer in your own words or use the quick options below.`;
+    const welcome = `Welcome to TRYBE${firstName ? `, ${firstName}` : ""}. I'm here to support your work across the platform. I'll make suggestions — but you stay in control. To tailor your experience, I'd like to ask a few quick questions. You can answer in your own words or use the options below.`;
     setMessages([
       { role: "assistant", content: welcome },
       { role: "assistant", content: STEP_QUESTIONS.role, chips: STEP_CHIPS.role, chipType: "single" },
@@ -192,7 +192,7 @@ export default function Onboarding() {
   const finishOnboarding = async () => {
     setDone(true);
     setSuggestionsLoading(true);
-    addMessages({ role: "assistant", content: "Thank you. I'm setting up your workspace and finding tables that match your profile..." });
+    addMessages({ role: "assistant", content: "Thank you. I'll suggest a few relevant spaces and milestones to get started..." });
 
     try {
       await apiRequest("PUT", "/api/profile", { ...profile, onboardingComplete: true });
@@ -226,7 +226,7 @@ export default function Onboarding() {
         </div>
         <div>
           <p className="text-sm font-semibold text-foreground">TRYBE Assistant</p>
-          <p className="text-xs text-muted-foreground">Setting up your workspace</p>
+          <p className="text-xs text-muted-foreground">Let's tailor this to you</p>
         </div>
       </div>
 
@@ -298,7 +298,7 @@ export default function Onboarding() {
           {done && !suggestionsLoading && (
             <div className="ml-9 pt-2">
               <Button className="w-full" onClick={() => navigate("/app")} data-testid="button-go-to-dashboard">
-                <CheckCircle2 className="h-4 w-4 mr-2" />Go to dashboard
+                <CheckCircle2 className="h-4 w-4 mr-2" />Go to your workspace
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-2">
                 You can update your preferences at any time in Settings.

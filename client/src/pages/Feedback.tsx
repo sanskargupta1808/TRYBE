@@ -41,8 +41,8 @@ export default function Feedback() {
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="h-7 w-7 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold mb-3">Thank you for your feedback</h2>
-        <p className="text-muted-foreground text-sm mb-6">Your input helps us improve TRYBE. All feedback flows directly to the team.</p>
+        <h2 className="text-xl font-semibold mb-3">Thank you</h2>
+        <p className="text-muted-foreground text-sm mb-6">We review all feedback carefully.</p>
         <Button variant="outline" onClick={() => setSubmitted(false)}>Submit more feedback</Button>
       </div>
     );
@@ -51,9 +51,9 @@ export default function Feedback() {
   return (
     <div className="p-6 max-w-xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Help shape TRYBE</h1>
+        <h1 className="text-2xl font-semibold mb-2">Help improve TRYBE</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Alpha is a co-creation phase. Your feedback is taken seriously and reviewed directly by the team.
+          Your feedback during Alpha helps us refine clarity, safety, and usefulness.
         </p>
       </div>
 
