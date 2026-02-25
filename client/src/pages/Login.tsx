@@ -54,10 +54,8 @@ export default function Login() {
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold">T</span>
-          </div>
-          <h1 className="text-2xl font-semibold">Sign in to TRYBE</h1>
+          <img src="/trybe-logo.png" alt="TRYBE" className="h-12 w-auto mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold">Sign in</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

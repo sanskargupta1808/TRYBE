@@ -260,11 +260,10 @@ export default function Onboarding() {
                 <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Bot className="h-3.5 w-3.5 text-primary" />
                 </div>
-                <div className="bg-muted/60 border border-border rounded-lg rounded-tl-sm px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="bg-muted/60 border border-border rounded-lg rounded-tl-sm px-4 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin" />
+                    <span className="text-xs text-muted-foreground">Processing</span>
                   </div>
                 </div>
               </div>

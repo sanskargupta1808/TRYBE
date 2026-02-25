@@ -76,10 +76,8 @@ export default function Register() {
     <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-lg">T</span>
-          </div>
-          <h1 className="text-2xl font-semibold">Welcome to TRYBE</h1>
+          <img src="/trybe-logo.png" alt="TRYBE" className="h-12 w-auto mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold">Create your account</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {isPreFilled
               ? "Your invitation has been recognised. Complete the form to create your account."
