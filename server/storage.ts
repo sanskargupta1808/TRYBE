@@ -286,6 +286,42 @@ export async function getSharedTableMembersForUser(userId: string) {
     .where(and(inArray(schema.users.id, uniqueIds), eq(schema.users.status, "ACTIVE")));
 }
 
+export async function getSharedTableMembersWithContext(userId: string) {
+  const myMemberships = await db.select({ tableId: schema.tableMembers.tableId })
+    .from(schema.tableMembers)
+    .where(eq(schema.tableMembers.userId, userId));
+  const myTableIds = myMemberships.map(m => m.tableId);
+  if (myTableIds.length === 0) return [];
+  const coMemberRows = await db
+    .select({
+      userId: schema.tableMembers.userId,
+      tableId: schema.tableMembers.tableId,
+      tableTitle: schema.tables.title,
+    })
+    .from(schema.tableMembers)
+    .innerJoin(schema.tables, eq(schema.tableMembers.tableId, schema.tables.id))
+    .where(and(
+      inArray(schema.tableMembers.tableId, myTableIds),
+      ne(schema.tableMembers.userId, userId)
+    ));
+  const memberMap = new Map<string, string[]>();
+  for (const row of coMemberRows) {
+    if (!memberMap.has(row.userId)) memberMap.set(row.userId, []);
+    memberMap.get(row.userId)!.push(row.tableTitle);
+  }
+  if (memberMap.size === 0) return [];
+  const uniqueIds = [...memberMap.keys()];
+  const users = await db.select().from(schema.users)
+    .where(and(inArray(schema.users.id, uniqueIds), eq(schema.users.status, "ACTIVE")));
+  return users.map(u => ({
+    id: u.id,
+    name: u.name,
+    organisation: u.organisation,
+    roleTitle: u.roleTitle,
+    sharedTables: memberMap.get(u.id) || [],
+  }));
+}
+
 // Returns whether two users share at least one table
 export async function doUsersShareTable(userAId: string, userBId: string): Promise<boolean> {
   const aMemberships = await db.select({ tableId: schema.tableMembers.tableId })
@@ -413,6 +449,18 @@ export async function getAllModerationItems() {
 export async function resolveModerationItem(id: string) {
   const [updated] = await db.update(schema.moderationQueue).set({ status: "RESOLVED", resolvedAt: new Date() }).where(eq(schema.moderationQueue.id, id)).returning();
   return updated;
+}
+
+// ─── Platform Metrics ─────────────────────────────────────────────────────────
+export async function getPlatformCounts() {
+  const [threadCount] = await db.select({ count: count() }).from(schema.threads);
+  const [postCount] = await db.select({ count: count() }).from(schema.posts);
+  const [memberCount] = await db.select({ count: count() }).from(schema.tableMembers);
+  return {
+    totalThreads: threadCount?.count ?? 0,
+    totalPosts: postCount?.count ?? 0,
+    totalMemberships: memberCount?.count ?? 0,
+  };
 }
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────

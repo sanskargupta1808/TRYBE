@@ -1,0 +1,320 @@
+TRYBE
+Alpha Product Blueprint
+Human-Led. AI-Supported. Deeply Structured. Fully Neutral.
+
+1. Introduction
+TRYBE is a private, invite-only communication and collaboration environment for the global
+health community.
+It is designed to help serious professionals coordinate meaningful work across disease areas,
+regions, institutions, and policy windows.
+TRYBE is not a content-driven social platform.​
+It does not operate on popularity metrics, public feeds, or algorithmic amplification.
+Instead, it provides structured professional visibility within a calm collaboration environment —
+supported by intelligent assistance.
+
+2. Strategic Ambition
+TRYBE aims to become neutral collaboration infrastructure for global health.
+It is not:
+●​ An advocacy platform​
+●​ A campaign engine​
+●​ A policy actor​
+●​ A medical advice system​
+
+It is:
+●​ A coordination layer​
+●​ A structured working environment​
+●​ A visibility system based on alignment rather than attention​
+●​ An AI-supported collaboration companion​
+
+The ambition is to reduce fragmentation and increase alignment without creating noise.
+
+3. Core Philosophy: 50–50 Intelligence
+TRYBE operates on a simple balance:
+Human judgment leads.​
+AI assists.
+The TRYBE Assistant:
+●​ Learns your professional focus​
+●​ Remembers your stated priorities​
+●​ Suggests relevant collaboration spaces​
+●​ Highlights important health calendar moments​
+●​ Offers introductions​
+●​ Drafts messages when asked​
+●​ Summarises discussions​
+●​ Provides contextual nudges​
+
+It does not:
+
+●​ Act autonomously​
+●​ Take policy positions​
+●​ Override user decisions​
+●​ Replace human agency​
+●​ Offer medical advice​
+
+The assistant operates in light-assist mode, but maintains persistent contextual awareness of
+the user’s declared focus and platform activity.
+This preserves depth without introducing heavy or opaque AI infrastructure.
+
+4. Emotional Experience
+TRYBE should feel:
+Kind​
+Safe​
+Professional​
+Calm​
+Intelligent​
+Structured
+Like a well-run working table at a global summit.
+No noise.​
+No public feeds.​
+No engagement scoring.​
+No popularity metrics.
+Visibility is contextual and connection-based, not competitive.
+
+5. User Types (Alpha Focus)
+
+Primary Alpha audience:
+●​ Patient advocacy leaders​
+●​ Public health professionals​
+●​ Policymakers and advisors​
+●​ Clinical research coordinators​
+●​ Responsible industry medical teams​
+●​ Health NGOs​
+
+Invite-only during Alpha to preserve signal quality and trust.
+
+6. User Journey Overview
+6.1 Invitation & Registration
+●​ User receives invitation token.​
+●​ Registers with real name and organisation.​
+●​ Email verification required.​
+●​ Admin approval required before activation.​
+
+This ensures a curated, high-trust environment.
+
+6.2 First Login & Onboarding
+On first login, the user engages with TRYBE Assistant.
+The Assistant asks:
+
+●​ What role do you play in health?​
+●​ Which disease areas matter most to you?​
+●​ Which regions are relevant?​
+●​ Are you currently working on a specific initiative?​
+●​ Would you like proactive collaboration suggestions?​
+
+User sets:
+Assistant Activity Level:
+●​ Quiet​
+●​ Balanced​
+●​ Active​
+
+Collaboration Mode:
+●​ Observe​
+●​ Contribute​
+●​ Lead​
+
+Based on this, TRYBE suggests:
+●​ 3 relevant Collaboration Tables​
+●​ 1 upcoming Calendar milestone​
+●​ 1 suggested discussion​
+
+There is no public feed.
+
+7. Core Product Components
+7.1 Collaboration Tables (Alpha Model)
+Tables are the structural unit of TRYBE.
+Alpha scope:
+●​ Invitation-based membership​
+●​ Clear title​
+●​ Short purpose statement​
+●​ Defined thematic scope​
+●​ Chronological discussion thread​
+●​ Visible participant list​
+●​ Optional private 1:1 chat between members​
+
+No:
+●​ Sub-channels​
+●​ Nested threads​
+●​ Document repositories​
+●​ Task management systems​
+●​ Real-time room chat​
+
+Table creation requires approval in Alpha to preserve intentionality.
+The objective is to validate that small, purpose-driven collaboration spaces increase
+coordination quality and trust.
+
+7.2 Health Calendar Backbone (2026)
+Alpha launches with a manually curated 2026 health calendar including:
+●​ Major awareness days​
+●​ Selected WHO/UN milestones​
+●​ Key congresses​
+●​ Anchor disease events​
+
+Calendar principles:
+●​ Structured dataset​
+●​ No automated scraping​
+●​ Limited, high-signal events only​
+
+Member interactions:
+●​ Support this event​
+●​ Attend​
+●​ Interested​
+
+These actions appear only to approved connections.
+No open content posting attached to events in Alpha.
+Calendar data feeds:
+●​ Assistant suggestions​
+●​ Table formation prompts​
+●​ Contextual alignment signals​
+
+The calendar provides structured awareness without noise.
+
+7.3 TRYBE Assistant (Persistent but Light)
+The Assistant is always accessible via a persistent side panel.
+Capabilities:
+●​ Suggest relevant tables​
+●​ Recommend introductions (user must approve)​
+●​ Draft or refine posts​
+●​ Summarise threads​
+●​ Surface relevant milestones​
+●​ Prompt structured feedback​
+●​ Adjust collaboration preferences​
+
+Memory model (Alpha):
+Stored as structured fields only:
+●​ Role​
+●​ Organisation​
+●​ Disease interests​
+●​ Regions​
+●​ Collaboration mode​
+●​ Activity level​
+●​ Recent goals​
+●​ Profile snapshot summary​
+
+Users can:
+
+●​ View profile snapshot​
+●​ Edit​
+●​ Reset​
+●​ Reduce activity​
+
+No heavy vector memory.​
+No autonomous actions.
+The assistant maintains contextual continuity without opaque depth.
+
+8. Visibility Model
+TRYBE does not use public feeds.
+Visibility is:
+●​ Connection-based​
+●​ Table-based​
+●​ Contextual​
+
+Members see:
+●​ Activity within shared tables​
+●​ Calendar signals from approved connections​
+
+There is:
+●​ No global member directory​
+●​ No cross-platform browsing​
+●​ No algorithmic amplification​
+
+Signal is based on shared purpose.
+
+9. Moderation & Governance
+TRYBE remains neutral infrastructure.
+Members may hold perspectives.​
+The platform does not institutionalise positions.
+Moderation layers:
+●​ AI moderation pre-check​
+●​ Custom keyword filtering​
+●​ Context-based rules​
+●​ Human oversight​
+●​ Table-level moderation responsibility​
+●​ Suspension capability​
+
+Strictly prohibited:
+●​ Harassment​
+●​ Profanity​
+●​ Disinformation​
+●​ Extremist content​
+●​ Irrelevant provocation​
+
+Professional conduct is central to trust.
+
+10. Co-Creation During Alpha
+Alpha is controlled refinement.
+Feedback mechanisms:
+●​ Structured submission form​
+●​ Feedback on tables​
+●​ Feedback on assistant suggestions​
+●​ Safety reporting​
+
+No:
+●​ Public feature debates​
+●​ Voting systems​
+●​ Popularity-based roadmap ranking​
+●​ Real-time AI roadmap promises​
+
+All feedback flows to admin dashboard.
+Alpha validates behaviour and coordination quality, not feature expansion velocity.
+
+11. MVP Expectations (What Alpha Must
+Prove)
+Alpha is not about engagement volume.
+Alpha validates:
+1.​ That connection-based visibility is preferred over public feeds.​
+
+2.​ That invitation-driven tables improve coordination trust.​
+3.​ That contextual AI assistance increases alignment without reducing human agency.​
+4.​ That calendar-driven signals improve timely collaboration.​
+5.​ That neutral infrastructure can scale responsibly.​
+
+Success metrics:
+●​ Activation rate​
+●​ Tables joined per user​
+●​ Meaningful thread participation​
+●​ Assistant usage quality​
+●​ Retention over 7–14 days​
+●​ Moderation incident rate​
+
+12. Lean Architecture Principles
+Alpha prioritises:
+●​ Structured data over unbounded memory​
+●​ Asynchronous discussion​
+●​ Invitation-only growth​
+●​ Human-led moderation​
+●​ Cost-controlled AI usage​
+●​ Single-region deployment​
+
+●​ Minimal infrastructure layers​
+
+No complex AI orchestration.​
+No heavy computational depth.​
+No premature scaling infrastructure.
+Built lean. Designed for responsible scale.
+
+13. Future Expansion (Not Alpha)
+Potential later expansions:
+●​ Multi-tenant enterprise spaces​
+●​ Advanced working-group tools​
+●​ Dynamic calendar integrations​
+●​ AI service separation​
+●​ Deeper search infrastructure​
+●​ Real-time collaboration layers​
+
+None are required for Alpha.
+Alpha validates behavioural alignment before expanding technical complexity.
+
+14. Final Positioning Statement
+TRYBE is a private global health collaboration environment designed for structured coordination
+and intelligent alignment.
+It connects professionals, patient advocates, and organisations through invitation-based tables,
+contextual visibility, and AI-supported assistance.
+
+TRYBE replaces attention-driven feeds with purpose-driven interaction — enabling members to
+move from connection to coordinated action.
+Human-led.​
+AI-supported.​
+Neutral.​
+Secure.​
+Designed for scale.
+
+

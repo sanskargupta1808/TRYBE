@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Table2, MessageSquare, Shield, ChevronRight, BarChart3, ClipboardList, Star } from "lucide-react";
+import { Users, Table2, MessageSquare, Shield, ChevronRight, ClipboardList, Star, TrendingUp, FileText, LayoutList } from "lucide-react";
 
 export default function AdminOverview() {
   const { data: metrics, isLoading } = useQuery<any>({ queryKey: ["/api/admin/metrics"] });
@@ -11,13 +11,20 @@ export default function AdminOverview() {
   const pendingInvites = (inviteRequests || []).filter(r => r.status === "PENDING").length;
   const pendingTables = (tableRequests || []).filter(r => r.status === "PENDING").length;
 
-  const stats = [
+  const primaryStats = [
     { label: "Total users", value: metrics?.totalUsers, icon: Users, link: "/admin/users" },
     { label: "Active members", value: metrics?.activeUsers, icon: Users, link: "/admin/users" },
     { label: "Pending approval", value: metrics?.pendingApproval, icon: Users, link: "/admin/users" },
     { label: "Tables", value: metrics?.totalTables, icon: Table2, link: "/admin/table-requests" },
     { label: "Feedback items", value: metrics?.totalFeedback, icon: Star, link: "/admin/feedback" },
     { label: "Open moderation", value: metrics?.openModerationItems, icon: Shield, link: "/admin/moderation" },
+  ];
+
+  const participationStats = [
+    { label: "Activation rate", value: metrics?.activationRate != null ? `${metrics.activationRate}%` : "—", icon: TrendingUp, note: "registered → active" },
+    { label: "Threads", value: metrics?.totalThreads, icon: LayoutList, note: `avg ${metrics?.avgThreadsPerTable ?? 0} per table` },
+    { label: "Posts", value: metrics?.totalPosts, icon: FileText, note: `avg ${metrics?.avgPostsPerThread ?? 0} per thread` },
+    { label: "Table memberships", value: metrics?.totalMemberships, icon: Users, note: "across all tables" },
   ];
 
   const actions = [
@@ -33,11 +40,10 @@ export default function AdminOverview() {
         <p className="text-muted-foreground text-sm mt-1">TRYBE Alpha — Platform management</p>
       </div>
 
-      {/* Metrics */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Platform metrics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {stats.map(stat => (
+          {primaryStats.map(stat => (
             <Link key={stat.label} href={stat.link}>
               <div className="bg-card border border-card-border rounded-md p-4 hover-elevate" data-testid={`stat-${stat.label}`}>
                 <stat.icon className="h-4 w-4 text-muted-foreground mb-2" />
@@ -49,7 +55,20 @@ export default function AdminOverview() {
         </div>
       </section>
 
-      {/* Actions required */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Participation</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {participationStats.map(stat => (
+            <div key={stat.label} className="bg-card border border-card-border rounded-md p-4" data-testid={`stat-${stat.label}`}>
+              <stat.icon className="h-4 w-4 text-muted-foreground mb-2" />
+              {isLoading ? <Skeleton className="h-7 w-10 mb-1" /> : <p className="text-2xl font-semibold text-foreground">{stat.value ?? 0}</p>}
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              {stat.note && <p className="text-xs text-muted-foreground/70 mt-0.5">{stat.note}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Actions required</h2>
         <div className="space-y-2">

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, User, Bot, RefreshCw } from "lucide-react";
+import { Loader2, User, Bot, RefreshCw, Trash2 } from "lucide-react";
 
 const DISEASE_AREAS = ["Cancer", "Rare Disease", "Diabetes", "Mental Health", "HIV/AIDS", "TB", "AMR", "Cardiovascular", "Respiratory", "NCD Prevention", "Neurology", "Paediatrics"];
 const REGIONS = ["Global", "Europe", "North America", "Asia Pacific", "Africa", "Latin America", "Middle East", "South Asia"];
@@ -27,6 +27,25 @@ export default function Settings() {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => { const res = await apiRequest("PUT", "/api/profile", data); return res.json(); },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/profile"] }); toast({ title: "Settings saved" }); setLocal(null); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const clearMemoryMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/profile", {
+        ...current,
+        profileSnapshot: "",
+        currentGoal: "",
+        interests: [],
+        regions: [],
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/profile"] });
+      setLocal(null);
+      toast({ title: "Assistant memory cleared", description: "TRYBE Assistant will start fresh on your next conversation." });
+    },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
@@ -161,12 +180,23 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 items-center">
             <Button onClick={() => saveMutation.mutate(local || current)} disabled={saveMutation.isPending} data-testid="button-save-settings">
               {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save changes
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setLocal(null); }} data-testid="button-reset-settings">
-              <RefreshCw className="h-3 w-3 mr-1" />Reset
+            <Button variant="ghost" size="sm" onClick={() => { setLocal(null); }} data-testid="button-discard-settings">
+              <RefreshCw className="h-3 w-3 mr-1" />Discard changes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive ml-auto"
+              onClick={() => { if (window.confirm("Clear all assistant memory? This will reset your profile snapshot, interests, regions, and current goal. This cannot be undone.")) clearMemoryMutation.mutate(); }}
+              disabled={clearMemoryMutation.isPending}
+              data-testid="button-clear-memory"
+            >
+              {clearMemoryMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Trash2 className="h-3 w-3 mr-1" />}
+              Clear assistant memory
             </Button>
           </div>
         </div>

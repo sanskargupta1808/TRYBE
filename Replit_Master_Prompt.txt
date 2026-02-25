@@ -1,0 +1,553 @@
+Replit Master Prompt — Build TRYBE Alpha (Invite-only,
+Neutral, AI-assisted)
+You are building a production-quality Alpha web application called TRYBE: a private,
+invite-only collaboration environment for the global health community, supported by TRYBE
+Assistant.
+
+Absolute Product Rules (non-negotiable)
+1.​ Invite-only + Admin approval required before any user can access the app.
+2.​ No public feeds. No follower counts. No global member directory.
+3.​ Member discovery is contextual only: users only see other members within shared
+tables and their approved connections (DM contacts).
+4.​ TRYBE is neutral infrastructure: no institutional policy positions, no advocacy
+messaging by the platform.
+5.​ TRYBE Assistant is suggestion-only: it can propose actions, but must never execute
+actions without an explicit user click/confirmation.
+6.​ Moderation is first-class: moderate posts and DMs. Provide admin moderation queue
++ suspend capability + audit log.
+7.​ Alpha scope discipline:
+○​ Async threads only (no realtime room chat)
+○​ No subchannels, no nested threads, no document repository, no task
+manager
+○​ No monetisation
+8.​ Costs: keep architecture lean; use structured user profile memory, not vector DB.
+
+1) Tech Stack Requirements
+Build in one Replit project with:
+
+Frontend / Backend
+●​
+●​
+●​
+●​
+
+Next.js (App Router) + TypeScript
+TailwindCSS
+shadcn/ui components (clean modern UI)
+Use server actions / route handlers where appropriate.
+
+Database
+
+●​ Postgres (use Neon or Replit Postgres)
+●​ ORM: Prisma (preferred for speed) OR Drizzle (acceptable). Choose Prisma unless
+blocked.
+
+Auth
+●​ Auth.js (NextAuth) with Credentials provider + email verification flow.
+●​ Invite token required at registration.
+●​ Admin approval gate after email verification.
+
+AI
+●​ OpenAI API:
+○​ For TRYBE Assistant chat responses
+○​ For moderation checks (input + output belt-and-braces)
+
+Observability
+●​ Basic server logging
+●​ Store critical actions in an audit_log table.
+●​ (Optional) Sentry placeholders but not required.
+
+2) Environment Variables (create
+.env.example)
+Include these keys and use them:
+●​ DATABASE_URL=
+●​ NEXTAUTH_SECRET=
+●​ OPENAI_API_KEY=
+●​ APP_BASE_URL= (e.g., http://localhost:3000)
+
+3) Database Schema (Prisma)
+Implement these models (adjust as needed but keep concepts):
+
+Users / Auth
+●​ User:
+○​
+○​
+○​
+○​
+○​
+○​
+
+id (uuid)
+name
+email (unique)
+passwordHash
+emailVerifiedAt (nullable)
+status: PENDING_APPROVAL | ACTIVE | SUSPENDED | DELETED
+
+○​ role: USER | MODERATOR | ADMIN
+○​ createdAt, lastLoginAt
+●​ Invite:
+○​ id
+○​ token (unique)
+○​ email (nullable)
+○​ status: UNUSED | USED | EXPIRED | REVOKED
+○​ expiresAt
+○​ createdByUserId (nullable)
+○​ usedByUserId (nullable)
+○​ createdAt
+
+Profile (structured “memory”)
+●​ UserProfile:
+○​ userId (unique)
+○​ organisation
+○​ roleTitle
+○​ regions (string[])
+○​ interests (string[])
+○​ collaborationMode: OBSERVE | CONTRIBUTE | LEAD
+○​ assistantActivityLevel: QUIET | BALANCED | ACTIVE
+○​ introPreference: SUGGEST_ONLY | ASK_BEFORE_CONNECT
+○​ profileSnapshot (text)
+○​ snapshotUpdatedAt
+
+Tables / Threads / Posts
+●​ Table:
+○​ id
+○​ title
+○​ purpose
+○​ tags (string[])
+
+○​ status: ACTIVE | ARCHIVED
+○​ createdByUserId
+○​ requiresApprovalToJoin (bool default true)
+○​ createdAt
+●​ TableMember:
+○​ id
+○​ tableId
+○​ userId
+○​ memberRole: MEMBER | HOST | MODERATOR
+○​ joinedAt
+●​ Thread:
+○​ id
+○​ tableId
+○​ title
+○​ createdByUserId
+○​ status: OPEN | CLOSED
+○​ createdAt
+●​ Post:
+○​ id
+○​ threadId
+○​ userId
+○​ content (text)
+○​ moderationStatus: CLEAN | FLAGGED | HIDDEN | REMOVED
+○​ createdAt
+○​ editedAt (nullable)
+
+DMs
+●​ DMConversation:
+○​ id
+○​ userAId
+○​ userBId
+○​ status: ACTIVE | CLOSED
+○​ createdAt
+●​ DMMessage:
+○​ id
+○​ conversationId
+○​ senderId
+○​ content (text)
+○​ moderationStatus: CLEAN | FLAGGED | HIDDEN | REMOVED
+○​ createdAt
+
+Calendar (“Moments”)
+●​ CalendarEvent:
+○​ id
+○​ title
+○​ startDate
+○​ endDate (nullable)
+○​ organiser (nullable)
+○​ regionScope (nullable)
+○​ tags (string[])
+○​ sourceNote (nullable)
+○​ createdAt
+●​ CalendarSignal:
+○​ id
+○​ userId
+○​ eventId
+○​ signalType: SUPPORT | INTERESTED | ATTENDING
+○​ createdAt
+
+Feedback
+●​ Feedback:
+○​ id
+○​ userId
+○​ contextType: TABLE | THREAD | ASSISTANT | GENERAL
+○​ contextId (nullable)
+○​ category: FEATURE | UX | SAFETY | ASSISTANT | BUG
+○​ rating (nullable int)
+○​ message (text)
+○​ status: NEW | TRIAGED | IN_PROGRESS | DONE
+○​ createdAt
+
+Moderation & Audit
+●​ ModerationQueue:
+○​ id
+○​ contentType: POST | DM_MESSAGE | THREAD | TABLE | PROFILE
+○​ contentId
+○​ reason
+○​ modelScores (json)
+○​ status: OPEN | RESOLVED
+○​ assignedToUserId (nullable)
+
+○​ createdAt
+○​ resolvedAt (nullable)
+●​ AuditLog:
+○​ id
+○​ actorUserId (nullable)
+○​ action (string)
+○​ targetType (string)
+○​ targetId (string)
+○​ metadata (json)
+○​ createdAt
+Run migrations and seed.
+
+4) Seed Data (required)
+On first run / seed script, create:
+
+Admin User
+●​ Email: admin@trybe.local (or configure)
+●​ Password: ChangeMe123! (print to console and instruct to change)
+●​ role: ADMIN, status: ACTIVE, emailVerifiedAt set.
+
+Calendar Events (minimal but real)
+Seed 15–25 key 2026 items (sample is fine for Alpha):
+●​
+●​
+●​
+●​
+●​
+●​
+●​
+●​
+
+World Cancer Day
+Rare Disease Day
+World TB Day
+World Health Day
+World Diabetes Day
+World AIDS Day
+WHO World Health Assembly (approx month)
+UN health-related milestone (generic)​
+Include tags and rough dates (you can use placeholders like 2026-02-04 etc. if exact is
+unknown).
+
+Suggested Tables
+
+Seed 8–12 tables with purpose + tags, e.g.:
+●​
+●​
+●​
+●​
+
+“Rare Disease Policy – EU 2026”
+“Diabetes Awareness Coordination – Asia”
+“Clinical Trials Recruitment – Best Practice”
+“Patient Voice – Shared Decision Making”​
+Make them ACTIVE.
+
+No user is auto-joined except admin.
+
+5) Moderation (must implement)
+Implement moderation for:
+●​
+●​
+●​
+●​
+●​
+
+Post creation
+DM message sending
+Thread creation
+Table creation request text fields
+Feedback text (light check)
+
+Moderation steps
+1.​ Pre-check user input using OpenAI moderation endpoint or a simple policy classifier (use
+OpenAI if key exists, fallback to keyword rules if not).
+2.​ If flagged:
+○​ Show user a calm message: “This may not meet TRYBE’s professional conduct
+standards. Please rephrase.”
+○​ Do not save content, OR save as FLAGGED+HIDDEN depending on severity.
+3.​ Create a ModerationQueue record for borderline content.
+4.​ Admin console lets admins:
+○​ Allow (mark CLEAN)
+○​ Hide (HIDDEN)
+○​ Remove (REMOVED)
+○​ Warn user (store audit)
+○​ Suspend user (status SUSPENDED)
+Also apply a second-pass moderation on assistant outputs (“belt and braces”).
+
+6) TRYBE Assistant (persistent panel)
+Add a persistent right-side panel (collapsible on mobile).
+
+Assistant behaviour (50–50)
+●​ Tone: calm, kind, professional, neutral, non-hype.
+●​ Never medical advice. Never political advocacy. Never autonomous actions.
+●​ It can suggest:
+○​ join table
+○​ request create table
+○​ draft post
+○​ summarise thread
+○​ suggest DM request (only within shared table context)
+○​ show upcoming moments
+○​ adjust preferences
+●​ Must return:
+○​ assistantText (string)
+○​ suggestedActions (array of objects)
+
+Suggested actions format
+Example:
+[
+{"type":"SUGGEST_JOIN_TABLE","tableId":"...","label":"Join ‘Rare Disease Policy – EU
+2026’"},
+{"type":"SUGGEST_CREATE_TABLE","title":"...","purpose":"...","tags":["..."]},
+{"type":"SUGGEST_DM_REQUEST","userId":"...","label":"Request a private chat with …"},
+{"type":"SUGGEST_SUMMARISE_THREAD","threadId":"..."}
+]
+
+User confirmation requirement
+Render suggested actions as buttons. Clicking executes via a backend endpoint that checks
+permissions and logs an audit entry.
+
+Memory model (lean)
+Assistant context should include:
+●​ user_profile structured fields
+●​ last 10 user actions (tables joined, recent posts)
+
+●​ current page context (table/thread)
+●​ profileSnapshot text
+Provide a “What I know about you” panel:
+●​ shows profileSnapshot and key fields
+●​ user can edit profileSnapshot and fields
+●​ user can reset snapshot
+
+7) UX / Pages (must match copy)
+Implement these routes/pages:
+
+Public
+●​ / Landing (invite-only positioning + CTAs)
+●​ /request-invite Request form
+●​ /privacy
+●​ /terms
+●​ /code-of-conduct
+●​ /ai-transparency
+
+Auth
+●​ /register (requires invite token)
+●​ /login
+●​ /verify-email
+●​ /pending-approval
+●​ /forgot-password
+●​ /reset-password
+
+App (authenticated, ACTIVE only)
+●​ /app Dashboard
+●​ /app/tables
+●​ /app/tables/[id] Table detail
+●​ /app/tables/[id]/threads/[threadId] Thread view
+
+●​ /app/tables/request Request new table
+●​ /app/moments Calendar
+●​ /app/messages DM list
+●​ /app/messages/[conversationId] DM thread
+●​ /app/feedback Feedback form
+●​ /app/settings Settings
+
+Admin (ADMIN only)
+●​ /admin Overview
+●​ /admin/users Approve/suspend users
+●​ /admin/table-requests Approve/deny requested tables
+●​ /admin/moderation Moderation queue
+●​ /admin/feedback Feedback list
+●​ /admin/calendar Calendar seed management
+●​ /admin/assistant Assistant defaults + banned terms
+●​ /admin/metrics Basic reporting
+Enforce route guards:
+●​ Not logged in → redirect to /login
+●​ Logged in but not ACTIVE → /pending-approval
+●​ Suspended → suspended screen
+
+8) Full Website Copy (hardcode into UI)
+Use this exact copy (do not invent new marketing language).
+
+Landing /
+Headline: A Calm Space for Global Health Collaboration​
+Subheading:​
+TRYBE is a private, invite-only working environment for professionals across global
+health.​
+Human-led. AI-supported. Fully user-controlled.​
+Primary CTA: Request an invitation​
+Secondary CTA: Learn more
+
+Why TRYBE exists:​
+“Global health work is often fragmented. Conversations happen in silos, key moments pass
+without coordination, and collaboration is harder than it should be. TRYBE provides a calm,
+structured place to connect and move work forward.”
+What makes TRYBE different:​
+No feeds. No follower counts. No public connection graphs.​
+“TRYBE is built for signal, trust, and purposeful coordination.”​
+Bullets:
+●​
+●​
+●​
+●​
+●​
+
+Structured collaboration tables
+TRYBE Assistant
+A 2026 health calendar backbone
+Professional moderation
+Full user control
+
+TRYBE Assistant section:​
+“It can suggest tables, highlight moments, help draft messages, summarise discussions, and
+offer introductions (with your approval).​
+It does not act without consent, provide medical advice, take policy positions, or replace your
+judgment.”
+Footer note:​
+“TRYBE is a neutral collaboration environment. It does not provide medical advice or take
+institutional policy positions.”
+Footer links: Privacy Policy | Terms | Code of Conduct | AI Transparency
+
+Request invite /request-invite
+Headline: Request access to TRYBE​
+Body:​
+“TRYBE is currently in private Alpha. We review requests carefully to protect a safe and
+purposeful environment.”​
+Submit success:​
+“Thank you. We’ll review your request and follow up by email. During Alpha, approvals are
+intentionally limited to protect quality and trust.”
+
+Register /register
+Headline: Welcome to TRYBE​
+Subhead: “Enter your invitation code to begin.”​
+Checkbox: “I agree to the Code of Conduct and AI Transparency policy.”
+
+Pending approval /pending-approval
+Headline: Your account is under review​
+Body:​
+“Thanks for registering. TRYBE is curated during Alpha to protect a safe and meaningful
+environment. You’ll receive an email once your access is approved.”
+
+Onboarding in-app
+Title: Let’s set up your workspace​
+Intro:​
+“TRYBE Assistant will ask a few questions to tailor your experience. You can change any of this
+later.”​
+Assistant first message:​
+“Welcome to TRYBE. I’m here to support your work across the platform. I’ll make suggestions,
+but you stay in control. First, what brings you here?”
+
+Dashboard /app
+Header: Your working environment​
+Suggested helper: “Based on your focus areas and activity, here are a few tables you may find
+useful.”​
+Upcoming moments helper: “A curated set of health milestones relevant to your focus.”​
+Assistant panel: “Would you like to join one of these tables, or start a new one?”
+
+Table page
+Composer helper: “Keep it professional, respectful, and relevant to this table.”​
+Feedback prompt: “How could this table be improved?”
+
+DMs
+Notice: “Private conversations are subject to the Code of Conduct and safety moderation.”
+
+Feedback
+Header: Help shape TRYBE​
+Body: “Alpha is intentionally focused. Your feedback helps improve clarity, safety, and
+usefulness.”​
+Confirmation: “Thank you. We review all feedback and prioritise trust, clarity, and stability.”
+
+Settings
+Privacy warning: “Deleting your account removes your data from TRYBE systems, subject to
+legal retention requirements.”
+
+Code of Conduct
+Headline: Professional conduct standards​
+Copy:​
+“TRYBE is a calm collaboration environment for global health. Please keep contributions
+professional, respectful, and relevant to the table you’re in.​
+We do not allow harassment, hateful content, threats, extremist content, or profanity.
+Disinformation and deliberate provocation are not permitted.”
+
+AI Transparency
+Headline: How AI is used in TRYBE​
+Copy:​
+“TRYBE Assistant uses AI to suggest tables, support drafting, summarise discussions, and help
+you navigate the platform.​
+AI does not provide medical advice, act autonomously, or take policy positions.​
+Where AI suggests an action, you remain in control and must confirm before anything happens.”
+(Keep the rest of in-app microcopy consistent with this tone.)
+
+9) Design System Instructions (implement)
+●​
+●​
+●​
+●​
+●​
+
+Clean white/soft light base, charcoal text, TRYBE orange accent sparingly.
+Subtle shadows, rounded cards, generous spacing.
+Left navigation rail + main content + assistant panel right.
+Mobile: nav collapses; assistant becomes a bottom sheet.
+No gamification, no infinite scroll patterns.
+
+10) Deliverables (must be produced by the
+build)
+
+1.​ Working app with all routes above.
+2.​ Seed script creates admin, calendar events, suggested tables.
+3.​ Admin console fully functional:
+○​ approve users
+○​ approve table requests
+○​ moderation queue actions
+○​ suspend users
+○​ view feedback
+4.​ Assistant panel works across the app with suggestion-only actions.
+5.​ Moderation enforced for posts + DMs.
+6.​ Audit logging for admin actions and assistant action executions.
+
+11) Testing / Acceptance Criteria
+●​
+●​
+●​
+●​
+●​
+●​
+●​
+●​
+●​
+
+A user without invite cannot register.
+A user with invite can register, must verify email, then is pending until admin approval.
+After approval, user can onboard, join suggested tables, create threads, post.
+Posts/DMs that violate policy are blocked or flagged and appear in moderation queue.
+Assistant suggests actions but never executes without user confirmation.
+No global member directory exists anywhere.
+Profiles only visible within tables.
+Calendar “Moments” actions are lightweight and only visible to approved connections.
+Admin can suspend a user; suspended user loses access immediately.
+
+12) Implementation Notes
+●​
+●​
+●​
+●​
+
+Keep everything in one repo for Alpha.
+Prefer server-side checks for permissions (never trust client).
+Rate limit assistant endpoint and posting endpoints.
+Keep assistant prompts short and structured. Store minimal chat history.
+
+Now build the application accordingly. Ensure it runs in Replit with a single npm run dev
+command and provide a clear README for setup, env vars, seeding, and admin login.
+
+

@@ -1,0 +1,547 @@
+1) Brand guidelines and design theme
+Brand essence
+●​ Purpose: Calm, safe, neutral collaboration infrastructure for global health.​
+●​ Personality: Kind, professional, quietly confident, never hype.​
+●​ Promise: “Human-led. AI-supported. Fully user-controlled.”​
+
+Tone of voice
+●​ Warm but restrained.​
+●​ Direct, plain English.​
+●​ No “disruption” language. No jargon unless needed.​
+●​ Neutral posture: TRYBE doesn’t advocate; members can discuss.​
+
+Visual direction
+●​ Overall feel: “A well-run working table at a global summit.”​
+●​ Layout: Clean, spacious, strong hierarchy, low cognitive load.​
+●​ Motion: Subtle (hover elevation, gentle fades), never gamified.​
+●​ Trust cues: Clear policies, visible moderation standards, transparent AI.​
+
+Color (recommended)
+●​ Base: Soft light background (near-white), charcoal text.​
+●​ Accent: TRYBE orange used sparingly for primary actions and highlights.​
+●​ Secondary accent: Deep blue (links, secondary actions) to convey trust.​
+●​ Avoid: Neon gradients, high-saturation UI, attention-hijacking reds.​
+
+Typography
+●​ Sans serif, modern: e.g., Inter / system font stack.​
+●​ Hierarchy: Big headline, calm subhead, readable body (16–18px).​
+●​ Spacing: Generous line height; aim for “breathing room.”​
+
+Components
+●​ Cards with soft shadows, rounded corners.​
+●​ Tags/pills for disease/region themes.​
+●​ Left navigation rail + main content area + optional right assistant panel.​
+●​ Empty states that guide purposefully (not “nothing here”).​
+
+UX rules that matter
+●​ No public follower counts or public profiles.​
+●​ No global member directory.​
+●​ Discovery is contextual (via tables + assistant suggestions).​
+●​ All “AI actions” are suggest → user confirm.​
+
+2) Full website copy pack
+2.1 Public pages
+A) Public landing page (Invite-only)
+Hero headline:​
+A Calm Space for Global Health Collaboration
+
+Subheading:​
+TRYBE is a private, invite-only working environment for professionals across global health.​
+Human-led. AI-supported. Fully user-controlled.
+Primary CTA: Request an invitation​
+Secondary CTA: Learn more
+Section: Why TRYBE exists​
+Global health work is often fragmented. Conversations happen in silos, key moments pass
+without coordination, and collaboration is harder than it should be. TRYBE provides a calm,
+structured place to connect and move work forward.
+Section: What makes TRYBE different​
+No feeds. No follower counts. No public connection graphs.​
+TRYBE is built for signal, trust, and purposeful coordination.
+●​ Structured collaboration tables​
+●​ A personal assistant (TRYBE Assistant)​
+●​ A 2026 health calendar backbone​
+●​ Professional moderation​
+●​ Full user control​
+
+Section: TRYBE Assistant​
+TRYBE Assistant supports your work across the platform.
+It can:
+●​ Suggest relevant tables​
+●​ Highlight upcoming health moments​
+●​ Help draft messages​
+●​ Summarise discussions​
+●​ Offer introductions (with your approval)​
+
+It does not:
+
+●​ Act without your consent​
+●​ Provide medical advice​
+●​ Take policy positions​
+●​ Replace your judgment​
+
+Section: Who it’s for​
+TRYBE is designed for:​
+Patient advocates • Public health professionals • Policymakers • Clinical research teams •
+Health NGOs • Responsible industry medical teams
+Footer note:​
+TRYBE is a neutral collaboration environment. It does not provide medical advice or take
+institutional policy positions.
+Footer links: Privacy Policy | Terms | Code of Conduct | AI Transparency
+
+B) Request an invitation page
+Headline: Request access to TRYBE​
+Body:​
+TRYBE is currently in private Alpha. We review requests carefully to protect a safe and
+purposeful environment.
+Form labels:
+●​ Full name​
+●​ Organisation​
+●​ Role​
+●​ Email​
+●​ Primary areas of focus (disease areas, regions, themes)​
+●​ Optional: Why would TRYBE be useful to you?​
+
+Submit button: Submit request​
+Confirmation message:​
+
+Thank you. We’ll review your request and follow up by email. During Alpha, approvals are
+intentionally limited to protect quality and trust.
+
+C) Terms / Privacy / Code of Conduct / AI Transparency (public pages)
+Code of Conduct (headline): Professional conduct standards​
+Copy:​
+TRYBE is a calm collaboration environment for global health. Please keep contributions
+professional, respectful, and relevant to the table you’re in.​
+We do not allow harassment, hateful content, threats, extremist content, or profanity.
+Disinformation and deliberate provocation are not permitted.
+AI Transparency (headline): How AI is used in TRYBE​
+Copy:​
+TRYBE Assistant uses AI to suggest tables, support drafting, summarise discussions, and help
+you navigate the platform.​
+AI does not provide medical advice, act autonomously, or take policy positions.​
+Where AI suggests an action, you remain in control and must confirm before anything happens.
+
+2.2 Auth and access pages
+D) Register (invite token)
+Headline: Welcome to TRYBE​
+Subhead: Enter your invitation code to begin.
+Fields: Invite Code • Email • Password • Confirm password​
+Checkbox: “I agree to the Code of Conduct and AI Transparency policy.”​
+Button: Create account
+Error microcopy:
+●​ “That invitation code isn’t valid, or it has expired.”​
+●​ “Please use a work email if possible.”​
+●​ “Password must be at least 12 characters.”​
+
+E) Verify email
+
+Headline: Verify your email​
+Body:​
+We’ve sent a verification link to your email. Please verify to continue.
+Button: Resend verification email​
+Link: Change email address
+
+F) Pending approval
+Headline: Your account is under review​
+Body:​
+Thanks for registering. TRYBE is curated during Alpha to protect a safe and meaningful
+environment. You’ll receive an email once your access is approved.
+
+G) Login
+Headline: Sign in to TRYBE​
+Fields: Email • Password​
+Link: Forgot password​
+Button: Sign in
+
+H) Forgot password
+Headline: Reset your password​
+Body: Enter your email and we’ll send you a reset link.​
+Button: Send reset link
+
+2.3 In-app pages (after approval)
+I) First-run onboarding (guided by TRYBE Assistant)
+Page title: Let’s set up your workspace​
+Intro:​
+TRYBE Assistant will ask a few questions to tailor your experience. You can change any of this
+later.
+Assistant script (initial):
+
+Welcome to TRYBE. I’m here to support your work across the platform.​
+I’ll make suggestions, but you stay in control.​
+First, what brings you here?
+Prompts (in chat form):
+●​ “What role do you play in health?”​
+●​ “Which disease areas matter most to you?”​
+●​ “Which regions are most relevant?”​
+●​ “Are you working on anything specific right now?”​
+●​ “How active would you like me to be?”​
+
+Controls (UI):
+●​ Assistant activity: Quiet / Balanced / Active​
+●​ Collaboration mode: Observe / Contribute / Lead​
+●​ Introductions: Suggest only / Ask before connecting​
+
+Completion message:
+Thank you. I’ll suggest a few tables and upcoming moments that match your focus.
+Button: Go to dashboard
+
+J) Dashboard (Home)
+Header: Your working environment
+Left nav items:
+●​ Home​
+●​ My Tables​
+●​ Suggested Tables​
+
+●​ Moments (2026 calendar)​
+●​ Messages​
+●​ Feedback​
+●​ Settings​
+
+Main sections:
+Suggested for you​
+Short helper text:​
+Based on your focus areas and activity, here are a few tables you may find useful.
+CTA buttons: Join • Preview • Ask TRYBE Assistant
+My tables​
+Helper text:​
+Your active collaboration spaces.
+Upcoming moments​
+Helper text:​
+A curated set of health milestones relevant to your focus.
+Right panel (TRYBE Assistant):
+Would you like to join one of these tables, or start a new one?
+Quick actions:
+●​ Suggest tables​
+●​ Draft a message​
+●​ Summarise my recent activity​
+●​ Adjust my preferences​
+
+K) Tables index
+
+Header: Tables​
+Filter chips: Disease • Region • Theme • Event window​
+Search placeholder: “Search tables you can access…”
+Empty state (no tables yet):​
+You’re not in any tables yet. Join a suggested table, or ask TRYBE Assistant to recommend
+one.
+Button: Ask TRYBE Assistant
+
+L) Table detail page
+Title: [Table name]​
+Purpose: [Short purpose statement]
+Buttons:
+●​ Request to join (if not a member)​
+●​ Leave table (if member)​
+●​ Start a thread​
+●​ Request private chat​
+●​ Suggest improvement​
+
+Section: Threads​
+Helper text:​
+Threads are chronological and moderated for professional relevance.
+Empty state:​
+No threads yet. Start the first discussion to set direction for this table.
+
+M) Create table (Alpha: request workflow)
+Header: Request a new table​
+Body:​
+Tables are intentionally curated during Alpha to protect focus and trust. Tell us what you want to
+create.
+
+Fields:
+●​ Table title​
+●​ Purpose statement (max 240 chars)​
+●​ Scope tags (disease, region, theme)​
+●​ Why is this needed now?​
+Button: Submit request​
+
+Confirmation:​
+Thanks. We’ll review this request shortly. If approved, you’ll be invited as the table host.
+
+N) Thread page
+Title: [Thread title]​
+Button: Summarise discussion (Assistant)​
+Button: Help me draft (Assistant)
+Composer placeholder:​
+Write your contribution here. Keep it professional, respectful, and relevant to this table.
+If blocked by moderation:​
+This message may not meet TRYBE’s professional conduct standards. Please rephrase and try
+again.
+
+O) Messages (DMs)
+Header: Messages​
+Notice:​
+Private conversations are subject to the Code of Conduct and safety moderation.
+Buttons: New message (if allowed) / Request introduction (preferred)
+Empty state:​
+No private conversations yet. You can request a conversation from within a table.
+
+P) TRYBE Assistant (persistent panel copy)
+
+Panel title: TRYBE Assistant​
+Greeting variants:
+●​ “How can I support your work today?”​
+●​ “What are you working on right now?”​
+●​ “Want suggestions for where to focus this week?”​
+
+Quick buttons:
+●​ Suggest tables​
+●​ Show upcoming moments​
+●​ Draft a post​
+●​ Summarise a table​
+●​ Update my preferences​
+
+Profile snapshot card title: “What I know about you”​
+Helper text:​
+This is used to tailor suggestions. You can edit or reset at any time.
+Buttons: Edit • Reset • Reduce activity
+Consent microcopy (when suggesting actions):​
+I can suggest an action, but I won’t do anything without your approval.
+
+Q) Moments (Calendar)
+Header: Moments​
+Helper text:​
+A curated set of 2026 health milestones. Keep it lightweight, contextual, and purposeful.
+Event card actions: Support • Interested • Attending​
+Disclaimer line:​
+These actions are visible only to your approved connections and relevant tables.
+
+Empty state:​
+No moments match your current focus. Update your interests or ask TRYBE Assistant to
+suggest relevant moments.
+
+R) Feedback page
+Header: Help shape TRYBE​
+Body:​
+Alpha is intentionally focused. Your feedback helps improve clarity, safety, and usefulness.
+Category dropdown: Feature • UX • Safety • Assistant • Bug​
+Message placeholder: “What should we improve, and why?”​
+Button: Submit feedback
+Confirmation:​
+Thank you. We review all feedback and prioritise trust, clarity, and stability.
+
+S) Settings page
+Sections and microcopy:
+Account
+●​ Name​
+●​ Organisation​
+●​ Role​
+●​ Change password​
+
+Assistant preferences
+●​ Activity level: Quiet / Balanced / Active​
+●​ Introductions: Suggest only / Ask before connecting​
+●​ Collaboration mode: Observe / Contribute / Lead​
+Button: Save changes​
+
+Privacy
+●​ Download my data​
+●​ Delete my account​
+Warning: Deleting your account removes your data from TRYBE systems, subject to
+legal retention requirements.​
+
+T) Admin console (internal)
+Admin nav:​
+Users • Table Requests • Moderation • Feedback • Calendar • Assistant Settings • Metrics
+Empty states and labels should be plain and operational (no marketing tone).
+
+3) CTO-ready technical environment and architecture
+guidance (WebLit/Vibe coding)
+3.1 North Star architecture
+You’re building a single product with three “planes”:
+1.​ Collaboration plane: tables, threads, membership, DMs​
+2.​ Intelligence plane: TRYBE Assistant suggestions + summaries + drafting​
+3.​ Governance plane: invites, approvals, moderation, audit logs, admin controls​
+
+Alpha success depends on governance and safety as much as features.
+
+3.2 Recommended deployment model for Alpha
+Keep it boring and strong.
+●​ One web app (frontend + backend in one repo)​
+
+●​ One Postgres database​
+●​ One object storage (only if you add uploads; otherwise skip)​
+●​ One AI provider (OpenAI) + moderation​
+●​ One logging/monitoring tool (Sentry)​
+
+This is the lowest-cost, highest-speed path that can still scale later.
+
+3.3 “WebLit” / Vibe coding execution approach
+Your AI engineer will likely iterate fast with a scaffolding tool. The guardrails that prevent rework:
+Hard constraints to bake in from day 1
+●​ Invite-only + approval gating​
+●​ No public member directory​
+●​ No global search for people​
+●​ No public feeds​
+●​ All AI actions require explicit user confirmation​
+●​ Moderation is enforced on posts and DMs​
+●​ Audit logs exist for admin actions​
+
+If these are added later, you’ll refactor core flows.
+
+3.4 Stack blueprint (state-of-the-art but pragmatic)
+Frontend
+●​ Next.js (App Router) + TypeScript​
+
+●​ TailwindCSS​
+●​ Component library: shadcn/ui (fast, clean, consistent)​
+
+Backend
+●​ Next.js route handlers (or a small Node API service if preferred)​
+●​ Validation: Zod​
+●​ Auth: Auth.js (NextAuth) with Postgres adapter (or Clerk if speed > cost)​
+
+Database
+●​ Postgres (Neon recommended)​
+●​ ORM: Drizzle (lean) or Prisma (faster dev ergonomics)​
+
+AI
+●​ OpenAI for:​
+○​ Assistant responses​
+○​ Moderation checks​
+○​ Summarisation (scheduled / on-demand)​
+●​ Store only:​
+○​ Structured user profile snapshot​
+○​ Limited assistant conversation records (or none—keep minimal)​
+
+Queues / background jobs
+●​ Alpha: cron-like scheduled job runner inside app (or platform scheduler)​
+●​ Scale: Upstash Redis + BullMQ (optional later)​
+
+Observability
+
+●​ Sentry (errors)​
+●​ Basic metrics dashboard (admin page + DB queries)​
+●​ Audit log table (non-negotiable)​
+
+3.5 Data model principles (the things that matter)
+Users
+●​ pending | active | suspended | deleted​
+●​ Roles: user | moderator | admin​
+●​ Email verified flag​
+
+Invites
+●​ Token-based invites with expiry​
+●​ Invite ties to optional email​
+
+Tables
+●​ Controlled creation (request + approve in Alpha)​
+●​ Membership list visible within table​
+●​ Threaded posts chronological (keep it simple)​
+
+Messages (DMs)
+●​ 1:1 only in Alpha​
+●​ Initiated from table context or assistant suggestion​
+
+Calendar (“Moments”)
+
+●​ Manually curated seed data in DB​
+●​ Lightweight actions: Support / Interested / Attending​
+●​ Visible only to connections, not public​
+
+Feedback
+●​ Form submission only​
+●​ Routed to admin dashboard​
+●​ No public feature voting​
+
+Moderation
+●​ clean | flagged | hidden | removed​
+●​ Moderation queue with reasons + model scores​
+●​ Admin actions create audit log entries​
+
+3.6 Security and compliance baseline
+Minimum viable “health-grade” posture
+●​ TLS (platform)​
+●​ Password hashing (argon2/bcrypt)​
+●​ Rate limiting (IP + user)​
+●​ Input validation (Zod)​
+●​ CSRF protection if cookie auth​
+●​ Secure headers (CSP, HSTS)​
+●​ Content moderation at write-time​
+
+●​ Data retention policy (simple statement + delete capability)​
+●​ User can delete account + download data​
+●​ AI transparency page + Code of Conduct​
+
+Important operational rule​
+Log moderation and admin actions to an immutable audit table.
+
+3.7 The TRYBE Assistant: implement depth without expensive memory
+You want “50–50 depth” but low cost.
+Implementation pattern
+●​ Keep a structured profile per user:​
+○​ role, org, regions, interests, activity level, collaboration mode​
+○​ a short “profile snapshot” paragraph​
+●​ Store table activity signals (tables joined, recent threads)​
+●​ Provide assistant context as:​
+○​ user profile fields​
+○​ current page context (table/thread IDs)​
+○​ last 5 assistant messages (optional)​
+●​ Summarise occasionally into the profile snapshot (manual trigger or scheduled)​
+
+Crucial guardrail
+●​ Assistant returns:​
+○​ assistant_text​
+○​ suggested_actions[] (structured JSON)​
+
+●​ UI requires user confirmation to execute actions.​
+
+This delivers “depth” through continuity of preferences + context, not through unlimited chat
+memory.
+
+3.8 Moderation architecture (must be first-class)
+Two-pass moderation
+1.​ Pre-submit: user text → moderation → allow/soft-block/block​
+2.​ Post-submit: async re-check → queue borderline cases → admin decision​
+
+Context sensitivity
+●​ Allow medical terminology in context​
+●​ Block sexual content outside medical context​
+●​ Block hate/profanity/threats/disinformation patterns​
+
+Admin tools
+●​ moderation queue​
+●​ user suspend/freeze​
+●​ table-level moderator assignment (optional)​
+
+3.9 Scaling plan (design hooks now, build later)
+If TRYBE takes off, you’ll separate concerns:
+●​ AI service (separate worker)​
+●​ Queue for summarisation/broadcast​
+
+●​ Search service (Typesense/Meilisearch)​
+●​ DB read replicas​
+●​ Multi-tenant spaces (future)​
+
+But you don’t build that now—just leave clean seams in code.
+
+3.10 Vibe coding “guardrail checklist” for your engineer
+When your AI engineer starts building fast, require these acceptance criteria:
+Access control
+●​ Invite token required​
+●​ Email verification required​
+●​ Admin approval required​
+●​ Suspended users blocked everywhere​
+
+Discovery
+●​ No public directory​
+●​ No browsing people​
+●​ Visibility only via tables + approved connections​
+
+Assistant
+●​ Suggestions only​
+●​ All actions require confirm click​
+●​ Editable “What I know about you” snapshot​
+
+Moderation
+
+●​ Posts + DMs moderated​
+●​ Moderation queue exists​
+●​ Audit log exists​
+
+Alpha scope discipline
+●​ No realtime rooms​
+●​ No subchannels/nested threads​
+●​ No file repository
+
+

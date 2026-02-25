@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { MessageSquare, ChevronRight, Plus, X, Search, Loader2, Users } from "lucide-react";
+import { MessageSquare, ChevronRight, Plus, X, Search, Loader2, Users, TableProperties } from "lucide-react";
 
 export default function Messages() {
   const { user } = useAuth();
@@ -104,29 +104,45 @@ export default function Messages() {
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {newContacts.map((contact: any) => (
-                <div key={contact.id} className="flex items-center justify-between bg-muted/30 rounded-md px-3 py-2.5" data-testid={`contact-${contact.id}`}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary text-xs font-medium">{contact.name?.charAt(0)}</span>
+              {newContacts.map((contact: any) => {
+                const tables: string[] = contact.sharedTables || [];
+                const contextLabel = contact.isExistingContact
+                  ? "Existing conversation"
+                  : tables.length === 1
+                  ? `via ${tables[0]}`
+                  : tables.length > 1
+                  ? `via ${tables[0]} +${tables.length - 1} more`
+                  : null;
+                return (
+                  <div key={contact.id} className="flex items-center justify-between bg-muted/30 rounded-md px-3 py-2.5" data-testid={`contact-${contact.id}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary text-xs font-medium">{contact.name?.charAt(0)}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
+                        {contact.organisation && <p className="text-xs text-muted-foreground truncate">{contact.organisation}</p>}
+                        {contextLabel && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5" data-testid={`contact-context-${contact.id}`}>
+                            <TableProperties className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{contextLabel}</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
-                      {contact.organisation && <p className="text-xs text-muted-foreground truncate">{contact.organisation}</p>}
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-shrink-0 h-7 ml-2"
+                      onClick={() => handleStartConv(contact)}
+                      disabled={startingWith === contact.id}
+                      data-testid={`button-start-conv-${contact.id}`}
+                    >
+                      {startingWith === contact.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Message"}
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-shrink-0 h-7"
-                    onClick={() => handleStartConv(contact)}
-                    disabled={startingWith === contact.id}
-                    data-testid={`button-start-conv-${contact.id}`}
-                  >
-                    {startingWith === contact.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Message"}
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -476,16 +476,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.get("/api/messages/eligible-contacts", requireActive, async (req, res) => {
-    const sharedMembers = await storage.getSharedTableMembersForUser(req.session.userId!);
+    const sharedMembers = await storage.getSharedTableMembersWithContext(req.session.userId!);
     const existingConvs = await storage.getDmConversationsForUser(req.session.userId!);
     const existingPartnerIds = new Set(existingConvs.map(c =>
       c.userAId === req.session.userId ? c.userBId : c.userAId
     ));
+    const sharedMap = new Map(sharedMembers.map(u => [u.id, u.sharedTables]));
     const allIds = new Set([...sharedMembers.map(u => u.id), ...existingPartnerIds]);
     allIds.delete(req.session.userId!);
     if (allIds.size === 0) return res.json([]);
     const allContacts = await Promise.all([...allIds].map(id => storage.getUserById(id)));
-    res.json(allContacts.filter(Boolean).map(u => ({ id: u!.id, name: u!.name, organisation: u!.organisation, roleTitle: u!.roleTitle })));
+    res.json(allContacts.filter(Boolean).map(u => ({
+      id: u!.id,
+      name: u!.name,
+      organisation: u!.organisation,
+      roleTitle: u!.roleTitle,
+      sharedTables: sharedMap.get(u!.id) || [],
+      isExistingContact: existingPartnerIds.has(u!.id),
+    })));
   });
 
   app.post("/api/messages", requireActive, async (req, res) => {
@@ -1086,15 +1094,31 @@ Rules:
   // ─── Admin Metrics ────────────────────────────────────────────────────────
 
   app.get("/api/admin/metrics", requireAdmin, async (req, res) => {
-    const users = await storage.getAllUsers();
-    const tables = await storage.getAllTables();
-    const feedback = await storage.getAllFeedback();
-    const modItems = await storage.getAllModerationItems();
+    const [users, tables, feedback, modItems, counts] = await Promise.all([
+      storage.getAllUsers(),
+      storage.getAllTables(),
+      storage.getAllFeedback(),
+      storage.getAllModerationItems(),
+      storage.getPlatformCounts(),
+    ]);
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.status === "ACTIVE").length;
+    const pendingApproval = users.filter(u => u.status === "PENDING_APPROVAL").length;
+    const everActivated = users.filter(u => u.status === "ACTIVE" || u.status === "SUSPENDED").length;
+    const activationRate = totalUsers > 0 ? Math.round((everActivated / totalUsers) * 100) : 0;
+    const avgThreadsPerTable = tables.length > 0 ? Math.round((Number(counts.totalThreads) / tables.length) * 10) / 10 : 0;
+    const avgPostsPerThread = Number(counts.totalThreads) > 0 ? Math.round((Number(counts.totalPosts) / Number(counts.totalThreads)) * 10) / 10 : 0;
     res.json({
-      totalUsers: users.length,
-      activeUsers: users.filter(u => u.status === "ACTIVE").length,
-      pendingApproval: users.filter(u => u.status === "PENDING_APPROVAL").length,
+      totalUsers,
+      activeUsers,
+      pendingApproval,
+      activationRate,
       totalTables: tables.length,
+      totalThreads: Number(counts.totalThreads),
+      totalPosts: Number(counts.totalPosts),
+      totalMemberships: Number(counts.totalMemberships),
+      avgThreadsPerTable,
+      avgPostsPerThread,
       totalFeedback: feedback.length,
       openModerationItems: modItems.filter(m => m.status === "OPEN").length,
     });
