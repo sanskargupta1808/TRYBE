@@ -18,7 +18,9 @@ import PendingApproval from "@/pages/PendingApproval";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Onboarding from "@/pages/Onboarding";
 
+import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
+import Invites from "@/pages/Invites";
 import Tables from "@/pages/Tables";
 import TableDetail from "@/pages/TableDetail";
 import ThreadDetail from "@/pages/ThreadDetail";
@@ -125,10 +127,23 @@ function Router() {
         </RequireAuth>
       </Route>
 
+      {/* Welcome page for auto-approved members */}
+      <Route path="/app/welcome">
+        <RequireAuth>
+          <Welcome />
+        </RequireAuth>
+      </Route>
+
       {/* App routes */}
       <Route path="/app">
         <RequireAuth>
           <AppLayout><Dashboard /></AppLayout>
+        </RequireAuth>
+      </Route>
+
+      <Route path="/app/invites">
+        <RequireAuth>
+          <AppLayout><Invites /></AppLayout>
         </RequireAuth>
       </Route>
 

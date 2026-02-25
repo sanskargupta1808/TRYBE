@@ -15,8 +15,11 @@ export default function PendingApproval() {
             <Clock className="h-7 w-7 text-muted-foreground" />
           </div>
           <h1 className="text-2xl font-semibold mb-3">Your account is being reviewed</h1>
-          <p className="text-muted-foreground leading-relaxed mb-8">
+          <p className="text-muted-foreground leading-relaxed mb-4">
             TRYBE is curated during Alpha to protect focus and trust. You'll receive an email once your access has been approved.
+          </p>
+          <p className="text-xs text-muted-foreground/70 mb-8">
+            We approve a limited number of new members during Alpha to protect focus and trust.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" onClick={logout}>Sign out</Button>

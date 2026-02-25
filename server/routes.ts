@@ -4,7 +4,7 @@ import session from "express-session";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
-import { sendInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail } from "./email";
+import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail } from "./email";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -133,11 +133,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     const user = await storage.createUser({ name, email, password, organisation, roleTitle });
     await storage.useInvite(inviteToken, user.id);
-    await createAuditEntry({ actorUserId: user.id, action: "USER_REGISTERED", targetType: "USER", targetId: user.id });
+    await createAuditEntry({ actorUserId: user.id, action: "USER_REGISTERED", targetType: "USER", targetId: user.id, metadata: { inviteType: invite.inviteType, invitedBy: invite.createdByUserId } });
 
-    // Auto-verify for demo (admin can manage actual email flow)
+    // Auto-verify for demo
     const verified = await storage.verifyUserEmail(user.emailVerifyToken!);
-    return res.json({ user: { ...verified, passwordHash: undefined }, message: "Registration successful. Awaiting admin approval." });
+
+    // Tiered approval: member invites auto-approve, admin codes require manual approval
+    if (invite.autoApproveOnUse && !invite.requiresManualApproval) {
+      const activated = await storage.updateUserStatus(verified!.id, "ACTIVE");
+      await createAuditEntry({ actorUserId: verified!.id, action: "AUTO_APPROVED", targetType: "USER", targetId: verified!.id, metadata: { inviteType: invite.inviteType, invitedBy: invite.createdByUserId } });
+      return res.json({ user: { ...activated, passwordHash: undefined }, autoApproved: true, message: "Your access has been confirmed." });
+    }
+
+    return res.json({ user: { ...verified, passwordHash: undefined }, autoApproved: false, message: "Registration successful. Awaiting admin approval." });
   });
 
   app.post("/api/auth/login", async (req, res) => {
@@ -195,6 +203,59 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/invites/:id/revoke", requireAdmin, async (req, res) => {
     const invite = await storage.revokeInvite(req.params.id);
     res.json(invite);
+  });
+
+  // ─── Member Invites ─────────────────────────────────────────────────────
+
+  app.get("/api/invites/my", requireActive, async (req, res) => {
+    const invites = await storage.getInvitesByCreator(req.session.userId!);
+    const memberInvites = invites.filter(i => i.inviteType === "MEMBER_INVITE");
+    const quota = await storage.getUserInviteQuota(req.session.userId!);
+    res.json({ invites: memberInvites, quota });
+  });
+
+  app.post("/api/invites/send", requireActive, async (req, res) => {
+    const { email, note } = req.body;
+    if (!email) return res.status(400).json({ error: "Email address is required" });
+
+    const user = await storage.getUserById(req.session.userId!);
+    if (!user || user.status !== "ACTIVE") return res.status(403).json({ error: "Only active members can send invitations" });
+    if (!user.canInvite) return res.status(403).json({ error: "Your invite privileges have been paused. Please contact an admin." });
+
+    const quota = await storage.getUserInviteQuota(req.session.userId!);
+    if (!quota || quota.remaining <= 0) return res.status(429).json({ error: `You've used all ${quota?.total || 5} invitations this month. Your quota resets next month.` });
+
+    const existingUser = await storage.getUserByEmail(email);
+    if (existingUser) return res.status(400).json({ error: "Someone with this email address is already on TRYBE." });
+
+    const invite = await storage.createInvite({
+      email,
+      createdByUserId: req.session.userId,
+      expiresAt: new Date(Date.now() + 14 * 86400000),
+      inviteType: "MEMBER_INVITE",
+      autoApproveOnUse: true,
+      requiresManualApproval: false,
+      maxUses: 1,
+      recipientNote: note,
+    });
+
+    await storage.incrementInviteQuotaUsed(req.session.userId!);
+    await createAuditEntry({
+      actorUserId: req.session.userId,
+      action: "MEMBER_INVITE_CREATED",
+      targetType: "INVITE",
+      targetId: invite.id,
+      metadata: { email, inviteType: "MEMBER_INVITE" },
+    });
+
+    let emailSent = false;
+    let emailError: string | undefined;
+    const result = await sendMemberInviteEmail(email, user.name, invite.token, note);
+    emailSent = result.sent;
+    emailError = result.error;
+
+    const updatedQuota = await storage.getUserInviteQuota(req.session.userId!);
+    res.json({ invite, emailSent, emailError, quota: updatedQuota });
   });
 
   // ─── Admin: Invite Requests ───────────────────────────────────────────────
@@ -987,7 +1048,14 @@ TRYBE's philosophy: Human-led. AI-supported. You suggest, the user decides. Neve
    If the user asks to change their assistant activity level or collaboration mode, explain
    they can update this in Settings, and use NAVIGATE to /app/settings.
 
-6. GENERAL SUPPORT
+6. INVITING COLLEAGUES
+   If the user asks about inviting someone, inviting a colleague, or how invites work:
+   - Explain that active members can invite up to 5 colleagues per month
+   - Invitees are automatically confirmed (no admin approval needed) because they come from a trusted member
+   - Direct them to the Invites page using NAVIGATE to /app/invites
+   - Do NOT send invites autonomously — always direct the user to the invite page
+
+7. GENERAL SUPPORT
    Answer questions about how TRYBE works. Help the user understand their workspace.
    If they seem stuck, suggest a next step.
 
@@ -1079,8 +1147,15 @@ Rules:
   app.post("/api/admin/invites", requireAdmin, async (req, res) => {
     const { email, recipientName, expiresInDays } = req.body;
     const expiresAt = new Date(Date.now() + (expiresInDays || 30) * 86400000);
-    const invite = await storage.createInvite({ email, createdByUserId: req.session.userId, expiresAt });
-    await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: { email } });
+    const invite = await storage.createInvite({
+      email,
+      createdByUserId: req.session.userId,
+      expiresAt,
+      inviteType: "ADMIN_CODE",
+      autoApproveOnUse: false,
+      requiresManualApproval: true,
+    });
+    await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: { email, inviteType: "ADMIN_CODE" } });
     let emailSent = false;
     let emailError: string | undefined;
     if (email) {
@@ -1150,6 +1225,19 @@ Rules:
     } else {
       res.status(400).json({ error: "Unknown action" });
     }
+  });
+
+  app.post("/api/admin/users/:userId/invite-privileges", requireAdmin, async (req, res) => {
+    const { canInvite, quota } = req.body;
+    const updated = await storage.updateUserInvitePrivileges(req.params.userId, canInvite, quota);
+    await createAuditEntry({
+      actorUserId: req.session.userId,
+      action: canInvite ? "INVITE_PRIVILEGES_RESTORED" : "INVITE_PRIVILEGES_REMOVED",
+      targetType: "USER",
+      targetId: req.params.userId,
+      metadata: { canInvite, quota },
+    });
+    res.json({ ...updated, passwordHash: undefined });
   });
 
   app.post("/api/admin/moderation/:id/review", requireAdmin, async (req, res) => {

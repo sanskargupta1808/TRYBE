@@ -197,6 +197,14 @@ export default function AdminInvites() {
                           Copy link
                         </button>
                       )}
+                      {invite.inviteType === "MEMBER_INVITE" ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Member invite</span>
+                      ) : (
+                        <span className="text-xs px-1.5 py-0.5 rounded-sm font-medium bg-muted text-muted-foreground">Admin code</span>
+                      )}
+                      {invite.autoApproveOnUse && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-sm font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">Auto-confirm</span>
+                      )}
                       {isActive ? (
                         <span className="text-xs px-1.5 py-0.5 rounded-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Active</span>
                       ) : (

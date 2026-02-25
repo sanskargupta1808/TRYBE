@@ -35,7 +35,7 @@ export default function Landing() {
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap mt-10 animate-fade-in-up stagger-2">
             <Link href="/request-invite">
-              <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow" data-testid="button-hero-request">Request an invitation</Button>
+              <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow cta-glow" data-testid="button-hero-request">Request an invitation</Button>
             </Link>
             <a href="#how">
               <Button size="lg" variant="outline" data-testid="button-hero-learn">Learn how it works</Button>
@@ -145,7 +145,7 @@ export default function Landing() {
         <h2 className="text-3xl font-semibold mb-4">Ready to request access?</h2>
         <p className="text-muted-foreground mb-8">We review each request carefully to maintain a trusted and purposeful environment.</p>
         <Link href="/request-invite">
-          <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow" data-testid="button-cta-request">Request an invitation</Button>
+          <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow cta-glow" data-testid="button-cta-request">Request an invitation</Button>
         </Link>
       </section>
 

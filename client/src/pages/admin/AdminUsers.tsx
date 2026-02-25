@@ -32,6 +32,15 @@ export default function AdminUsers() {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const invitePrivMutation = useMutation({
+    mutationFn: async ({ userId, canInvite, quota }: { userId: string; canInvite: boolean; quota?: number }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/invite-privileges`, { canInvite, quota });
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/admin/users"] }); toast({ title: "Invite privileges updated" }); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
   let filtered = users;
   if (search) filtered = filtered.filter(u => u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()) || u.organisation?.toLowerCase().includes(search.toLowerCase()));
   if (statusFilter !== "ALL") filtered = filtered.filter(u => u.status === statusFilter);
@@ -83,7 +92,14 @@ export default function AdminUsers() {
                   </>
                 )}
                 {u.status === "ACTIVE" && u.role !== "ADMIN" && (
-                  <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "SUSPEND" })} disabled={updateMutation.isPending} data-testid={`button-suspend-${u.id}`}>Suspend</Button>
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "SUSPEND" })} disabled={updateMutation.isPending} data-testid={`button-suspend-${u.id}`}>Suspend</Button>
+                    {u.canInvite === false ? (
+                      <Button size="sm" variant="outline" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: true })} disabled={invitePrivMutation.isPending} data-testid={`button-restore-invites-${u.id}`}>Restore invites</Button>
+                    ) : (
+                      <Button size="sm" variant="ghost" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: false })} disabled={invitePrivMutation.isPending} data-testid={`button-pause-invites-${u.id}`}>Pause invites</Button>
+                    )}
+                  </>
                 )}
                 {u.status === "SUSPENDED" && (
                   <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "REACTIVATE" })} disabled={updateMutation.isPending} data-testid={`button-reactivate-${u.id}`}>Reactivate</Button>

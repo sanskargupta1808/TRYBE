@@ -52,13 +52,27 @@ export async function verifyPassword(user: schema.User, password: string) {
 }
 
 // ─── Invites ──────────────────────────────────────────────────────────────────
-export async function createInvite(data: { email?: string; createdByUserId?: string; expiresAt?: Date }) {
+export async function createInvite(data: {
+  email?: string;
+  createdByUserId?: string;
+  expiresAt?: Date;
+  inviteType?: string;
+  autoApproveOnUse?: boolean;
+  requiresManualApproval?: boolean;
+  maxUses?: number;
+  recipientNote?: string;
+}) {
   const token = randomBytes(16).toString("hex").toUpperCase();
   const [invite] = await db.insert(schema.invites).values({
     token,
     email: data.email,
     createdByUserId: data.createdByUserId,
     expiresAt: data.expiresAt,
+    inviteType: data.inviteType || "ADMIN_CODE",
+    autoApproveOnUse: data.autoApproveOnUse ?? false,
+    requiresManualApproval: data.requiresManualApproval ?? true,
+    maxUses: data.maxUses ?? 1,
+    recipientNote: data.recipientNote,
     status: "UNUSED",
   }).returning();
   return invite;
@@ -70,12 +84,68 @@ export async function getInviteByToken(token: string) {
 export async function getAllInvites() {
   return db.select().from(schema.invites).orderBy(desc(schema.invites.createdAt));
 }
+export async function getInvitesByCreator(userId: string) {
+  return db.select().from(schema.invites)
+    .where(eq(schema.invites.createdByUserId, userId))
+    .orderBy(desc(schema.invites.createdAt));
+}
 export async function useInvite(token: string, userId: string) {
-  const [updated] = await db.update(schema.invites).set({ status: "USED", usedByUserId: userId }).where(eq(schema.invites.token, token.toUpperCase())).returning();
+  const invite = await getInviteByToken(token);
+  if (!invite) return null;
+  const newUsesCount = (invite.usesCount || 0) + 1;
+  const newStatus = newUsesCount >= invite.maxUses ? "USED" : "UNUSED";
+  const [updated] = await db.update(schema.invites).set({
+    status: newStatus,
+    usedByUserId: userId,
+    usesCount: newUsesCount,
+  }).where(eq(schema.invites.token, token.toUpperCase())).returning();
   return updated;
 }
 export async function revokeInvite(id: string) {
   const [updated] = await db.update(schema.invites).set({ status: "REVOKED" }).where(eq(schema.invites.id, id)).returning();
+  return updated;
+}
+
+// ─── User Invite Quotas ──────────────────────────────────────────────────────
+export async function getUserInviteQuota(userId: string) {
+  const user = await getUserById(userId);
+  if (!user) return null;
+  const now = new Date();
+  if (!user.inviteQuotaResetAt || now > user.inviteQuotaResetAt) {
+    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    await db.update(schema.users).set({
+      inviteQuotaUsedThisMonth: 0,
+      inviteQuotaResetAt: nextReset,
+    }).where(eq(schema.users.id, userId));
+    return { remaining: user.inviteQuotaMonthly, used: 0, total: user.inviteQuotaMonthly, canInvite: user.canInvite };
+  }
+  return {
+    remaining: Math.max(0, user.inviteQuotaMonthly - user.inviteQuotaUsedThisMonth),
+    used: user.inviteQuotaUsedThisMonth,
+    total: user.inviteQuotaMonthly,
+    canInvite: user.canInvite,
+  };
+}
+export async function incrementInviteQuotaUsed(userId: string) {
+  const user = await getUserById(userId);
+  if (!user) return;
+  const now = new Date();
+  if (!user.inviteQuotaResetAt || now > user.inviteQuotaResetAt) {
+    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    await db.update(schema.users).set({
+      inviteQuotaUsedThisMonth: 1,
+      inviteQuotaResetAt: nextReset,
+    }).where(eq(schema.users.id, userId));
+  } else {
+    await db.update(schema.users).set({
+      inviteQuotaUsedThisMonth: user.inviteQuotaUsedThisMonth + 1,
+    }).where(eq(schema.users.id, userId));
+  }
+}
+export async function updateUserInvitePrivileges(userId: string, canInvite: boolean, quota?: number) {
+  const updates: any = { canInvite };
+  if (quota !== undefined) updates.inviteQuotaMonthly = quota;
+  const [updated] = await db.update(schema.users).set(updates).where(eq(schema.users.id, userId)).returning();
   return updated;
 }
 

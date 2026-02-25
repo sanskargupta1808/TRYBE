@@ -82,7 +82,7 @@ export default function Moments() {
                   {monthEvents.map((event: any) => {
                     const currentSignal = getSignal(event.id);
                     return (
-                      <div key={event.id} className="bg-card border border-card-border rounded-md p-4 hover-elevate" data-testid={`card-event-${event.id}`}>
+                      <div key={event.id} className="bg-card border border-card-border rounded-md p-4 pl-5 hover-elevate moment-accent-bar" data-testid={`card-event-${event.id}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start gap-3">
@@ -107,7 +107,7 @@ export default function Moments() {
                               <button
                                 key={type}
                                 onClick={() => signalMutation.mutate({ eventId: event.id, signalType: type })}
-                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors ${currentSignal === type ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors chip-press ${currentSignal === type ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
                                 data-testid={`button-signal-${type}-${event.id}`}
                               >
                                 <Icon className="h-3 w-3" />

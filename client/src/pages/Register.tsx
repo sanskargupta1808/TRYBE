@@ -55,7 +55,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await apiRequest("POST", "/api/auth/register", {
+      const res = await apiRequest("POST", "/api/auth/register", {
         name: form.name,
         email: form.email,
         password: form.password,
@@ -63,8 +63,13 @@ export default function Register() {
         organisation: form.organisation,
         roleTitle: form.roleTitle,
       });
+      const data = await res.json();
       await refetch();
-      navigate("/pending-approval");
+      if (data.autoApproved) {
+        navigate("/app/welcome");
+      } else {
+        navigate("/pending-approval");
+      }
     } catch (err: any) {
       toast({ title: "Registration failed", description: err.message, variant: "destructive" });
     } finally {

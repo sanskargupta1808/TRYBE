@@ -271,6 +271,89 @@ function buildApprovalPendingEmail(name: string): string {
   `.trim();
 }
 
+function buildMemberInviteEmail(inviterName: string, token: string, note?: string): string {
+  const registerUrl = `${APP_URL}/register?invite=${token}`;
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You've been invited to TRYBE</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f9f8f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .wrapper { max-width: 560px; margin: 48px auto; background: #ffffff; border: 1px solid #e8e6e1; border-radius: 8px; overflow: hidden; }
+    .header { background: #1a1a1a; padding: 32px 40px; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark { width: 32px; height: 32px; background: #c2692e; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; line-height: 32px; text-align: center; }
+    .logo-name { color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+    .logo-tag { color: #9a9a9a; font-size: 11px; margin-top: 2px; }
+    .body { padding: 40px 40px 32px; }
+    h1 { font-size: 22px; font-weight: 600; color: #111111; margin: 0 0 12px; letter-spacing: -0.3px; }
+    p { font-size: 15px; line-height: 1.65; color: #555555; margin: 0 0 20px; }
+    .cta { display: block; background: #c2692e; color: #ffffff; text-decoration: none; text-align: center; font-size: 15px; font-weight: 600; padding: 14px 24px; border-radius: 6px; margin: 28px 0; letter-spacing: 0.1px; }
+    .note-block { background: #f4f2ee; border-left: 3px solid #c2692e; border-radius: 0 6px 6px 0; padding: 14px 18px; font-size: 14px; line-height: 1.6; color: #444; margin: 16px 0 24px; font-style: italic; }
+    .note { font-size: 13px; color: #888888; line-height: 1.6; }
+    .divider { border: none; border-top: 1px solid #e8e6e1; margin: 28px 0; }
+    .footer { padding: 20px 40px; background: #f9f8f6; border-top: 1px solid #e8e6e1; }
+    .footer p { font-size: 12px; color: #aaaaaa; margin: 0; line-height: 1.6; }
+    .footer a { color: #aaaaaa; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-mark">T</div>
+        <div>
+          <div class="logo-name">TRYBE</div>
+          <div class="logo-tag">Alpha</div>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <h1>${inviterName} has invited you to TRYBE</h1>
+      <p>
+        TRYBE is a private collaboration platform for global health professionals.
+        ${inviterName} thinks you'd be a great addition to the community.
+      </p>
+      ${note ? `<div class="note-block">"${note}"</div>` : ""}
+      <p>
+        Because you've been invited by a trusted member, your access will be confirmed
+        automatically once you create your account.
+      </p>
+      <a href="${registerUrl}" class="cta">Accept invitation and join TRYBE</a>
+      <p class="note">
+        This invitation is personal and expires in 14 days.<br />
+        TRYBE is a curated, professional space. Please review the Code of Conduct when you join.
+      </p>
+      <hr class="divider" />
+      <p class="note">
+        If you weren't expecting this invitation or believe it was sent in error,
+        you can safely ignore this email.
+      </p>
+    </div>
+    <div class="footer">
+      <p>
+        TRYBE &mdash; Private Global Health Collaboration &nbsp;&middot;&nbsp;
+        <a href="${APP_URL}/privacy">Privacy</a> &nbsp;&middot;&nbsp;
+        <a href="${APP_URL}/code-of-conduct">Code of Conduct</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+export async function sendMemberInviteEmail(recipientEmail: string, inviterName: string, token: string, note?: string): Promise<{ sent: boolean; error?: string }> {
+  return sendEmail(
+    recipientEmail,
+    `${inviterName} has invited you to TRYBE`,
+    buildMemberInviteEmail(inviterName, token, note)
+  );
+}
+
 export async function sendInviteEmail(recipientEmail: string, recipientName: string | undefined, token: string): Promise<{ sent: boolean; error?: string }> {
   return sendEmail(
     recipientEmail,

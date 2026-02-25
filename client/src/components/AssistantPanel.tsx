@@ -69,11 +69,17 @@ function getQuickActions(location: string): string[] {
     "Suggest a professional tone for this",
     "What should I include?",
   ];
+  if (location.includes("/invites")) return [
+    "How do invitations work?",
+    "Who should I invite?",
+    "What happens after I send an invite?",
+    "How many invites do I have left?",
+  ];
   return [
     "Suggest relevant tables for me",
     "Show upcoming health moments",
     "What should I focus on today?",
-    "Help me find my next collaboration",
+    "Can I invite a colleague?",
   ];
 }
 

@@ -318,7 +318,7 @@ export default function Onboarding() {
                     <button
                       key={chip}
                       onClick={() => handleChipClick(chip)}
-                      className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                      className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors chip-press ${
                         isMultiChip && selectedChips.includes(chip)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"

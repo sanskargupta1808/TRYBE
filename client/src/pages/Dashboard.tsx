@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
-import { Table2, Calendar, MessageSquare, ChevronRight, Bot, ArrowRight, Repeat2 } from "lucide-react";
+import { Table2, Calendar, MessageSquare, ChevronRight, Bot, ArrowRight, Repeat2, UserPlus } from "lucide-react";
 
 function getMonthLabel(dateStr: string) {
   const d = new Date(dateStr);
@@ -228,14 +228,24 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <div className="border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20 animate-fade-in-up stagger-5" data-testid="section-assistant-callout">
-        <p className="text-sm text-muted-foreground">Need guidance?</p>
-        <Button variant="ghost" size="sm" onClick={() => {
-          const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
-          btn?.click();
-        }} data-testid="button-callout-assistant">
-          <Bot className="h-3.5 w-3.5 mr-1.5" />Ask TRYBE Assistant
-        </Button>
+      <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up stagger-5">
+        <div className="flex-1 border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-assistant-callout">
+          <p className="text-sm text-muted-foreground">Need guidance?</p>
+          <Button variant="ghost" size="sm" onClick={() => {
+            const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
+            btn?.click();
+          }} data-testid="button-callout-assistant">
+            <Bot className="h-3.5 w-3.5 mr-1.5" />Ask TRYBE Assistant
+          </Button>
+        </div>
+        <div className="flex-1 border border-border rounded-lg p-4 flex items-center justify-between bg-muted/20" data-testid="section-invite-callout">
+          <p className="text-sm text-muted-foreground">Know someone who should be here?</p>
+          <Link href="/app/invites">
+            <Button variant="ghost" size="sm" data-testid="button-invite-colleague">
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />Invite a colleague
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {showFocusSelector && myTables.length > 1 && (

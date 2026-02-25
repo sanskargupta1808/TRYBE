@@ -88,6 +88,17 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations
 - **Cards**: hover shadow lift (`hover:shadow-md transition-shadow duration-200`) on dashboard grid
 - **Message bubbles**: `rounded-2xl` with `px-3.5 py-2.5` for warmer feel
+- **CTA glow**: `cta-glow` class adds warm box-shadow on hover (primary/15%) for hero buttons
+- **Chip press**: `chip-press` class adds `active:scale(0.95)` for tactile feedback on filter/signal chips
+- **Moment accent bar**: `moment-accent-bar` class adds a 3px left accent bar (primary/35%) on milestone cards
+
+### Trusted Invites & Tiered Approval
+- **Invite types**: `ADMIN_CODE` (requires manual admin approval) and `MEMBER_INVITE` (auto-approves on use, 14-day expiry, 5/month quota)
+- Admin panel shows invite type badges (blue "Member invite" / grey "Admin code") and auto-confirm indicator
+- Admin Users page has "Pause invites" / "Restore invites" toggle per user
+- Member invite page at `/app/invites`: quota display, send form (email + optional note), sent invite history
+- Welcome page at `/app/welcome`: auto-approved member landing with onboarding prompt
+- Assistant knows about invites and can direct users to `/app/invites`
 
 ## UX Architecture (Focus-First Redesign)
 - Dashboard: Single "Your current focus" hero card → one primary CTA (Open table) → secondary 3-column grid (My tables, Upcoming moments, Messages) with max 3 items each + "View all" links

@@ -15,11 +15,15 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("USER"),
   organisation: text("organisation"),
   roleTitle: text("role_title"),
+  inviteQuotaMonthly: integer("invite_quota_monthly").notNull().default(5),
+  inviteQuotaUsedThisMonth: integer("invite_quota_used_this_month").notNull().default(0),
+  inviteQuotaResetAt: timestamp("invite_quota_reset_at"),
+  canInvite: boolean("can_invite").notNull().default(true),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, lastLoginAt: true, emailVerifiedAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, lastLoginAt: true, emailVerifiedAt: true, inviteQuotaMonthly: true, inviteQuotaUsedThisMonth: true, inviteQuotaResetAt: true, canInvite: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -29,6 +33,12 @@ export const invites = pgTable("invites", {
   token: text("token").notNull().unique(),
   email: text("email"),
   status: text("status").notNull().default("UNUSED"),
+  inviteType: text("invite_type").notNull().default("ADMIN_CODE"),
+  autoApproveOnUse: boolean("auto_approve_on_use").notNull().default(false),
+  requiresManualApproval: boolean("requires_manual_approval").notNull().default(true),
+  maxUses: integer("max_uses").notNull().default(1),
+  usesCount: integer("uses_count").notNull().default(0),
+  recipientNote: text("recipient_note"),
   expiresAt: timestamp("expires_at"),
   createdByUserId: varchar("created_by_user_id").references(() => users.id),
   usedByUserId: varchar("used_by_user_id").references(() => users.id),

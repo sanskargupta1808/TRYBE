@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare } from "lucide-react";
+import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare, UserPlus } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
@@ -12,6 +12,7 @@ const appNavItems = [
   { title: "Spaces", url: "/app/tables", icon: Table2 },
   { title: "Milestones", url: "/app/moments", icon: Calendar },
   { title: "Messages", url: "/app/messages", icon: MessageSquare },
+  { title: "Invites", url: "/app/invites", icon: UserPlus },
   { title: "Feedback", url: "/app/feedback", icon: Star },
   { title: "Settings", url: "/app/settings", icon: Settings },
 ];

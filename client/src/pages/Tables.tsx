@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, Users, ChevronRight, Lock } from "lucide-react";
+import { Search, Plus, Users, ChevronRight, Lock, Table2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Tables() {
@@ -65,11 +65,11 @@ export default function Tables() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setTagFilter("")}
-            className={`text-xs px-2.5 py-1 rounded-md border ${!tagFilter ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
+            className={`text-xs px-2.5 py-1 rounded-md border chip-press ${!tagFilter ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
             data-testid="filter-all">All</button>
           {allTags.map(tag => (
             <button key={tag} onClick={() => setTagFilter(tag === tagFilter ? "" : tag)}
-              className={`text-xs px-2.5 py-1 rounded-md border ${tagFilter === tag ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
+              className={`text-xs px-2.5 py-1 rounded-md border chip-press ${tagFilter === tag ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
               data-testid={`filter-${tag}`}>
               {tag}
             </button>
