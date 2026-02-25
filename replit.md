@@ -18,6 +18,8 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - `client/src/App.tsx` — Full routing with auth guards
 - `client/src/contexts/AuthContext.tsx` — Session auth context
 - `client/src/components/AppSidebar.tsx` — Sidebar with app + admin nav
+- `client/src/hooks/useVoiceRecorder.ts` — MediaRecorder-based voice recording hook
+- `client/src/hooks/useSignaling.ts` — WebSocket signaling hook for WebRTC audio calls
 - `client/src/components/AssistantPanel.tsx` — TRYBE Assistant chat panel
 
 ## Pages

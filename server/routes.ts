@@ -5,6 +5,10 @@ import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
 import { sendInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail } from "./email";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { WebSocketServer, WebSocket } from "ws";
 
 declare module "express-session" {
   interface SessionData {
@@ -51,7 +55,52 @@ async function moderateContent(text: string): Promise<{ flagged: boolean; reason
   return { flagged: false };
 }
 
+// ─── Multer Setup ─────────────────────────────────────────────────────────────
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+      cb(null, name);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // Serve uploaded files
+  const express = await import("express");
+  app.use("/uploads", express.default.static(uploadsDir));
+
+  // ── WebSocket Signaling Server (live audio calls) ────────────────────────────
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  const wsClients = new Map<string, WebSocket>();
+  wss.on("connection", (ws) => {
+    let registeredUserId: string | null = null;
+    ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+        if (msg.type === "register") {
+          registeredUserId = msg.userId;
+          wsClients.set(msg.userId, ws);
+          return;
+        }
+        if (msg.to) {
+          const target = wsClients.get(msg.to);
+          if (target && target.readyState === WebSocket.OPEN) {
+            target.send(JSON.stringify({ ...msg, from: registeredUserId }));
+          }
+        }
+      } catch {}
+    });
+    ws.on("close", () => {
+      if (registeredUserId) wsClients.delete(registeredUserId);
+    });
+  });
+
   app.use(session({
     secret: process.env.SESSION_SECRET || "trybe-secret-key-change-in-prod",
     resave: false,
@@ -400,12 +449,52 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ ...conv, messages, otherUser: other ? { id: other.id, name: other.name, organisation: other.organisation } : null });
   });
   app.post("/api/messages/:id/send", requireActive, async (req, res) => {
-    const { content } = req.body;
-    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
-    const mod = await moderateContent(content);
-    if (mod.flagged) return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase." });
-    const msg = await storage.createDmMessage({ conversationId: req.params.id, senderId: req.session.userId, content });
+    const { content, messageType, fileUrl, fileName, fileMimeType, isOneTime, replyToId } = req.body;
+    const type = messageType || "TEXT";
+    if (type === "TEXT" || type === "EMOJI") {
+      if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+      if (type === "TEXT") {
+        const mod = await moderateContent(content);
+        if (mod.flagged) return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase." });
+      }
+    }
+    const msg = await storage.createDmMessage({
+      conversationId: req.params.id,
+      senderId: req.session.userId,
+      content: content || "",
+      messageType: type,
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
+      fileMimeType: fileMimeType || null,
+      isOneTime: !!isOneTime,
+      viewedOnce: false,
+      replyToId: replyToId || null,
+      moderationStatus: "CLEAN",
+    });
     res.json(msg);
+  });
+
+  // File upload for DMs (images, video, audio, voice)
+  app.post("/api/upload", requireActive, upload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file provided" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url, fileName: req.file.originalname, mimeType: req.file.mimetype });
+  });
+
+  // Toggle emoji reaction on a DM message
+  app.post("/api/messages/:convId/reactions", requireActive, async (req, res) => {
+    const { messageId, emoji } = req.body;
+    if (!messageId || !emoji) return res.status(400).json({ error: "messageId and emoji required" });
+    const result = await storage.toggleDmReaction(messageId, req.session.userId!, emoji);
+    res.json(result);
+  });
+
+  // Mark a one-time message as viewed
+  app.post("/api/messages/:convId/view-once/:msgId", requireActive, async (req, res) => {
+    const msg = await storage.getDmMessageById(req.params.msgId);
+    if (!msg) return res.status(404).json({ error: "Not found" });
+    const updated = await storage.markMessageViewedOnce(req.params.msgId);
+    res.json(updated);
   });
 
   // ─── Calendar ─────────────────────────────────────────────────────────────

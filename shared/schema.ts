@@ -164,7 +164,14 @@ export const dmMessages = pgTable("dm_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   conversationId: varchar("conversation_id").notNull().references(() => dmConversations.id),
   senderId: varchar("sender_id").references(() => users.id),
-  content: text("content").notNull(),
+  content: text("content").notNull().default(""),
+  messageType: text("message_type").notNull().default("TEXT"),
+  fileUrl: text("file_url"),
+  fileName: text("file_name"),
+  fileMimeType: text("file_mime_type"),
+  isOneTime: boolean("is_one_time").notNull().default(false),
+  viewedOnce: boolean("viewed_once").notNull().default(false),
+  replyToId: varchar("reply_to_id"),
   moderationStatus: text("moderation_status").notNull().default("CLEAN"),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
 });
@@ -172,6 +179,17 @@ export const dmMessages = pgTable("dm_messages", {
 export const insertDmMessageSchema = createInsertSchema(dmMessages).omit({ id: true, createdAt: true });
 export type InsertDmMessage = z.infer<typeof insertDmMessageSchema>;
 export type DmMessage = typeof dmMessages.$inferSelect;
+
+// ─── DM Reactions ─────────────────────────────────────────────────────────────
+export const dmReactions = pgTable("dm_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => dmMessages.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  emoji: text("emoji").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export type DmReaction = typeof dmReactions.$inferSelect;
 
 // ─── Calendar Events ─────────────────────────────────────────────────────────
 export const calendarEvents = pgTable("calendar_events", {

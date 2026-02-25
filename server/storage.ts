@@ -271,15 +271,51 @@ export async function createDmConversation(userAId: string, userBId: string) {
   return conv;
 }
 export async function getDmMessages(conversationId: string) {
-  return db.select({ message: schema.dmMessages, sender: schema.users })
+  const messages = await db.select({ message: schema.dmMessages, sender: schema.users })
     .from(schema.dmMessages)
     .innerJoin(schema.users, eq(schema.dmMessages.senderId, schema.users.id))
     .where(eq(schema.dmMessages.conversationId, conversationId))
     .orderBy(schema.dmMessages.createdAt);
+  // Enrich with reactions and replyTo
+  const enriched = await Promise.all(messages.map(async (m) => {
+    const reactions = await db.select({ reaction: schema.dmReactions, user: schema.users })
+      .from(schema.dmReactions)
+      .innerJoin(schema.users, eq(schema.dmReactions.userId, schema.users.id))
+      .where(eq(schema.dmReactions.messageId, m.message.id));
+    let replyTo = null;
+    if (m.message.replyToId) {
+      const [rm] = await db.select({ message: schema.dmMessages, sender: schema.users })
+        .from(schema.dmMessages)
+        .innerJoin(schema.users, eq(schema.dmMessages.senderId, schema.users.id))
+        .where(eq(schema.dmMessages.id, m.message.replyToId));
+      replyTo = rm || null;
+    }
+    return { ...m, reactions, replyTo };
+  }));
+  return enriched;
+}
+export async function getDmMessageById(id: string) {
+  const [msg] = await db.select().from(schema.dmMessages).where(eq(schema.dmMessages.id, id));
+  return msg;
 }
 export async function createDmMessage(data: schema.InsertDmMessage) {
   const [msg] = await db.insert(schema.dmMessages).values(data).returning();
   return msg;
+}
+export async function markMessageViewedOnce(id: string) {
+  const [msg] = await db.update(schema.dmMessages).set({ viewedOnce: true }).where(eq(schema.dmMessages.id, id)).returning();
+  return msg;
+}
+export async function toggleDmReaction(messageId: string, userId: string, emoji: string) {
+  const existing = await db.select().from(schema.dmReactions).where(
+    and(eq(schema.dmReactions.messageId, messageId), eq(schema.dmReactions.userId, userId), eq(schema.dmReactions.emoji, emoji))
+  );
+  if (existing.length > 0) {
+    await db.delete(schema.dmReactions).where(eq(schema.dmReactions.id, existing[0].id));
+    return { action: "removed" };
+  }
+  await db.insert(schema.dmReactions).values({ messageId, userId, emoji });
+  return { action: "added" };
 }
 
 // ─── Calendar ─────────────────────────────────────────────────────────────────
