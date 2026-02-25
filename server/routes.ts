@@ -620,6 +620,113 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(entries);
   });
 
+  // ─── AI Content Generation ────────────────────────────────────────────────
+
+  app.post("/api/ai/generate-post", requireActive, async (req, res) => {
+    const { threadId, prompt } = req.body;
+    if (!threadId) return res.status(400).json({ error: "threadId required" });
+    const thread = await storage.getThreadById(threadId);
+    if (!thread) return res.status(404).json({ error: "Thread not found" });
+    const isMember = await storage.isTableMember(thread.tableId, req.session.userId!);
+    if (!isMember) return res.status(403).json({ error: "Must be a table member" });
+    const posts = await storage.getPostsByThread(threadId);
+    const recentPosts = posts.slice(-5).map(({ post, user: u }: any) => `${u?.name || "Member"}: ${post.content}`).join("\n");
+    const user = await storage.getUserById(req.session.userId!);
+    if (!openai) return res.status(503).json({ error: "AI generation unavailable" });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional health sector communicator writing a contribution to a TRYBE collaboration table thread. 
+TRYBE is a private global health platform for senior professionals — researchers, clinicians, policymakers, and advocates.
+Write in a calm, evidence-informed, collaborative tone. Be substantive but concise (150–250 words). 
+Do not use bullet points or headers — write in flowing paragraphs. Do not start with "I" or greetings.
+The author is ${user?.name || "a member"} (${user?.roleTitle || user?.organisation || "health professional"}).`,
+        },
+        {
+          role: "user",
+          content: `Thread title: "${thread.title}"\n\n${recentPosts ? `Recent discussion:\n${recentPosts}\n\n` : ""}${prompt ? `Additional direction: ${prompt}\n\n` : ""}Write a professional contribution to this thread that adds value to the discussion.`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 400,
+    });
+    const content = completion.choices[0]?.message?.content?.trim() || "";
+    res.json({ content });
+  });
+
+  app.post("/api/ai/generate-event", requireAdmin, async (req, res) => {
+    const { description } = req.body;
+    if (!description?.trim()) return res.status(400).json({ error: "Description required" });
+    if (!openai) return res.status(503).json({ error: "AI generation unavailable" });
+    const today = new Date().toISOString().split("T")[0];
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an assistant that creates structured global health calendar events for TRYBE, a private health collaboration platform.
+Return ONLY a valid JSON object with these fields:
+- title: string (concise event name, max 80 chars)
+- organiser: string (organisation or body running the event)
+- startDate: string (YYYY-MM-DD format, must be ${today} or later)
+- endDate: string (YYYY-MM-DD format, optional, same or after startDate)
+- regionScope: string (e.g. "Global", "Africa", "Europe", "Asia", "North America")
+- tags: array of strings (2–5 relevant health tags from: rare-disease, cancer, diabetes, mental-health, HIV/AIDS, TB, AMR, policy, research, advocacy, nutrition, maternal-health, NTDs, UHC)
+- sourceNote: string (brief description of the event, 1–2 sentences)
+Return ONLY the JSON, no markdown, no explanation.`,
+        },
+        { role: "user", content: description },
+      ],
+      temperature: 0.4,
+      max_tokens: 350,
+      response_format: { type: "json_object" },
+    });
+    try {
+      const raw = completion.choices[0]?.message?.content || "{}";
+      const event = JSON.parse(raw);
+      res.json(event);
+    } catch {
+      res.status(500).json({ error: "Failed to parse AI response" });
+    }
+  });
+
+  app.post("/api/ai/generate-table", requireActive, async (req, res) => {
+    const { prompt } = req.body;
+    if (!prompt?.trim()) return res.status(400).json({ error: "Prompt required" });
+    if (!openai) return res.status(503).json({ error: "AI generation unavailable" });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an assistant that creates structured collaboration table proposals for TRYBE, a private global health platform.
+Return ONLY a valid JSON object with these fields:
+- title: string (clear, professional table name, max 80 chars)
+- purpose: string (1–3 sentence purpose statement, max 240 chars, explains focus and goals)
+- tags: array of strings (2–5 relevant tags from: rare-disease, cancer, diabetes, mental-health, HIV/AIDS, TB, AMR, policy, research, advocacy, nutrition, maternal-health, NTDs, UHC, Global, Europe, Africa, Asia)
+- reason: string (1–2 sentences explaining why this table is needed now)
+Return ONLY the JSON, no markdown, no explanation.`,
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.5,
+      max_tokens: 300,
+      response_format: { type: "json_object" },
+    });
+    try {
+      const raw = completion.choices[0]?.message?.content || "{}";
+      const proposal = JSON.parse(raw);
+      if (proposal.purpose && proposal.purpose.length > 240) {
+        proposal.purpose = proposal.purpose.slice(0, 237) + "...";
+      }
+      res.json(proposal);
+    } catch {
+      res.status(500).json({ error: "Failed to parse AI response" });
+    }
+  });
+
   // ─── TRYBE Assistant ──────────────────────────────────────────────────────
 
   app.post("/api/assistant/suggest-tables", requireActive, async (req, res) => {

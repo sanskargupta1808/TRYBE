@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, Sparkles } from "lucide-react";
 
 const COMMON_TAGS = ["rare-disease", "cancer", "diabetes", "mental-health", "HIV/AIDS", "TB", "AMR", "policy", "research", "advocacy", "Global", "Europe", "Africa", "Asia"];
 
@@ -16,6 +16,8 @@ export default function RequestTable() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[], reason: "" });
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   const toggleTag = (tag: string) =>
     setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
@@ -30,6 +32,27 @@ export default function RequestTable() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateProposal = async () => {
+    if (!aiPrompt.trim()) return;
+    setGenerating(true);
+    try {
+      const res = await apiRequest("POST", "/api/ai/generate-table", { prompt: aiPrompt.trim() });
+      const data = await res.json();
+      const tags = Array.isArray(data.tags) ? data.tags.filter((t: string) => COMMON_TAGS.includes(t)) : [];
+      setForm({
+        title: data.title || "",
+        purpose: (data.purpose || "").slice(0, 240),
+        tags,
+        reason: data.reason || "",
+      });
+      toast({ title: "Proposal drafted", description: "Review and edit the details before submitting." });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -57,6 +80,25 @@ export default function RequestTable() {
         <p className="text-muted-foreground text-sm leading-relaxed">
           Tables are intentionally curated during Alpha to protect focus and trust. Tell us what you want to create.
         </p>
+      </div>
+
+      <div className="mb-6 bg-primary/5 border border-primary/20 rounded-md p-4">
+        <p className="text-sm font-medium mb-1">Draft with AI</p>
+        <p className="text-xs text-muted-foreground mb-3">Describe the table you have in mind and we'll draft a proposal for you to review and edit.</p>
+        <div className="flex gap-2">
+          <Input
+            value={aiPrompt}
+            onChange={e => setAiPrompt(e.target.value)}
+            placeholder="e.g. A collaboration space for WHO policy advisors focused on antimicrobial resistance..."
+            className="flex-1 text-sm"
+            onKeyDown={e => { if (e.key === "Enter") generateProposal(); }}
+            data-testid="input-ai-table-prompt"
+          />
+          <Button size="sm" onClick={generateProposal} disabled={!aiPrompt.trim() || generating} data-testid="button-generate-table">
+            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+            {generating ? "Drafting..." : "Draft"}
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">

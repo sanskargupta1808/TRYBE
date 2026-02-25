@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check, Sparkles } from "lucide-react";
 
 export default function ThreadDetail() {
   const { tableId, threadId } = useParams<{ tableId: string; threadId: string }>();
@@ -18,6 +18,9 @@ export default function ThreadDetail() {
   const [content, setContent] = useState("");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [generatePrompt, setGeneratePrompt] = useState("");
+  const [showGenPrompt, setShowGenPrompt] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/threads", threadId],
@@ -61,6 +64,22 @@ export default function ThreadDetail() {
   const startEdit = (postId: string, currentContent: string) => {
     setEditingPostId(postId);
     setEditContent(currentContent);
+  };
+
+  const generateDraft = async () => {
+    setGenerating(true);
+    try {
+      const res = await apiRequest("POST", "/api/ai/generate-post", { threadId, prompt: generatePrompt.trim() || undefined });
+      const { content: generated } = await res.json();
+      setContent(generated);
+      setShowGenPrompt(false);
+      setGeneratePrompt("");
+      toast({ title: "Draft generated", description: "Review and edit before posting." });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const confirmDelete = (postId: string) => {
@@ -179,6 +198,28 @@ export default function ThreadDetail() {
         </div>
       ) : data?.isMember ? (
         <div className="bg-card border border-card-border rounded-md p-4">
+          {showGenPrompt && (
+            <div className="mb-3 bg-primary/5 border border-primary/20 rounded-md p-3">
+              <p className="text-xs text-muted-foreground mb-2 font-medium">Optional: give AI a direction for your draft</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={generatePrompt}
+                  onChange={e => setGeneratePrompt(e.target.value)}
+                  placeholder="e.g. focus on African regional context, or policy implications..."
+                  className="flex-1 text-sm bg-background border border-border rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                  onKeyDown={e => { if (e.key === "Enter") generateDraft(); }}
+                  data-testid="input-generate-prompt"
+                />
+                <Button size="sm" onClick={generateDraft} disabled={generating} data-testid="button-generate-draft">
+                  {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowGenPrompt(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
           <Textarea
             value={content}
             onChange={e => setContent(e.target.value)}
@@ -188,7 +229,14 @@ export default function ThreadDetail() {
             data-testid="input-post-content"
           />
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Contributions are moderated for professional relevance.</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">Moderated for professional relevance.</p>
+              {!showGenPrompt && (
+                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-muted-foreground" onClick={() => setShowGenPrompt(true)} disabled={generating} data-testid="button-show-generate">
+                  <Sparkles className="h-3 w-3" />Draft with AI
+                </Button>
+              )}
+            </div>
             <Button onClick={() => postMutation.mutate(content.trim())} disabled={!content.trim() || postMutation.isPending} data-testid="button-post-submit">
               {postMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
               Post
