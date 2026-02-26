@@ -497,11 +497,6 @@ Return ONLY valid JSON:
     res.json(table);
   });
 
-  app.get("/api/admin/table-requests", requireAdmin, async (req, res) => {
-    const requests = await storage.getAllTableRequests();
-    res.json(requests);
-  });
-
   // ─── Threads ──────────────────────────────────────────────────────────────
 
   app.get("/api/tables/:tableId/threads", requireActive, async (req, res) => {
@@ -1446,21 +1441,6 @@ Rules:
     }
   });
 
-  app.post("/api/admin/table-requests/:id/action", requireAdmin, async (req, res) => {
-    const { action } = req.body;
-    if (action === "APPROVE") {
-      const updated = await storage.updateTableRequestStatus(req.params.id, "APPROVED");
-      const table = await storage.createTable({ title: updated.title, purpose: updated.purpose, tags: updated.tags ?? [], createdByUserId: updated.requestedByUserId ?? undefined });
-      if (updated.requestedByUserId) await storage.addTableMember(table.id, updated.requestedByUserId, "HOST");
-      await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_REQUEST_APPROVED", targetType: "TABLE_REQUEST", targetId: req.params.id });
-      res.json({ request: updated, table });
-    } else if (action === "REJECT") {
-      const updated = await storage.updateTableRequestStatus(req.params.id, "DECLINED");
-      res.json(updated);
-    } else {
-      res.status(400).json({ error: "Unknown action" });
-    }
-  });
 
   app.post("/api/admin/users/:userId/invite-privileges", requireAdmin, async (req, res) => {
     const { canInvite, quota } = req.body;

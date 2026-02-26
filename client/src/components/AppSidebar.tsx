@@ -23,7 +23,6 @@ const adminNavItems = [
   { title: "Invitations", url: "/admin/invites", icon: MessageCircle },
   { title: "Invite Requests", url: "/admin/invite-requests", icon: ClipboardList },
   { title: "Tables", url: "/admin/tables", icon: Table2 },
-  { title: "Table Requests", url: "/admin/table-requests", icon: ClipboardList },
   { title: "Moderation", url: "/admin/moderation", icon: Shield },
   { title: "Calendar", url: "/admin/calendar", icon: Calendar },
   { title: "Feedback", url: "/admin/feedback", icon: CheckSquare },

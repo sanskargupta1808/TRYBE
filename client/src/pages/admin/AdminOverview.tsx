@@ -1,21 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Table2, MessageSquare, Shield, ChevronRight, ClipboardList, Star, TrendingUp, FileText, LayoutList } from "lucide-react";
+import { Users, Table2, MessageSquare, Shield, ChevronRight, Star, TrendingUp, FileText, LayoutList } from "lucide-react";
 
 export default function AdminOverview() {
   const { data: metrics, isLoading } = useQuery<any>({ queryKey: ["/api/admin/metrics"] });
   const { data: inviteRequests } = useQuery<any[]>({ queryKey: ["/api/admin/invite-requests"] });
-  const { data: tableRequests } = useQuery<any[]>({ queryKey: ["/api/admin/table-requests"] });
-
   const pendingInvites = (inviteRequests || []).filter(r => r.status === "PENDING").length;
-  const pendingTables = (tableRequests || []).filter(r => r.status === "PENDING").length;
 
   const primaryStats = [
     { label: "Total users", value: metrics?.totalUsers, icon: Users, link: "/admin/users" },
     { label: "Active members", value: metrics?.activeUsers, icon: Users, link: "/admin/users" },
     { label: "Pending approval", value: metrics?.pendingApproval, icon: Users, link: "/admin/users" },
-    { label: "Tables", value: metrics?.totalTables, icon: Table2, link: "/admin/table-requests" },
+    { label: "Tables", value: metrics?.totalTables, icon: Table2, link: "/admin/tables" },
     { label: "Feedback items", value: metrics?.totalFeedback, icon: Star, link: "/admin/feedback" },
     { label: "Open moderation", value: metrics?.openModerationItems, icon: Shield, link: "/admin/moderation" },
   ];
@@ -29,7 +26,6 @@ export default function AdminOverview() {
 
   const actions = [
     { label: "Invite requests", value: pendingInvites, suffix: "pending", link: "/admin/invites", icon: MessageSquare },
-    { label: "Table requests", value: pendingTables, suffix: "pending", link: "/admin/table-requests", icon: ClipboardList },
     { label: "Moderation queue", value: metrics?.openModerationItems, suffix: "open", link: "/admin/moderation", icon: Shield },
   ];
 

@@ -35,7 +35,6 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminInvites from "@/pages/admin/AdminInvites";
 import AdminInviteRequests from "@/pages/admin/AdminInviteRequests";
-import AdminTableRequests from "@/pages/admin/AdminTableRequests";
 import AdminTables from "@/pages/admin/AdminTables";
 import AdminModeration from "@/pages/admin/AdminModeration";
 import AdminCalendar from "@/pages/admin/AdminCalendar";
@@ -235,12 +234,6 @@ function Router() {
       <Route path="/admin/tables">
         <RequireAuth adminOnly>
           <AppLayout><AdminTables /></AppLayout>
-        </RequireAuth>
-      </Route>
-
-      <Route path="/admin/table-requests">
-        <RequireAuth adminOnly>
-          <AppLayout><AdminTableRequests /></AppLayout>
         </RequireAuth>
       </Route>
 
