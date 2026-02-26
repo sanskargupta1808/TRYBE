@@ -9,7 +9,7 @@ export default function AITransparency() {
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">TRYBE Assistant uses artificial intelligence to:</h2>
             <ul className="list-disc pl-4 space-y-1">
-              <li>Suggest relevant collaboration spaces</li>
+              <li>Suggest relevant tables</li>
               <li>Highlight milestones</li>
               <li>Summarise discussions</li>
               <li>Help draft messages</li>

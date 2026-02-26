@@ -89,7 +89,7 @@ export default function RequestTable() {
           <Input
             value={aiPrompt}
             onChange={e => setAiPrompt(e.target.value)}
-            placeholder="e.g. A collaboration space for WHO policy advisors focused on antimicrobial resistance..."
+            placeholder="e.g. A table for WHO policy advisors focused on antimicrobial resistance..."
             className="flex-1 text-sm"
             onKeyDown={e => { if (e.key === "Enter") generateProposal(); }}
             data-testid="input-ai-table-prompt"

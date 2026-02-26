@@ -156,9 +156,9 @@ export default function Messages() {
           <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
             <MessageSquare className="h-8 w-8 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground mb-5">You don't have any private conversations yet. You can start a conversation from within a collaboration space.</p>
+          <p className="text-sm text-muted-foreground mb-5">You don't have any private conversations yet. You can start a conversation from within a table.</p>
           <Link href="/app/tables">
-            <Button data-testid="button-view-tables-from-messages">Browse spaces</Button>
+            <Button data-testid="button-view-tables-from-messages">Browse tables</Button>
           </Link>
         </div>
       ) : (

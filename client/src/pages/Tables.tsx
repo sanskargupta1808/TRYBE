@@ -41,7 +41,7 @@ export default function Tables() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground heading-rule">Collaboration spaces</h1>
+          <h1 className="text-2xl font-semibold text-foreground heading-rule">Tables</h1>
           <p className="text-muted-foreground text-sm mt-2">Focused working areas organised by topic or initiative</p>
         </div>
         <Link href="/app/tables/request">
@@ -80,7 +80,7 @@ export default function Tables() {
       {/* My Tables */}
       {!search && !tagFilter && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-3">My spaces</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">My tables</h2>
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
           ) : (data?.all || []).filter((t: any) => myIds.has(t.id)).length === 0 ? (
@@ -88,7 +88,7 @@ export default function Tables() {
               <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
                 <Table2 className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground text-sm">You haven't joined any collaboration spaces yet.</p>
+              <p className="text-muted-foreground text-sm">You haven't joined any tables yet.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -118,7 +118,7 @@ export default function Tables() {
       {/* All / Suggested Tables */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          {search || tagFilter ? `Results (${tables.length})` : "Suggested spaces"}
+          {search || tagFilter ? `Results (${tables.length})` : "Suggested tables"}
         </h2>
         {isLoading ? (
           <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-28 rounded-md" />)}</div>

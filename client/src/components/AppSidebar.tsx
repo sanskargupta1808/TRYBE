@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 
 const appNavItems = [
   { title: "Dashboard", url: "/app", icon: Home },
-  { title: "Spaces", url: "/app/tables", icon: Table2 },
+  { title: "Tables", url: "/app/tables", icon: Table2 },
   { title: "Milestones", url: "/app/moments", icon: Calendar },
   { title: "Messages", url: "/app/messages", icon: MessageSquare },
   { title: "Invites", url: "/app/invites", icon: UserPlus },

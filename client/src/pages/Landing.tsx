@@ -71,7 +71,7 @@ export default function Landing() {
           </p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: Users, title: "Focused collaboration spaces", desc: "Purpose-driven working areas organised by topic or initiative." },
+              { icon: Users, title: "Focused tables", desc: "Purpose-driven working areas organised by topic or initiative." },
               { icon: Calendar, title: "A 2026 health milestone calendar", desc: "A curated set of awareness days, congresses, and policy windows." },
               { icon: Shield, title: "Professional moderation", desc: "Human-led oversight with AI assistance to maintain a trusted environment." },
               { icon: Bot, title: "A personal assistant that supports your work", desc: "Suggests, summarises, and drafts — but never acts without your approval." },
@@ -95,7 +95,7 @@ export default function Landing() {
             <p className="text-muted-foreground mb-6 leading-relaxed mt-4">Every member has access to TRYBE Assistant. It can:</p>
             <div className="space-y-3">
               {[
-                "Suggest relevant collaboration spaces",
+                "Suggest relevant tables",
                 "Highlight upcoming health milestones",
                 "Help you draft or refine messages",
                 "Summarise discussions",

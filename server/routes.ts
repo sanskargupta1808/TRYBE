@@ -948,7 +948,7 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
 
     if (!openai) {
       return res.json({
-        assistantText: "I'm here to support your work. Explore the Tables section to find collaboration spaces relevant to your focus.",
+        assistantText: "I'm here to support your work. Explore the Tables section to find tables relevant to your focus.",
         suggestedActions: [
           { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
           { type: "NAVIGATE", label: "View Moments", url: "/app/moments" },
@@ -1227,7 +1227,7 @@ Rules:
           if (!lastPost || now - lastPost > 10 * 86400000) {
             nudges.push({
               type: "INACTIVE_TABLE",
-              message: `The "${table.title}" collaboration space has been quiet recently. Would you like to re-engage?`,
+              message: `The "${table.title}" table has been quiet recently. Would you like to re-engage?`,
               tableId: table.id,
             });
           }

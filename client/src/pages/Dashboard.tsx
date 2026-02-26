@@ -95,7 +95,7 @@ export default function Dashboard() {
           <div className="relative overflow-hidden bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-2xl p-8 shadow-sm mt-4" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
             <p className="text-2xl font-semibold text-foreground mb-1 tracking-tight" data-testid="text-focus-title">{focusTable.title}</p>
             {focusTable.purpose && (
-              <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the collaboration space you're most active in.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the table you're most active in.</p>
             )}
             <div className="flex flex-wrap gap-2 mb-6">
               {(focusTable.tags || []).slice(0, 3).map((tag: string) => (
@@ -104,7 +104,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <Button size="lg" onClick={() => navigate(`/app/tables/${focusTable.id}`)} data-testid="button-open-focus">
-                Open collaboration space <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                Open table <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               {myTables.length > 1 && (
                 <Button variant="ghost" size="sm" onClick={() => setShowFocusSelector(true)} data-testid="button-change-focus">
@@ -122,14 +122,14 @@ export default function Dashboard() {
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-1">Get started</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-md mx-auto">
-              You're not in any collaboration spaces yet. Join a suggested space or request a new one.
+              You're not in any tables yet. Join a suggested table or request a new one.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link href="/app/tables">
-                <Button data-testid="button-browse-tables">Browse spaces</Button>
+                <Button data-testid="button-browse-tables">Browse tables</Button>
               </Link>
               <Link href="/app/tables/request">
-                <Button variant="outline" data-testid="button-request-table">Request a space</Button>
+                <Button variant="outline" data-testid="button-request-table">Request a table</Button>
               </Link>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Table2 className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Your collaboration spaces</h3>
+              <h3 className="text-sm font-semibold text-foreground">Your tables</h3>
             </div>
           </div>
           {tablesLoading ? (
