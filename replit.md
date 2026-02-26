@@ -134,13 +134,17 @@ TRYBE is a private, invite-only global health collaboration platform built for s
   19. Milestone Preparation — Context, Focus Areas, Stakeholder Types
   20. Draft Posts/Messages — professional, neutral, moderation-checked
   21. Surface Calendar Moments — relevance-matched upcoming events
+  22. Suggest Tables For Me — smart profile-based matching (interests × 3, regions × 2, role × 2, goal keywords × 1)
+  23. List All Tables — browse all platform tables
+  24. List Upcoming Milestones — next 90 days with user signal status
+  25. Get My Profile — read user's full profile/settings
 - **Activity Pattern Nudges** (GET /api/assistant/nudges):
   - Inactive tables (10+ days) → re-engagement suggestion
   - Upcoming milestones (within 30 days) → preparation prompt
   - Throttled: max 3/week; suppressed for QUIET activity level
 - **Personal Focus Review**: Every 30 days, prompts focus shift check
 - **Guardrails**: Refuses political positions, advocacy drafts, off-topic requests, medical advice
-- **Moderation**: All structured outputs run through OpenAI moderation API
+- **Moderation**: All structured outputs and all write tool content (thread titles, posts, DMs, table requests, feedback, invite notes) run through OpenAI moderation API. Flagged content is blocked with clear feedback to rephrase.
 - **Tone rules**: No exclamation marks, no emoji, no motivational/inspirational language, no corporate jargon
 - **Frontend**: Actions performed block (success/fail indicators), collapsible sections for structured content, nudge cards, focus review prompt
 - **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, pendingActions, suggestedActions

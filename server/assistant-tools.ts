@@ -8,6 +8,10 @@ export const READ_ONLY_TOOLS = new Set([
   "get_thread_summary",
   "list_my_tables",
   "list_my_conversations",
+  "suggest_tables_for_me",
+  "list_all_tables",
+  "list_upcoming_milestones",
+  "get_my_profile",
 ]);
 
 export const TOOL_LABELS: Record<string, string> = {
@@ -204,6 +208,54 @@ export const assistantTools: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "suggest_tables_for_me",
+      description: "Find and rank tables that best match the user's profile (interests, regions, health role, goals). Use when the user asks 'what tables should I join?', 'suggest tables', or 'what's relevant for me?'. Returns scored results with match reasons.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "integer", description: "Maximum number of suggestions to return (default 5)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_all_tables",
+      description: "List all available collaboration tables on the platform. Use when the user asks to browse or see all tables.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_upcoming_milestones",
+      description: "List upcoming health milestones and calendar events in the next 90 days. Use when the user asks about what's coming up or wants to see upcoming events.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "integer", description: "Maximum number of events to return (default 10)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_profile",
+      description: "Get the current user's profile, interests, regions, goals, and settings. Use when the user asks about their profile or you need to understand their preferences.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "search_tables",
       description: "Search for tables by topic, tag, or keyword. Use to help the user find relevant tables.",
       parameters: {
@@ -332,6 +384,8 @@ export async function executeTool(
         if (!table) return { success: false, message: "Table not found." };
         const isMember = await storage.isTableMember(args.tableId, userId);
         if (!isMember) return { success: false, message: `You need to be a member of "${table.title}" to start a discussion.` };
+        const titleMod = await ctx.moderateContent(args.title);
+        if (titleMod.flagged) return { success: false, message: "That thread title was flagged by moderation. Please rephrase." };
         const thread = await storage.createThread({
           tableId: args.tableId,
           title: args.title,
@@ -391,6 +445,9 @@ export async function executeTool(
       }
 
       case "request_new_table": {
+        const combinedText = `${args.title} ${args.purpose || ""} ${args.reason || ""}`;
+        const reqMod = await ctx.moderateContent(combinedText);
+        if (reqMod.flagged) return { success: false, message: "Your table request content was flagged by moderation. Please rephrase." };
         await storage.createTableRequest({
           title: args.title,
           purpose: args.purpose,
@@ -405,6 +462,10 @@ export async function executeTool(
         const inviteUser = await storage.getUserById(userId);
         if (!inviteUser) return { success: false, message: "User not found." };
         if (!inviteUser.canInvite) return { success: false, message: "Your invite privileges are currently disabled." };
+        if (args.note) {
+          const noteMod = await ctx.moderateContent(args.note);
+          if (noteMod.flagged) return { success: false, message: "Your invitation note was flagged by moderation. Please rephrase." };
+        }
         const quota = await storage.getUserInviteQuota(userId);
         if (quota.used >= quota.limit) return { success: false, message: `You've used all ${quota.limit} invites for this month. Your quota resets next month.` };
         const existingUser = await storage.getUserByEmail(args.email);
@@ -449,6 +510,8 @@ export async function executeTool(
       }
 
       case "submit_feedback": {
+        const fbMod = await ctx.moderateContent(args.message);
+        if (fbMod.flagged) return { success: false, message: "Your feedback content was flagged by moderation. Please rephrase." };
         await storage.createFeedback({
           userId,
           category: args.category,
@@ -599,6 +662,161 @@ export async function executeTool(
               otherUser: c.otherUser?.name || "Member",
               otherUserId: c.otherUser?.id,
             })),
+          },
+        };
+      }
+
+      case "suggest_tables_for_me": {
+        const profile = await storage.getUserProfile(userId);
+        const user = await storage.getUserById(userId);
+        const allTables = await storage.getAllTables();
+        const userTables = await storage.getTablesForUser(userId);
+        const userTableIds = new Set(userTables.map(t => t.id));
+        const available = allTables.filter(t => !userTableIds.has(t.id));
+
+        if (available.length === 0) {
+          return { success: true, message: "You are already a member of all available tables.", data: { suggestions: [] } };
+        }
+
+        const userInterests = (profile?.interests || []).map((i: string) => i.toLowerCase());
+        const userRegions = (profile?.regions || []).map((r: string) => r.toLowerCase());
+        const userRole = ((profile?.healthRole || "") + " " + (user?.roleTitle || "")).toLowerCase();
+        const userGoal = (profile?.currentGoal || "").toLowerCase();
+
+        const scored = available.map(table => {
+          const tags = (table.tags || []).map((t: string) => t.toLowerCase());
+          const titleLower = table.title.toLowerCase();
+          const purposeLower = table.purpose.toLowerCase();
+
+          let score = 0;
+          const reasons: string[] = [];
+
+          const interestMatches = userInterests.filter(i =>
+            tags.some(t => t.includes(i) || i.includes(t)) ||
+            titleLower.includes(i) || purposeLower.includes(i)
+          );
+          if (interestMatches.length > 0) {
+            score += interestMatches.length * 3;
+            reasons.push(`Matches your interest${interestMatches.length > 1 ? "s" : ""} in ${interestMatches.join(", ")}`);
+          }
+
+          const regionMatches = userRegions.filter(r =>
+            tags.some(t => t.includes(r) || r.includes(t)) ||
+            titleLower.includes(r) || purposeLower.includes(r)
+          );
+          if (regionMatches.length > 0) {
+            score += regionMatches.length * 2;
+            reasons.push(`Covers your region: ${regionMatches.join(", ")}`);
+          }
+
+          if (userRole && (titleLower.includes(userRole) || purposeLower.includes(userRole) || tags.some(t => userRole.includes(t)))) {
+            score += 2;
+            reasons.push("Relevant to your professional role");
+          }
+
+          if (userGoal) {
+            const goalWords = userGoal.split(/\s+/).filter(w => w.length > 3);
+            const goalMatches = goalWords.filter(w => titleLower.includes(w) || purposeLower.includes(w) || tags.some(t => t.includes(w)));
+            if (goalMatches.length > 0) {
+              score += goalMatches.length;
+              reasons.push("Aligns with your current goal");
+            }
+          }
+
+          if (reasons.length === 0) {
+            reasons.push("May broaden your collaboration network");
+          }
+
+          return { table, score, reason: reasons[0] };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+        const limit = Math.min(args.limit || 5, 10);
+        const top = scored.slice(0, limit);
+
+        return {
+          success: true,
+          message: `Found ${top.length} table suggestion${top.length !== 1 ? "s" : ""} based on your profile.`,
+          data: {
+            suggestions: top.map(s => ({
+              id: s.table.id,
+              title: s.table.title,
+              purpose: s.table.purpose,
+              tags: s.table.tags,
+              matchScore: s.score,
+              reason: s.reason,
+            })),
+          },
+        };
+      }
+
+      case "list_all_tables": {
+        const allTables = await storage.getAllTables();
+        const userTables = await storage.getTablesForUser(userId);
+        const userTableIds = new Set(userTables.map(t => t.id));
+        return {
+          success: true,
+          message: `There ${allTables.length === 1 ? "is" : "are"} ${allTables.length} table(s) on the platform.`,
+          data: {
+            tables: allTables.map(t => ({
+              id: t.id,
+              title: t.title,
+              purpose: t.purpose,
+              tags: t.tags,
+              isMember: userTableIds.has(t.id),
+            })),
+          },
+        };
+      }
+
+      case "list_upcoming_milestones": {
+        const allEvents = await storage.getAllCalendarEvents();
+        const today = new Date().toISOString().slice(0, 10);
+        const upcoming = allEvents
+          .filter(e => e.startDate >= today)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+          .slice(0, args.limit || 10);
+        if (upcoming.length === 0) {
+          return { success: true, message: "No upcoming milestones found.", data: { events: [] } };
+        }
+        const userSignals = await storage.getUserSignals(userId);
+        const signalMap = new Map(userSignals.map((s: any) => [s.eventId, s.signalType]));
+        return {
+          success: true,
+          message: `Found ${upcoming.length} upcoming milestone(s).`,
+          data: {
+            events: upcoming.map(e => ({
+              id: e.id,
+              title: e.title,
+              startDate: e.startDate,
+              endDate: e.endDate,
+              organiser: e.organiser,
+              tags: e.tags,
+              regionScope: e.regionScope,
+              yourSignal: signalMap.get(e.id) || null,
+            })),
+          },
+        };
+      }
+
+      case "get_my_profile": {
+        const profile = await storage.getUserProfile(userId);
+        const user = await storage.getUserById(userId);
+        return {
+          success: true,
+          message: "Here is your current profile.",
+          data: {
+            name: user?.name,
+            email: user?.email,
+            organisation: user?.organisation,
+            roleTitle: user?.roleTitle,
+            healthRole: profile?.healthRole,
+            interests: profile?.interests || [],
+            regions: profile?.regions || [],
+            collaborationMode: profile?.collaborationMode || "OBSERVE",
+            assistantActivityLevel: profile?.assistantActivityLevel || "BALANCED",
+            currentGoal: profile?.currentGoal || null,
+            onboardingComplete: profile?.onboardingComplete || false,
           },
         };
       }
