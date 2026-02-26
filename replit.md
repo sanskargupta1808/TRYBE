@@ -109,7 +109,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 ## TRYBE Assistant OMNI (Phase 3 — Full Automation)
 - **Core identity**: Calm, professional, neutral. Human-led, AI-supported. Your intelligent companion in TRYBE.
 - **Architecture**: OpenAI function calling with tool loop (max 5 iterations). GPT-4o-mini with 17 registered tools.
-- **Key files**: `server/assistant-tools.ts` (tool definitions + execution), `server/routes.ts` (assistant endpoint), `client/src/components/AssistantPanel.tsx` (UI)
+- **Key files**: `server/assistant-tools.ts` (tool definitions + execution), `server/context-builder.ts` (intent classification, profile/data builders, thread memory, conversation compression), `server/routes.ts` (assistant endpoint), `client/src/components/AssistantPanel.tsx` (UI)
 - **Capabilities — Actions (via function calling)**:
   1. `join_table` / `leave_table` — Join or leave tables on behalf of the user
   2. `create_thread` — Start new discussions inside tables
@@ -149,6 +149,12 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Frontend**: Actions performed block (success/fail indicators), collapsible sections for structured content, nudge cards, focus review prompt
 - **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, pendingActions, suggestedActions
 - **Confirmation flow**: Write tools (join_table, create_thread, post_in_thread, etc.) are collected as `pendingActions` and presented to the user for approval before execution. Read-only tools (search, list, get) execute immediately. User approves → POST `/api/assistant/execute` executes the actions. User declines → no changes made.
+- **Context builder** (`server/context-builder.ts`):
+  - Intent classification: keyword-based classifier (thread_discussion, table_management, dm_chat, event_inquiry, strategic_guidance, profile_settings, invitation, feedback, general) — used for tool selection, NOT for data gating
+  - Full data injection: user profile (all interests, regions, role, goal), user's tables (names + IDs), available tables (names + IDs + tags, up to 10), upcoming events (next 90 days, up to 5), always-loaded page context (thread summary/table detail)
+  - Intent-based tool selection: all read-only tools always available + intent-specific write tools
+  - Thread memory: rolling AI summaries stored in `thread_memory` table; threads ≤5 posts get raw content, larger threads get cached summary (auto-refreshed when new posts arrive)
+  - Conversation compression: last 6 messages sent raw, older messages condensed into topic-level summary
 - **Chat persistence**: Current conversation stored in `sessionStorage` (key: `trybe_assistant_messages`). Survives drawer close/reopen and page navigation. Clears on tab close or "New conversation" button. Backend accepts last 20 messages as history context.
 - **Cache invalidation**: After tool actions, frontend invalidates relevant query caches (tables, profile, messages, invites, calendar)
 - **Max tokens**: 1500

@@ -46,46 +46,26 @@ const INTENT_KEYWORDS: Record<Intent, string[]> = {
   general: [],
 };
 
-const TOOL_GROUPS: Record<string, string[]> = {
-  core: [
-    "get_my_profile", "suggest_tables_for_me",
-  ],
-  tables: [
-    "join_table", "leave_table", "search_tables", "list_all_tables",
-    "get_table_details", "list_my_tables", "request_new_table",
-    "suggest_tables_for_me",
-  ],
-  threads: [
-    "create_thread", "post_in_thread", "get_thread_summary",
-    "get_table_details", "list_my_tables",
-  ],
-  messaging: [
-    "send_direct_message", "list_my_conversations", "search_members",
-  ],
-  events: [
-    "list_upcoming_milestones", "search_milestones", "signal_milestone",
-  ],
-  profile: [
-    "get_my_profile", "update_profile",
-  ],
-  invites: [
-    "send_invite",
-  ],
-  feedback: [
-    "submit_feedback",
-  ],
-};
+const ALWAYS_AVAILABLE_TOOLS = [
+  "get_my_profile", "suggest_tables_for_me", "search_tables", "search_members",
+  "search_milestones", "list_my_tables", "list_all_tables", "list_upcoming_milestones",
+  "list_my_conversations", "get_table_details", "get_thread_summary",
+];
 
-const INTENT_TOOL_MAP: Record<Intent, string[]> = {
-  thread_discussion: [...TOOL_GROUPS.threads, ...TOOL_GROUPS.core],
-  table_management: [...TOOL_GROUPS.tables, ...TOOL_GROUPS.core],
-  dm_chat: [...TOOL_GROUPS.messaging, ...TOOL_GROUPS.core],
-  event_inquiry: [...TOOL_GROUPS.events, ...TOOL_GROUPS.core],
-  strategic_guidance: [...TOOL_GROUPS.threads, ...TOOL_GROUPS.tables, ...TOOL_GROUPS.events, ...TOOL_GROUPS.core],
-  profile_settings: [...TOOL_GROUPS.profile],
-  invitation: [...TOOL_GROUPS.invites, ...TOOL_GROUPS.core],
-  feedback: [...TOOL_GROUPS.feedback],
-  general: Object.values(TOOL_GROUPS).flat(),
+const INTENT_EXTRA_TOOLS: Record<Intent, string[]> = {
+  thread_discussion: ["create_thread", "post_in_thread"],
+  table_management: ["join_table", "leave_table", "request_new_table"],
+  dm_chat: ["send_direct_message"],
+  event_inquiry: ["signal_milestone"],
+  strategic_guidance: ["create_thread", "post_in_thread", "join_table"],
+  profile_settings: ["update_profile"],
+  invitation: ["send_invite"],
+  feedback: ["submit_feedback"],
+  general: [
+    "join_table", "leave_table", "create_thread", "post_in_thread",
+    "send_direct_message", "signal_milestone", "request_new_table",
+    "send_invite", "update_profile", "submit_feedback",
+  ],
 };
 
 export function classifyIntent(message: string, context?: { tableId?: string; threadId?: string; page?: string }): Intent {
@@ -111,76 +91,85 @@ export function classifyIntent(message: string, context?: { tableId?: string; th
 }
 
 export function getToolsForIntent(intent: Intent): ToolDefinition[] {
-  const allowedNames = new Set(INTENT_TOOL_MAP[intent]);
+  const allowedNames = new Set([
+    ...ALWAYS_AVAILABLE_TOOLS,
+    ...(INTENT_EXTRA_TOOLS[intent] || []),
+  ]);
   const filtered = assistantTools.filter(t => allowedNames.has(t.function.name));
   return filtered.length > 0 ? filtered : assistantTools;
 }
 
-export function buildMicroProfile(user: any, profile: any): string {
-  const parts: string[] = [];
+export function buildUserProfile(user: any, profile: any): string {
+  const lines: string[] = [];
 
-  parts.push(`Name: ${user?.name || "Unknown"}`);
+  lines.push(`Name: ${user?.name || "Unknown"}`);
+  if (user?.organisation) lines.push(`Organisation: ${user.organisation}`);
 
   const roleParts = [user?.roleTitle, profile?.healthRole].filter(Boolean);
-  if (roleParts.length > 0) parts.push(`Role: ${roleParts.join(" / ")}`);
-  if (user?.organisation) parts.push(`Org: ${user.organisation}`);
+  if (roleParts.length > 0) lines.push(`Role: ${roleParts.join(" / ")}`);
 
   if (profile?.interests?.length) {
-    const primary = profile.interests[0];
-    if (profile.interests.length === 1) {
-      parts.push(`Focus: ${primary}`);
-    } else {
-      parts.push(`Focus: ${primary} (+${profile.interests.length - 1} more — use get_my_profile for full list)`);
-    }
+    lines.push(`Interests: ${profile.interests.join(", ")}`);
   }
 
   if (profile?.regions?.length) {
-    parts.push(`Region: ${profile.regions.slice(0, 2).join(", ")}${profile.regions.length > 2 ? ` (+${profile.regions.length - 2})` : ""}`);
+    lines.push(`Regions: ${profile.regions.join(", ")}`);
   }
 
   if (profile?.currentGoal) {
-    const goal = profile.currentGoal.length > 80 ? profile.currentGoal.slice(0, 77) + "..." : profile.currentGoal;
-    parts.push(`Goal: ${goal}`);
+    lines.push(`Goal: ${profile.currentGoal}`);
   }
 
-  parts.push(`Mode: ${profile?.collaborationMode || "OBSERVE"}`);
+  lines.push(`Collaboration mode: ${profile?.collaborationMode || "OBSERVE"}`);
+  lines.push(`Assistant activity: ${profile?.assistantActivityLevel || "BALANCED"}`);
 
-  return parts.join(" | ");
+  return lines.join("\n");
 }
 
-export function buildContextCounts(
-  userTableCount: number,
-  leadTableCount: number,
-  upcomingEventCount: number,
-  conversationCount: number
-): string {
-  const lines: string[] = [];
-  lines.push(`Tables: member of ${userTableCount}${leadTableCount > 0 ? `, lead of ${leadTableCount}` : ""}`);
-  lines.push(`Upcoming events (30 days): ${upcomingEventCount}`);
-  lines.push(`Active conversations: ${conversationCount}`);
-  return lines.join(" | ");
+export function buildMyTablesSummary(tables: any[]): string {
+  if (!tables || tables.length === 0) return "None yet";
+  return tables.map(t => `- ${t.title} (ID: ${t.id})`).join("\n");
+}
+
+export function buildAvailableTablesSummary(allTables: any[], myTableIds: Set<string>): string {
+  const available = allTables.filter(t => !myTableIds.has(t.id));
+  if (available.length === 0) return "None — user is in all available tables";
+  return available.slice(0, 10).map(t =>
+    `- ${t.title} (ID: ${t.id})${(t.tags || []).length > 0 ? ` | Tags: ${(t.tags || []).join(", ")}` : ""}`
+  ).join("\n");
+}
+
+export function buildUpcomingEventsSummary(events: any[]): string {
+  if (!events || events.length === 0) return "None in the next 90 days";
+  const today = new Date().toISOString().slice(0, 10);
+  const cutoff = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+  const upcoming = events
+    .filter(e => e.startDate >= today && e.startDate <= cutoff)
+    .slice(0, 5)
+    .map(e => `- ${e.title} (${e.startDate})${e.organiser ? ` — ${e.organiser}` : ""}${e.tags?.length ? ` [${e.tags.join(", ")}]` : ""}`);
+  if (upcoming.length === 0) return "None in the next 90 days";
+  return upcoming.join("\n");
 }
 
 export function compressConversationHistory(
-  history: { role: string; content: string }[],
-  openai: any | null
+  history: { role: string; content: string }[]
 ): { recentMessages: { role: string; content: string }[]; summaryPrefix: string | null } {
   if (!history || history.length === 0) {
     return { recentMessages: [], summaryPrefix: null };
   }
 
-  if (history.length <= 4) {
+  if (history.length <= 6) {
     return { recentMessages: history, summaryPrefix: null };
   }
 
-  const recent = history.slice(-4);
-  const older = history.slice(0, -4);
+  const recent = history.slice(-6);
+  const older = history.slice(0, -6);
 
   const summaryLines: string[] = [];
   for (const msg of older) {
     const prefix = msg.role === "user" ? "User asked about" : "Assistant helped with";
-    const trimmed = msg.content.slice(0, 60).replace(/\n/g, " ");
-    summaryLines.push(`${prefix}: ${trimmed}${msg.content.length > 60 ? "..." : ""}`);
+    const trimmed = msg.content.slice(0, 80).replace(/\n/g, " ");
+    summaryLines.push(`${prefix}: ${trimmed}${msg.content.length > 80 ? "..." : ""}`);
   }
 
   const summary = `CONVERSATION CONTEXT (${older.length} earlier exchanges):\n${summaryLines.join("\n")}`;
