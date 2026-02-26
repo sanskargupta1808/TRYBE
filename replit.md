@@ -24,7 +24,11 @@ The platform employs a "quietly confident" aesthetic with a professional, calm, 
 - **Messaging**: Chat bubbles are styled with `rounded-2xl` and specific padding for a warmer feel.
 - **The TRYBE Assistant** is implemented as a floating drawer on the right side, triggered by a top-bar button, and not permanently visible.
 - **Dashboard**: Features a "Your current focus" hero card leading to a primary CTA, with a secondary grid for My Tables, Upcoming Moments, and Messages.
-- **Empty States**: Designed with a 1-line explanation and a single action button for clarity.
+- **Empty States**: Designed with a 1-line explanation and a single action button for clarity, with radial gradient icon backgrounds and generous padding.
+- **Focus Card**: Premium treatment with left accent bar (3px primary/40), warm gradient background, shimmer highlight line at top, and size="lg" CTA button.
+- **Tag Colours**: Eight-colour tag system (warm/teal/violet/sky/rose/lime/amber/slate) with dark mode variants, applied to badges across tables, moments, and profiles.
+- **Sidebar Polish**: Fade separators instead of hard borders, active nav accent bar, avatar ring on hover, subtle background tint.
+- **Auth Pages**: Dot grid background pattern with radial glow behind logo, card containers with shadow.
 
 **Technical Implementations**:
 - **Authentication**: Session-based authentication using `express-session`. Users register with an invite code and are auto-approved as ACTIVE. Password reset available via email token flow (forgot-password) and directly from Settings (change-password with current password verification). All password fields use a reusable `PasswordInput` component with show/hide toggle.

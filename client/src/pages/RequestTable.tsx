@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, Sparkles, Plus, X } from "lucide-react";
 
 const COMMON_TAGS = ["rare-disease", "cancer", "diabetes", "mental-health", "HIV/AIDS", "TB", "AMR", "policy", "research", "advocacy", "Global", "Europe", "Africa", "Asia"];
 
@@ -18,9 +18,25 @@ export default function RequestTable() {
   const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[] });
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [customTagInput, setCustomTagInput] = useState("");
 
   const toggleTag = (tag: string) =>
     setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
+
+  const addCustomTag = () => {
+    const tag = customTagInput.trim();
+    if (!tag) return;
+    if (form.tags.includes(tag)) {
+      toast({ title: "Tag already added", variant: "destructive" });
+      return;
+    }
+    if (form.tags.length >= 10) {
+      toast({ title: "Maximum 10 tags allowed", variant: "destructive" });
+      return;
+    }
+    setForm(f => ({ ...f, tags: [...f.tags, tag] }));
+    setCustomTagInput("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +60,7 @@ export default function RequestTable() {
     try {
       const res = await apiRequest("POST", "/api/ai/generate-table", { prompt: aiPrompt.trim() });
       const data = await res.json();
-      const tags = Array.isArray(data.tags) ? data.tags.filter((t: string) => COMMON_TAGS.includes(t)) : [];
+      const tags = Array.isArray(data.tags) ? data.tags.slice(0, 10) : [];
       setForm({
         title: data.title || "",
         purpose: (data.purpose || "").slice(0, 240),
@@ -118,15 +134,41 @@ export default function RequestTable() {
         </div>
         <div>
           <Label className="mb-1.5">Scope tags</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             {COMMON_TAGS.map(tag => (
               <button type="button" key={tag} onClick={() => toggleTag(tag)}
-                className={`text-xs px-2.5 py-1 rounded-md border ${form.tags.includes(tag) ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
+                className={`text-xs px-2.5 py-1 rounded-md border chip-press ${form.tags.includes(tag) ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover-elevate"}`}
                 data-testid={`tag-${tag}`}>
                 {tag}
               </button>
             ))}
           </div>
+          <div className="flex gap-2 items-center">
+            <Input
+              value={customTagInput}
+              onChange={e => setCustomTagInput(e.target.value)}
+              placeholder="Add a custom tag..."
+              className="flex-1 text-sm"
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
+              data-testid="input-custom-tag"
+            />
+            <Button type="button" size="sm" variant="outline" onClick={addCustomTag} disabled={!customTagInput.trim()} data-testid="button-add-custom-tag">
+              <Plus className="h-3.5 w-3.5 mr-1" />Add
+            </Button>
+          </div>
+          {form.tags.filter(t => !COMMON_TAGS.includes(t)).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {form.tags.filter(t => !COMMON_TAGS.includes(t)).map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border bg-primary text-primary-foreground border-primary">
+                  {tag}
+                  <button type="button" onClick={() => toggleTag(tag)} className="hover:opacity-70" data-testid={`remove-tag-${tag}`}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-1.5">{form.tags.length}/10 tags selected</p>
         </div>
         <Button type="submit" disabled={loading} className="w-full" data-testid="button-create-table">
           {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create table

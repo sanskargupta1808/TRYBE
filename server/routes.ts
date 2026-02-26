@@ -446,10 +446,10 @@ Return ONLY valid JSON:
   // ─── Tables ───────────────────────────────────────────────────────────────
 
   app.get("/api/tables", requireActive, async (req, res) => {
+    const search = (req.query.search as string || "").trim().toLowerCase();
     const allTables = await storage.getAllTables();
     const myTables = await storage.getTablesForUser(req.session.userId!);
     const myIds = new Set(myTables.map(t => t.id));
-    // Rank suggested tables by overlap with user's profile
     const profile = await storage.getUserProfile(req.session.userId!);
     const userInterests = new Set([
       ...(profile?.interests || []).map((s: string) => s.toLowerCase()),
@@ -467,7 +467,10 @@ Return ONLY valid JSON:
       if (aMember !== bMember) return aMember - bMember;
       return b._score - a._score;
     });
-    const clean = scored.map(({ _score, ...t }) => t);
+    const filtered = search
+      ? scored
+      : scored.filter(t => myIds.has(t.id) || t._score > 0);
+    const clean = filtered.map(({ _score, ...t }) => t);
     res.json({ all: clean, myTableIds: Array.from(myIds) });
   });
   app.get("/api/tables/my", requireActive, async (req, res) => {
@@ -487,10 +490,6 @@ Return ONLY valid JSON:
     if (!table) return res.status(404).json({ error: "Not found" });
     const already = await storage.isTableMember(req.params.id, req.session.userId!);
     if (already) return res.status(400).json({ error: "Already a member" });
-    if (table.requiresApprovalToJoin) {
-      const req_ = await storage.createTableJoinRequest(req.params.id, req.session.userId!);
-      return res.json({ status: "requested", request: req_ });
-    }
     const member = await storage.addTableMember(req.params.id, req.session.userId!);
     await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_JOINED", targetType: "TABLE", targetId: req.params.id });
     res.json({ status: "joined", member });
@@ -589,18 +588,29 @@ Return ONLY valid JSON:
     res.json(posts);
   });
   app.post("/api/threads/:threadId/posts", requireActive, async (req, res) => {
-    const { content } = req.body;
-    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const { content, fileUrl, fileName, fileMimeType } = req.body;
+    const hasFile = !!fileUrl;
+    if (!content?.trim() && !hasFile) return res.status(400).json({ error: "Content or attachment required" });
     const thread = await storage.getThreadById(req.params.threadId);
     if (!thread) return res.status(404).json({ error: "Thread not found" });
     const isMember = await storage.isTableMember(thread.tableId, req.session.userId!);
     if (!isMember) return res.status(403).json({ error: "You must be a table member to post in this thread" });
-    const mod = await moderateContent(content);
-    if (mod.flagged) {
-      await storage.createModerationItem({ contentType: "POST_ATTEMPT", contentId: req.params.threadId, reason: mod.reason || "Flagged by moderation", reportedByUserId: req.session.userId });
-      return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase and try again." });
+    if (content?.trim()) {
+      const mod = await moderateContent(content);
+      if (mod.flagged) {
+        await storage.createModerationItem({ contentType: "POST_ATTEMPT", contentId: req.params.threadId, reason: mod.reason || "Flagged by moderation", reportedByUserId: req.session.userId });
+        return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase and try again." });
+      }
     }
-    const post = await storage.createPost({ threadId: req.params.threadId, userId: req.session.userId, content, moderationStatus: "CLEAN" });
+    const post = await storage.createPost({
+      threadId: req.params.threadId,
+      userId: req.session.userId,
+      content: content?.trim() || "",
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
+      fileMimeType: fileMimeType || null,
+      moderationStatus: "CLEAN",
+    });
     res.json(post);
   });
   app.post("/api/posts/:id/flag", requireActive, async (req, res) => {

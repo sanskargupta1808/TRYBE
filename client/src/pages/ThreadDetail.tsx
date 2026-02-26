@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check, Sparkles, Paperclip, Image as ImageIcon } from "lucide-react";
 
 export default function ThreadDetail() {
   const { tableId, threadId } = useParams<{ tableId: string; threadId: string }>();
@@ -21,6 +21,8 @@ export default function ThreadDetail() {
   const [generatePrompt, setGeneratePrompt] = useState("");
   const [showGenPrompt, setShowGenPrompt] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/threads", threadId],
@@ -29,10 +31,46 @@ export default function ThreadDetail() {
   });
 
   const postMutation = useMutation({
-    mutationFn: async (c: string) => { const res = await apiRequest("POST", `/api/threads/${threadId}/posts`, { content: c }); return res.json(); },
+    mutationFn: async (payload: { content: string; fileUrl?: string; fileName?: string; fileMimeType?: string }) => {
+      const res = await apiRequest("POST", `/api/threads/${threadId}/posts`, payload);
+      return res.json();
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/threads", threadId] }); setContent(""); },
     onError: (err: any) => toast({ title: "Could not post", description: err.message, variant: "destructive" }),
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = file.type.startsWith("image/") || file.type.startsWith("video/");
+    if (!allowed) {
+      toast({ title: "Only images and videos are supported", variant: "destructive" });
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: "File too large (max 50MB)", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      const result = await res.json();
+      postMutation.mutate({
+        content: content.trim(),
+        fileUrl: result.url,
+        fileName: result.fileName,
+        fileMimeType: result.mimeType,
+      });
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const editMutation = useMutation({
     mutationFn: async ({ id, content: c }: { id: string; content: string }) => {
@@ -183,7 +221,31 @@ export default function ThreadDetail() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                <div>
+                  {post.content && <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>}
+                  {post.fileUrl && post.fileMimeType?.startsWith("image/") && (
+                    <img
+                      src={post.fileUrl}
+                      alt={post.fileName || "Image"}
+                      className="mt-2 rounded-lg max-w-full max-h-80 object-contain cursor-pointer border border-border"
+                      onClick={() => window.open(post.fileUrl, "_blank")}
+                      data-testid={`img-post-${post.id}`}
+                    />
+                  )}
+                  {post.fileUrl && post.fileMimeType?.startsWith("video/") && (
+                    <video
+                      src={post.fileUrl}
+                      controls
+                      className="mt-2 rounded-lg max-w-full max-h-80 border border-border"
+                      data-testid={`video-post-${post.id}`}
+                    />
+                  )}
+                  {post.fileUrl && !post.fileMimeType?.startsWith("image/") && !post.fileMimeType?.startsWith("video/") && (
+                    <a href={post.fileUrl} target="_blank" rel="noreferrer" className="mt-2 flex items-center gap-1.5 text-sm text-primary hover:underline" data-testid={`file-post-${post.id}`}>
+                      <Paperclip className="h-3.5 w-3.5" />{post.fileName || "Attachment"}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           ))
@@ -237,10 +299,23 @@ export default function ThreadDetail() {
                 </Button>
               )}
             </div>
-            <Button onClick={() => postMutation.mutate(content.trim())} disabled={!content.trim() || postMutation.isPending} data-testid="button-post-submit">
-              {postMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
-              Post
-            </Button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={handleFileUpload}
+                data-testid="input-thread-file"
+              />
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Attach image or video" data-testid="button-attach-file">
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4 text-muted-foreground" />}
+              </Button>
+              <Button onClick={() => postMutation.mutate({ content: content.trim() })} disabled={!content.trim() || postMutation.isPending} data-testid="button-post-submit">
+                {postMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+                Post
+              </Button>
+            </div>
           </div>
         </div>
       ) : (

@@ -403,6 +403,27 @@
     transform: scale(0.95);
   }
 
+  .focus-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .focus-shimmer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.25) 30%,
+      hsl(var(--primary) / 0.4) 50%,
+      hsl(var(--primary) / 0.25) 70%,
+      transparent
+    );
+  }
+
   .moment-accent-bar {
     position: relative;
   }

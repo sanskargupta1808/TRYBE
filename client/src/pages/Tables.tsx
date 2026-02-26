@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, Users, ChevronRight, Lock, Table2 } from "lucide-react";
+import { Search, Plus, Users, ChevronRight, Table2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { tagColour } from "@/lib/utils";
 
@@ -124,8 +124,12 @@ export default function Tables() {
         {isLoading ? (
           <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-28 rounded-md" />)}</div>
         ) : tables.filter((t: any) => !myIds.has(t.id)).length === 0 && !search && !tagFilter ? (
-          <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
-            <p className="text-muted-foreground text-sm">You're in all available tables! Check back as new ones are added.</p>
+          <div className="bg-muted/30 border border-border rounded-xl p-8 text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }}>
+              <Table2 className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground text-sm mb-1">No more tables match your interests right now.</p>
+            <p className="text-xs text-muted-foreground">Update your profile interests in Settings, or create a new table.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -142,11 +146,6 @@ export default function Tables() {
                           <Users className="h-3 w-3" />{table.memberCount} {table.memberCount === 1 ? "member" : "members"}
                         </span>
                       )}
-                      {table.requiresApprovalToJoin && (
-                        <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
-                          <Lock className="h-3 w-3" />By request
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
@@ -155,7 +154,7 @@ export default function Tables() {
                     </Link>
                     {!myIds.has(table.id) && (
                       <Button size="sm" onClick={() => joinMutation.mutate(table.id)} disabled={joinMutation.isPending} data-testid={`button-join-${table.id}`}>
-                        {table.requiresApprovalToJoin ? "Request to join" : "Join"}
+                        Join
                       </Button>
                     )}
                   </div>

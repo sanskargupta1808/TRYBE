@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, UserCheck } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail } from "lucide-react";
 import { tagColour } from "@/lib/utils";
 
 export default function TableDetail() {
@@ -67,28 +67,6 @@ export default function TableDetail() {
 
   const isHost = (data?.members || []).some(({ user: u, member }: any) => u?.id === user?.id && member?.memberRole === "HOST");
 
-  const { data: joinRequests = [] } = useQuery<any[]>({
-    queryKey: ["/api/tables", id, "join-requests"],
-    queryFn: async () => { const res = await fetch(`/api/tables/${id}/join-requests`, { credentials: "include" }); if (!res.ok) return []; return res.json(); },
-    enabled: isHost,
-    refetchInterval: 30000,
-  });
-
-  const pendingRequests = (joinRequests as any[]).filter((r: any) => r.request?.status === "PENDING");
-
-  const joinRequestMutation = useMutation({
-    mutationFn: async ({ reqId, action }: { reqId: string; action: "approve" | "decline" }) => {
-      const res = await apiRequest("POST", `/api/tables/${id}/join-requests/${reqId}/${action}`, {});
-      return res.json();
-    },
-    onSuccess: (_, { action }) => {
-      qc.invalidateQueries({ queryKey: ["/api/tables", id, "join-requests"] });
-      qc.invalidateQueries({ queryKey: ["/api/tables", id] });
-      toast({ title: action === "approve" ? "Member approved" : "Request declined" });
-    },
-    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
-  });
-
   if (isLoading) return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
       <Skeleton className="h-8 w-48" />
@@ -116,7 +94,7 @@ export default function TableDetail() {
               </Button>
             ) : (
               <Button size="sm" onClick={() => joinMutation.mutate()} disabled={joinMutation.isPending} data-testid="button-join-table">
-                {joinMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : (data.requiresApprovalToJoin ? "Request to join" : "Join table")}
+                {joinMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Join table"}
               </Button>
             )}
           </div>
@@ -163,39 +141,6 @@ export default function TableDetail() {
           ))}
         </div>
       </section>
-
-      {/* Join Requests — visible to HOST only */}
-      {isHost && pendingRequests.length > 0 && (
-        <section className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <UserCheck className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-muted-foreground">Join requests ({pendingRequests.length})</h2>
-          </div>
-          <div className="space-y-2">
-            {pendingRequests.map(({ request, user: u }: any) => (
-              <div key={request.id} className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 rounded-md px-3 py-2.5" data-testid={`card-join-request-${request.id}`}>
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary text-xs font-medium">{u?.name?.charAt(0)}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm text-foreground font-medium">{u?.name}</p>
-                    {u?.organisation && <p className="text-xs text-muted-foreground">{u.organisation}</p>}
-                  </div>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Button size="sm" onClick={() => joinRequestMutation.mutate({ reqId: request.id, action: "approve" })} disabled={joinRequestMutation.isPending} data-testid={`button-approve-join-${request.id}`}>
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => joinRequestMutation.mutate({ reqId: request.id, action: "decline" })} disabled={joinRequestMutation.isPending} data-testid={`button-decline-join-${request.id}`}>
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Threads */}
       <section className="animate-fade-in-up stagger-2">

@@ -93,7 +93,7 @@ export default function Dashboard() {
       ) : focusTable ? (
         <section className="mb-10 animate-fade-in-up stagger-1" data-testid="section-focus">
           <h2 className="text-sm font-medium text-muted-foreground mb-2 heading-rule">Your current focus</h2>
-          <div className="relative overflow-hidden bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-2xl p-8 shadow-sm mt-4" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
+          <div className="relative bg-card border-l-[3px] border-l-primary/40 border border-card-border rounded-2xl p-8 shadow-sm mt-4 focus-shimmer" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.04), transparent 60%)' }}>
             <p className="text-2xl font-semibold text-foreground mb-1 tracking-tight" data-testid="text-focus-title">{focusTable.title}</p>
             {focusTable.purpose && (
               <p className="text-sm text-muted-foreground leading-relaxed mb-1">This is the table you're most active in.</p>
