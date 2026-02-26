@@ -476,8 +476,23 @@ Return ONLY valid JSON:
     ]);
     const scored = allTables.map(t => {
       const tableTags = (t.tags || []).map((s: string) => s.toLowerCase());
-      const overlap = tableTags.filter(tag => userInterests.has(tag)).length;
-      return { ...t, _score: overlap };
+      const exactOverlap = tableTags.filter(tag => userInterests.has(tag)).length;
+      let partialScore = 0;
+      if (exactOverlap === 0) {
+        for (const tag of tableTags) {
+          for (const interest of userInterests) {
+            if (tag.includes(interest) || interest.includes(tag)) {
+              partialScore += 0.5;
+            } else {
+              const words = interest.split(/[\s\/]+/).filter(w => w.length > 2);
+              if (words.some(w => tag.includes(w) || tag.split(/[\s\/]+/).some(tw => tw.includes(w)))) {
+                partialScore += 0.3;
+              }
+            }
+          }
+        }
+      }
+      return { ...t, _score: exactOverlap + partialScore };
     });
     scored.sort((a, b) => {
       const aMember = myIds.has(a.id) ? 0 : 1;
@@ -485,9 +500,20 @@ Return ONLY valid JSON:
       if (aMember !== bMember) return aMember - bMember;
       return b._score - a._score;
     });
-    const filtered = search
-      ? scored
-      : scored.filter(t => myIds.has(t.id) || t._score > 0);
+    let filtered;
+    if (search) {
+      filtered = scored;
+    } else {
+      const matched = scored.filter(t => myIds.has(t.id) || t._score > 0);
+      if (matched.length >= 5) {
+        filtered = matched;
+      } else {
+        const recommended = scored
+          .filter(t => !myIds.has(t.id) && t._score === 0)
+          .slice(0, 10 - matched.length);
+        filtered = [...matched, ...recommended];
+      }
+    }
     const clean = filtered.map(({ _score, ...t }) => t);
     res.json({ all: clean, myTableIds: Array.from(myIds) });
   });
