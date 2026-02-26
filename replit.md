@@ -27,7 +27,7 @@ The platform employs a "quietly confident" aesthetic with a professional, calm, 
 - **Empty States**: Designed with a 1-line explanation and a single action button for clarity.
 
 **Technical Implementations**:
-- **Authentication**: Session-based authentication using `express-session`. Users register with an invite code and are auto-approved as ACTIVE.
+- **Authentication**: Session-based authentication using `express-session`. Users register with an invite code and are auto-approved as ACTIVE. Password reset available via email token flow (forgot-password) and directly from Settings (change-password with current password verification). All password fields use a reusable `PasswordInput` component with show/hide toggle.
 - **Table Management**: Users can directly create collaboration tables without admin approval. An automated cleanup process removes inactive tables (no posts for 14+ days) and past calendar events every 6 hours.
 - **TRYBE Assistant OMNI**: Utilizes OpenAI function calling with a tool loop and 17 registered tools for actions (e.g., join/leave tables, create threads, send DMs, create tables, send invites, update profile, submit feedback) and information retrieval (e.g., search tables/milestones/members, get table/thread details). It also supports analysis and drafting capabilities like summarizing threads, strategic reflection, and drafting posts. All write actions require user confirmation.
 - **Context Builder**: The server's `context-builder.ts` handles intent classification, profile and data injection, thread memory (rolling AI summaries), and conversation compression.

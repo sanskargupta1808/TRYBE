@@ -5,13 +5,94 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, User, Bot, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, User, Bot, RefreshCw, Trash2, KeyRound } from "lucide-react";
 
 const DISEASE_AREAS = ["Cancer", "Rare Disease", "Diabetes", "Mental Health", "HIV/AIDS", "TB", "AMR", "Cardiovascular", "Respiratory", "NCD Prevention", "Neurology", "Paediatrics"];
 const REGIONS = ["Global", "Europe", "North America", "Asia Pacific", "Africa", "Latin America", "Middle East", "South Asia"];
+
+function ChangePasswordSection() {
+  const { toast } = useToast();
+  const [pw, setPw] = useState({ current: "", newPw: "", confirm: "" });
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/auth/change-password", {
+        currentPassword: pw.current,
+        newPassword: pw.newPw,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Password updated" });
+      setPw({ current: "", newPw: "", confirm: "" });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.newPw !== pw.confirm) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    if (pw.newPw.length < 12) {
+      toast({ title: "New password must be at least 12 characters", variant: "destructive" });
+      return;
+    }
+    mutation.mutate();
+  };
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-4">
+        <KeyRound className="h-4 w-4 text-muted-foreground" />
+        <h2 className="font-semibold text-foreground">Change password</h2>
+      </div>
+      <div className="bg-card border border-card-border rounded-xl p-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <Label htmlFor="currentPassword" className="text-xs mb-1.5">Current password</Label>
+            <PasswordInput
+              id="currentPassword"
+              value={pw.current}
+              onChange={e => setPw(p => ({ ...p, current: e.target.value }))}
+              required
+              data-testid="input-current-password"
+            />
+          </div>
+          <div>
+            <Label htmlFor="newPassword" className="text-xs mb-1.5">New password</Label>
+            <PasswordInput
+              id="newPassword"
+              value={pw.newPw}
+              onChange={e => setPw(p => ({ ...p, newPw: e.target.value }))}
+              required
+              data-testid="input-new-password"
+            />
+            <p className="text-xs text-muted-foreground mt-1">At least 12 characters.</p>
+          </div>
+          <div>
+            <Label htmlFor="confirmNewPassword" className="text-xs mb-1.5">Confirm new password</Label>
+            <PasswordInput
+              id="confirmNewPassword"
+              value={pw.confirm}
+              onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))}
+              required
+              data-testid="input-confirm-new-password"
+            />
+          </div>
+          <Button type="submit" size="sm" disabled={mutation.isPending} data-testid="button-change-password">
+            {mutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Update password
+          </Button>
+        </form>
+      </div>
+    </section>
+  );
+}
 
 export default function Settings() {
   const qc = useQueryClient();
@@ -95,6 +176,8 @@ export default function Settings() {
           </div>
         </div>
       </section>
+
+      <ChangePasswordSection />
 
       {/* Focus areas */}
       <section>

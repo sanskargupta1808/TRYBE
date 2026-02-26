@@ -212,6 +212,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json({ success: true });
   });
 
+  app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: "Current and new password are required" });
+    if (newPassword.length < 12) return res.status(400).json({ error: "New password must be at least 12 characters" });
+    const user = await storage.getUserById(req.session.userId!);
+    if (!user) return res.status(401).json({ error: "Not authenticated" });
+    const valid = await storage.verifyPassword(user, currentPassword);
+    if (!valid) return res.status(400).json({ error: "Current password is incorrect" });
+    await storage.resetPassword(user.id, newPassword);
+    return res.json({ success: true });
+  });
+
   // ─── Invite Requests (public) ─────────────────────────────────────────────
 
   app.post("/api/invite-requests", async (req, res) => {
