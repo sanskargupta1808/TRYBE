@@ -300,3 +300,18 @@ export const threadMemory = pgTable("thread_memory", {
 });
 
 export type ThreadMemory = typeof threadMemory.$inferSelect;
+
+// ─── Reactivation Appeals ────────────────────────────────────────────────────
+export const reactivationAppeals = pgTable("reactivation_appeals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("PENDING"),
+  reviewedByUserId: varchar("reviewed_by_user_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const insertReactivationAppealSchema = createInsertSchema(reactivationAppeals).omit({ id: true, createdAt: true, status: true, reviewedByUserId: true, reviewedAt: true });
+export type InsertReactivationAppeal = z.infer<typeof insertReactivationAppealSchema>;
+export type ReactivationAppeal = typeof reactivationAppeals.$inferSelect;

@@ -4,7 +4,7 @@ import session from "express-session";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
-import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail } from "./email";
+import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendAccountSuspendedEmail, sendAccountReactivatedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail } from "./email";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
@@ -212,6 +212,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json({ success: true });
   });
 
+  app.post("/api/auth/reactivation-appeal", async (req, res) => {
+    const { email, message } = req.body;
+    if (!email || !message) return res.status(400).json({ error: "Email and message are required" });
+    if (message.trim().length < 20) return res.status(400).json({ error: "Please provide a more detailed message (at least 20 characters)." });
+    const user = await storage.getUserByEmail(email.toLowerCase().trim());
+    if (!user || user.status !== "SUSPENDED") return res.status(400).json({ error: "No suspended account found with this email address." });
+    const existingAppeals = await storage.getReactivationAppealsByUser(user.id);
+    const pendingAppeal = existingAppeals.find(a => a.status === "PENDING");
+    if (pendingAppeal) return res.status(400).json({ error: "You already have a pending appeal. The admin team will review it shortly." });
+    const appeal = await storage.createReactivationAppeal(user.id, message.trim());
+    await createAuditEntry({ actorUserId: user.id, action: "REACTIVATION_APPEAL_SUBMITTED", targetType: "USER", targetId: user.id });
+    return res.json({ success: true, appeal });
+  });
+
   app.post("/api/auth/change-password", requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).json({ error: "Current and new password are required" });
@@ -335,6 +349,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/admin/users/:id/suspend", requireAdmin, async (req, res) => {
     const user = await storage.updateUserStatus(req.params.id, "SUSPENDED");
     await createAuditEntry({ actorUserId: req.session.userId, action: "USER_SUSPENDED", targetType: "USER", targetId: req.params.id });
+    if (user?.email) sendAccountSuspendedEmail(user.email, user.name).catch(() => {});
     res.json({ ...user, passwordHash: undefined });
   });
   app.post("/api/admin/users/:id/role", requireAdmin, async (req, res) => {
@@ -1450,13 +1465,48 @@ Rules:
     } else if (action === "SUSPEND") {
       user = await storage.updateUserStatus(userId, "SUSPENDED");
       await createAuditEntry({ actorUserId: req.session.userId, action: "USER_SUSPENDED", targetType: "USER", targetId: userId });
+      if (user?.email) sendAccountSuspendedEmail(user.email, user.name).catch(() => {});
     } else if (action === "REACTIVATE") {
       user = await storage.updateUserStatus(userId, "ACTIVE");
       await createAuditEntry({ actorUserId: req.session.userId, action: "USER_REACTIVATED", targetType: "USER", targetId: userId });
+      if (user?.email) sendAccountReactivatedEmail(user.email, user.name).catch(() => {});
     } else {
       return res.status(400).json({ error: "Unknown action" });
     }
     res.json({ ...user, passwordHash: undefined });
+  });
+
+  app.get("/api/admin/reactivation-appeals", requireAdmin, async (req, res) => {
+    const appeals = await storage.getAllAppeals();
+    const appealUsers = await Promise.all(appeals.map(async (a) => {
+      const user = await storage.getUserById(a.userId);
+      return { ...a, user: user ? { id: user.id, name: user.name, email: user.email, status: user.status, organisation: user.organisation } : null };
+    }));
+    res.json(appealUsers);
+  });
+
+  app.post("/api/admin/reactivation-appeals/:id/action", requireAdmin, async (req, res) => {
+    const { action } = req.body;
+    const appealId = req.params.id;
+
+    if (action === "APPROVE") {
+      const appeal = await storage.updateAppealStatus(appealId, "APPROVED", req.session.userId!);
+      if (appeal) {
+        const user = await storage.updateUserStatus(appeal.userId, "ACTIVE");
+        await createAuditEntry({ actorUserId: req.session.userId, action: "USER_REACTIVATED", targetType: "USER", targetId: appeal.userId, metadata: { via: "appeal" } });
+        if (user?.email) sendAccountReactivatedEmail(user.email, user.name).catch(() => {});
+        return res.json({ appeal, user: { ...user, passwordHash: undefined } });
+      }
+      return res.status(404).json({ error: "Appeal not found" });
+    } else if (action === "REJECT") {
+      const appeal = await storage.updateAppealStatus(appealId, "REJECTED", req.session.userId!);
+      if (appeal) {
+        await createAuditEntry({ actorUserId: req.session.userId, action: "REACTIVATION_APPEAL_REJECTED", targetType: "USER", targetId: appeal.userId });
+        return res.json({ appeal });
+      }
+      return res.status(404).json({ error: "Appeal not found" });
+    }
+    return res.status(400).json({ error: "Unknown action" });
   });
 
   app.post("/api/admin/invite-requests/:id/action", requireAdmin, async (req, res) => {

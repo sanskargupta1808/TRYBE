@@ -656,6 +656,29 @@ export async function cleanupInactiveTables(inactiveDays = 14) {
   return removed;
 }
 
+// ─── Reactivation Appeals ─────────────────────────────────────────────────────
+export async function createReactivationAppeal(userId: string, message: string) {
+  const [appeal] = await db.insert(schema.reactivationAppeals).values({ userId, message }).returning();
+  return appeal;
+}
+
+export async function getReactivationAppealsByUser(userId: string) {
+  return db.select().from(schema.reactivationAppeals).where(eq(schema.reactivationAppeals.userId, userId)).orderBy(desc(schema.reactivationAppeals.createdAt));
+}
+
+export async function getAllPendingAppeals() {
+  return db.select().from(schema.reactivationAppeals).where(eq(schema.reactivationAppeals.status, "PENDING")).orderBy(desc(schema.reactivationAppeals.createdAt));
+}
+
+export async function getAllAppeals() {
+  return db.select().from(schema.reactivationAppeals).orderBy(desc(schema.reactivationAppeals.createdAt));
+}
+
+export async function updateAppealStatus(id: string, status: string, reviewedByUserId: string) {
+  const [updated] = await db.update(schema.reactivationAppeals).set({ status, reviewedByUserId, reviewedAt: new Date() }).where(eq(schema.reactivationAppeals.id, id)).returning();
+  return updated;
+}
+
 export async function cleanupPastEvents() {
   const today = new Date().toISOString().split("T")[0];
   const pastEvents = await db.select({ id: schema.calendarEvents.id }).from(schema.calendarEvents).where(lt(schema.calendarEvents.startDate, today));

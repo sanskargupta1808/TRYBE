@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare, UserPlus } from "lucide-react";
+import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare, UserPlus, ShieldAlert } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
@@ -26,6 +26,7 @@ const adminNavItems = [
   { title: "Moderation", url: "/admin/moderation", icon: Shield },
   { title: "Calendar", url: "/admin/calendar", icon: Calendar },
   { title: "Feedback", url: "/admin/feedback", icon: CheckSquare },
+  { title: "Appeals", url: "/admin/appeals", icon: ShieldAlert },
   { title: "Audit Log", url: "/admin/audit-log", icon: BarChart3 },
 ];
 

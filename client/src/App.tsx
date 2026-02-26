@@ -41,12 +41,14 @@ import AdminModeration from "@/pages/admin/AdminModeration";
 import AdminCalendar from "@/pages/admin/AdminCalendar";
 import AdminFeedback from "@/pages/admin/AdminFeedback";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
+import AdminAppeals from "@/pages/admin/AdminAppeals";
 
 import Privacy from "@/pages/policy/Privacy";
 import Terms from "@/pages/policy/Terms";
 import CodeOfConduct from "@/pages/policy/CodeOfConduct";
 import AITransparency from "@/pages/policy/AITransparency";
 
+import Suspended from "@/pages/Suspended";
 import NotFound from "@/pages/not-found";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -97,7 +99,7 @@ function RequireAuth({ children, adminOnly }: { children: React.ReactNode; admin
 
   if (!user) return <Redirect to="/login" />;
   if (user.status === "PENDING_APPROVAL") return <Redirect to="/pending-approval" />;
-  if (user.status === "SUSPENDED") return <Redirect to="/login" />;
+  if (user.status === "SUSPENDED") return <Redirect to="/suspended" />;
   if (adminOnly && user.role !== "ADMIN" && user.role !== "MODERATOR") return <Redirect to="/app" />;
 
   return <>{children}</>;
@@ -114,6 +116,7 @@ function Router() {
       <Route path="/pending-approval" component={PendingApproval} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/suspended" component={Suspended} />
 
       {/* Policy */}
       <Route path="/privacy" component={Privacy} />
@@ -254,6 +257,12 @@ function Router() {
       <Route path="/admin/feedback">
         <RequireAuth adminOnly>
           <AppLayout><AdminFeedback /></AppLayout>
+        </RequireAuth>
+      </Route>
+
+      <Route path="/admin/appeals">
+        <RequireAuth adminOnly>
+          <AppLayout><AdminAppeals /></AppLayout>
         </RequireAuth>
       </Route>
 
