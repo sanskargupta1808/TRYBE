@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Bot, Send, ChevronRight, ChevronDown, Loader2, Copy, Check, FileText, AlignLeft, Lightbulb, CalendarDays, MessageSquare, RefreshCw } from "lucide-react";
+import { X, Bot, Send, ChevronRight, ChevronDown, Loader2, Copy, Check, FileText, AlignLeft, Lightbulb, CalendarDays, MessageSquare, RefreshCw, CheckCircle, XCircle, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,12 @@ interface Nudge {
   eventTitle?: string;
 }
 
+interface ActionPerformed {
+  tool: string;
+  result: string;
+  success: boolean;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -32,6 +38,7 @@ interface Message {
   milestoneContent?: string | Record<string, any>;
   draftContent?: string;
   suggestedActions?: SuggestedAction[];
+  actionsPerformed?: ActionPerformed[];
 }
 
 interface AssistantPanelProps {
@@ -57,38 +64,38 @@ function getQuickActions(location: string): string[] {
   if (location.includes("/threads/")) return [
     "Summarise this discussion",
     "What's happening here?",
-    "Is there alignment forming?",
     "Help me draft a reply",
+    "Post a contribution for me",
   ];
   if (location.includes("/tables/")) return [
     "What is this table about?",
-    "What are we missing?",
-    "Suggest a discussion to start",
+    "Start a new discussion here",
+    "Who are the members?",
     "Help me prepare for an upcoming milestone",
   ];
   if (location.includes("/moments")) return [
     "Which moments are most relevant to me?",
+    "Signal that I'm attending the next event",
     "Help me prepare for an event",
-    "What is happening in my focus areas?",
     "Suggest tables for upcoming events",
   ];
   if (location.includes("/messages")) return [
     "Help me draft a message",
-    "How should I introduce myself?",
-    "Suggest a professional tone for this",
-    "What should I include?",
+    "Find members in my focus area",
+    "Who can I message?",
+    "List my conversations",
   ];
   if (location.includes("/invites")) return [
-    "How do invitations work?",
-    "Who should I invite?",
-    "What happens after I send an invite?",
     "How many invites do I have left?",
+    "Invite a colleague for me",
+    "How do invitations work?",
+    "What happens after I send an invite?",
   ];
   return [
-    "Suggest relevant tables for me",
-    "Show upcoming health moments",
+    "Join a table for me",
     "What should I focus on today?",
-    "Help me prepare for an upcoming event",
+    "Show upcoming health moments",
+    "Find members working on my topics",
   ];
 }
 
@@ -201,7 +208,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "How can I support your work today? I can suggest tables, surface upcoming health moments, help draft messages, summarise discussions, provide strategic reflections, or help prepare for milestones.",
+      content: "How can I support your work today? I can take actions for you — join tables, start discussions, send messages, invite colleagues — or help with analysis, drafting, and milestone preparation. Just tell me what you need.",
       suggestedActions: [
         { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
         { type: "NAVIGATE", label: "View Milestones", url: "/app/moments" },
@@ -246,7 +253,8 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
     },
     onSuccess: (data) => {
       const hasStructured = data.reflectionContent || data.milestoneContent || data.summaryContent || data.draftContent;
-      const fallbackText = hasStructured
+      const hasActions = data.actionsPerformed && data.actionsPerformed.length > 0;
+      const fallbackText = hasStructured || hasActions
         ? (data.assistantText || "Here is what I found.")
         : (data.assistantText || "I'm here to support your work.");
       setMessages(prev => [...prev, {
@@ -257,7 +265,16 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
         milestoneContent: data.milestoneContent,
         draftContent: data.draftContent,
         suggestedActions: data.suggestedActions || [],
+        actionsPerformed: data.actionsPerformed || [],
       }]);
+      if (hasActions) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tables/my"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/invites/my"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/calendar"] });
+      }
     },
     onError: () => {
       setMessages(prev => [...prev, {
@@ -316,7 +333,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
           </div>
           <div>
             <p className="text-sm font-semibold">TRYBE Assistant <span className="text-muted-foreground font-normal">OMNI</span></p>
-            <p className="text-xs text-muted-foreground">Suggestions only. You stay in control.</p>
+            <p className="text-xs text-muted-foreground">Your intelligent companion in TRYBE</p>
           </div>
         </div>
         {onClose && (
@@ -393,6 +410,27 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
                   {msg.content}
                 </div>
               </div>
+
+              {msg.actionsPerformed && msg.actionsPerformed.length > 0 && (
+                <div className="mt-2 border border-border rounded-md bg-background overflow-hidden" data-testid={`block-actions-${i}`}>
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 border-b border-border">
+                    <Zap className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Actions performed</span>
+                  </div>
+                  <div className="px-3 py-2">
+                    {msg.actionsPerformed.map((action, j) => (
+                      <div key={j} className="flex items-start gap-2 py-1">
+                        {action.success ? (
+                          <CheckCircle className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+                        )}
+                        <span className="text-xs text-foreground leading-relaxed">{action.result}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {msg.reflectionContent && (
                 <CollapsibleSection title="Strategic Reflection" icon={Lightbulb} testId={`block-reflection-${i}`}>
@@ -482,7 +520,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
 
       <div className="px-4 py-3 border-t border-border flex-shrink-0">
         <p className="text-xs text-muted-foreground mb-2">
-          I suggest — you decide. Nothing happens without your confirmation.
+          Ask me anything or tell me what to do. I'll handle it.
         </p>
         <div className="flex gap-2">
           <Textarea

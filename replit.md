@@ -103,28 +103,46 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - Welcome page at `/app/welcome`: auto-approved member landing with onboarding prompt
 - Assistant knows about invites and can direct users to `/app/invites`
 
-## TRYBE Assistant OMNI (Phase 2 — Strategic Coordination)
-- **Core identity**: Calm, professional, neutral. Human-led, AI-supported. Suggestion-only.
-- **Capabilities**:
-  1. Suggest Tables — profile-matched table recommendations
-  2. Summarise Threads — structured Key Themes / Areas of Agreement / Open Questions (max 400 words, 4 bullets/section)
-  3. Strategic Reflection — "What's happening here?", "Is there alignment forming?" → structured analysis with Suggested Next Step
-  4. Milestone Preparation — "Help me prepare for World TB Day" → Context, Focus Areas, Stakeholder Types, Optional Suggestion
-  5. Draft Posts/Messages — professional, neutral, moderation-checked (max 400 words)
-  6. Surface Calendar Moments — relevance-matched upcoming events
-  7. Inviting Colleagues — directs to /app/invites, explains 5/month quota
-  8. General Support — platform navigation and guidance
+## TRYBE Assistant OMNI (Phase 3 — Full Automation)
+- **Core identity**: Calm, professional, neutral. Human-led, AI-supported. Your intelligent companion in TRYBE.
+- **Architecture**: OpenAI function calling with tool loop (max 5 iterations). GPT-4o-mini with 17 registered tools.
+- **Key files**: `server/assistant-tools.ts` (tool definitions + execution), `server/routes.ts` (assistant endpoint), `client/src/components/AssistantPanel.tsx` (UI)
+- **Capabilities — Actions (via function calling)**:
+  1. `join_table` / `leave_table` — Join or leave tables on behalf of the user
+  2. `create_thread` — Start new discussions inside tables
+  3. `post_in_thread` — Post messages in discussion threads
+  4. `send_direct_message` — Send DMs to members who share a table
+  5. `signal_milestone` — Signal interest in calendar events (ATTENDING/PRESENTING/WATCHING)
+  6. `request_new_table` — Submit table creation requests for admin review
+  7. `send_invite` — Send colleague invitations by email (uses monthly quota)
+  8. `update_profile` — Update interests, regions, collaboration mode, assistant activity, goals
+  9. `submit_feedback` — Submit platform feedback
+- **Capabilities — Information retrieval (via function calling)**:
+  10. `search_tables` — Search tables by topic/keyword/tag
+  11. `search_milestones` — Search upcoming health events
+  12. `search_members` — Find members by interest, region, role, or name
+  13. `get_table_details` — Get table info with members and threads
+  14. `get_thread_summary` — Get thread content for analysis
+  15. `list_my_tables` — List user's current tables
+  16. `list_my_conversations` — List active DM conversations
+- **Capabilities — Analysis & Drafting (via structured JSON output)**:
+  17. Summarise Threads — Key Themes / Areas of Agreement / Open Questions (max 400 words)
+  18. Strategic Reflection — analysis with Suggested Next Step
+  19. Milestone Preparation — Context, Focus Areas, Stakeholder Types
+  20. Draft Posts/Messages — professional, neutral, moderation-checked
+  21. Surface Calendar Moments — relevance-matched upcoming events
 - **Activity Pattern Nudges** (GET /api/assistant/nudges):
-  - Inactive tables (10+ days no activity) → subtle re-engagement suggestion
+  - Inactive tables (10+ days) → re-engagement suggestion
   - Upcoming milestones (within 30 days) → preparation prompt
-  - Throttled: max 1/session, max 3/week; suppressed for QUIET activity level
-- **Personal Focus Review**: Every 30 days, prompts "Has your professional focus shifted?" with Update/Keep options
+  - Throttled: max 3/week; suppressed for QUIET activity level
+- **Personal Focus Review**: Every 30 days, prompts focus shift check
 - **Guardrails**: Refuses political positions, advocacy drafts, off-topic requests, medical advice
-- **Moderation**: All structured outputs (drafts, summaries, reflections, milestone content) run through OpenAI moderation API
+- **Moderation**: All structured outputs run through OpenAI moderation API
 - **Tone rules**: No exclamation marks, no emoji, no motivational/inspirational language, no corporate jargon
-- **Frontend**: Collapsible sections for structured content (reflection, milestone, summary), nudge cards, focus review prompt
-- **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, suggestedActions
-- **Max tokens**: 1200 (up from 800)
+- **Frontend**: Actions performed block (success/fail indicators), collapsible sections for structured content, nudge cards, focus review prompt
+- **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, suggestedActions
+- **Cache invalidation**: After tool actions, frontend invalidates relevant query caches (tables, profile, messages, invites, calendar)
+- **Max tokens**: 1500
 
 ## UX Architecture (Focus-First Redesign)
 - Dashboard: Single "Your current focus" hero card → one primary CTA (Open table) → secondary 3-column grid (My tables, Upcoming moments, Messages) with max 3 items each + "View all" links
