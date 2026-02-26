@@ -1,6 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
+import pgSession from "connect-pg-simple";
+import pg from "pg";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
@@ -110,7 +112,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
   });
 
+  const PgStore = pgSession(session);
+  const sessionPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   app.use(session({
+    store: new PgStore({ pool: sessionPool, createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET || "trybe-secret-key-change-in-prod",
     resave: false,
     saveUninitialized: false,
