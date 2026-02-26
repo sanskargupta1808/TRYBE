@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, MessageSquare } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -28,7 +28,15 @@ export default function AdminUsers() {
       const res = await apiRequest("POST", `/api/admin/users/${userId}/action`, { action });
       return res.json();
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/admin/users"] }); toast({ title: "User updated" }); },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      qc.invalidateQueries({ queryKey: ["/api/admin/reactivation-appeals"] });
+      const msg = variables.action === "REACTIVATE" ? "Account reactivated — email sent to user"
+        : variables.action === "SUSPEND" ? "Account suspended — email sent to user"
+        : variables.action === "APPROVE" ? "Account approved"
+        : "User updated";
+      toast({ title: msg });
+    },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
@@ -75,36 +83,56 @@ export default function AdminUsers() {
       ) : (
         <div className="space-y-2">
           {filtered.map((u: any) => (
-            <div key={u.id} className="bg-card border border-card-border rounded-xl px-4 py-3 flex items-center justify-between gap-3" data-testid={`row-user-${u.id}`}>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium text-foreground">{u.name}</p>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${STATUS_COLORS[u.status] || "bg-muted text-muted-foreground"}`}>{u.status}</span>
-                  {u.role === "ADMIN" && <Badge variant="secondary" className="text-xs">Admin</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{u.email} {u.organisation && `· ${u.organisation}`}</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                {u.status === "PENDING_APPROVAL" && (
-                  <>
-                    <Button size="sm" onClick={() => updateMutation.mutate({ userId: u.id, action: "APPROVE" })} disabled={updateMutation.isPending} data-testid={`button-approve-${u.id}`}>Approve</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "REJECT" })} disabled={updateMutation.isPending} data-testid={`button-reject-${u.id}`}>Reject</Button>
-                  </>
-                )}
-                {u.status === "ACTIVE" && u.role !== "ADMIN" && (
-                  <>
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "SUSPEND" })} disabled={updateMutation.isPending} data-testid={`button-suspend-${u.id}`}>Suspend</Button>
-                    {u.canInvite === false ? (
-                      <Button size="sm" variant="outline" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: true })} disabled={invitePrivMutation.isPending} data-testid={`button-restore-invites-${u.id}`}>Restore invites</Button>
-                    ) : (
-                      <Button size="sm" variant="ghost" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: false })} disabled={invitePrivMutation.isPending} data-testid={`button-pause-invites-${u.id}`}>Pause invites</Button>
+            <div key={u.id} className="bg-card border border-card-border rounded-xl px-4 py-3" data-testid={`row-user-${u.id}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-foreground">{u.name}</p>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${STATUS_COLORS[u.status] || "bg-muted text-muted-foreground"}`}>{u.status}</span>
+                    {u.role === "ADMIN" && <Badge variant="secondary" className="text-xs">Admin</Badge>}
+                    {u.pendingAppeal && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />Appeal pending
+                      </span>
                     )}
-                  </>
-                )}
-                {u.status === "SUSPENDED" && (
-                  <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "REACTIVATE" })} disabled={updateMutation.isPending} data-testid={`button-reactivate-${u.id}`}>Reactivate</Button>
-                )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{u.email} {u.organisation && `· ${u.organisation}`}</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  {u.status === "PENDING_APPROVAL" && (
+                    <>
+                      <Button size="sm" onClick={() => updateMutation.mutate({ userId: u.id, action: "APPROVE" })} disabled={updateMutation.isPending} data-testid={`button-approve-${u.id}`}>Approve</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "REJECT" })} disabled={updateMutation.isPending} data-testid={`button-reject-${u.id}`}>Reject</Button>
+                    </>
+                  )}
+                  {u.status === "ACTIVE" && u.role !== "ADMIN" && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ userId: u.id, action: "SUSPEND" })} disabled={updateMutation.isPending} data-testid={`button-suspend-${u.id}`}>Suspend</Button>
+                      {u.canInvite === false ? (
+                        <Button size="sm" variant="outline" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: true })} disabled={invitePrivMutation.isPending} data-testid={`button-restore-invites-${u.id}`}>Restore invites</Button>
+                      ) : (
+                        <Button size="sm" variant="ghost" onClick={() => invitePrivMutation.mutate({ userId: u.id, canInvite: false })} disabled={invitePrivMutation.isPending} data-testid={`button-pause-invites-${u.id}`}>Pause invites</Button>
+                      )}
+                    </>
+                  )}
+                  {u.status === "SUSPENDED" && (
+                    <Button size="sm" onClick={() => updateMutation.mutate({ userId: u.id, action: "REACTIVATE" })} disabled={updateMutation.isPending} data-testid={`button-reactivate-${u.id}`}>Reactivate</Button>
+                  )}
+                </div>
               </div>
+              {u.pendingAppeal && (
+                <div className="mt-3 bg-muted/40 border border-border rounded-lg p-3" data-testid={`appeal-message-${u.id}`}>
+                  <div className="flex items-start gap-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
+                        Reactivation request · {new Date(u.pendingAppeal.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap" data-testid={`text-appeal-${u.id}`}>{u.pendingAppeal.message}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

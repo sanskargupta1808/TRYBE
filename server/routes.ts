@@ -339,7 +339,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     const users = await storage.getAllUsers();
-    res.json(users.map(u => ({ ...u, passwordHash: undefined })));
+    const appeals = await storage.getAllAppeals();
+    const pendingAppealsByUser: Record<string, any> = {};
+    for (const a of appeals) {
+      if (a.status === "PENDING") {
+        pendingAppealsByUser[a.userId] = { id: a.id, message: a.message, createdAt: a.createdAt };
+      }
+    }
+    res.json(users.map(u => ({ ...u, passwordHash: undefined, pendingAppeal: pendingAppealsByUser[u.id] || null })));
   });
   app.post("/api/admin/users/:id/approve", requireAdmin, async (req, res) => {
     const user = await storage.updateUserStatus(req.params.id, "ACTIVE");
@@ -1480,6 +1487,11 @@ Rules:
       user = await storage.updateUserStatus(userId, "ACTIVE");
       await createAuditEntry({ actorUserId: req.session.userId, action: "USER_REACTIVATED", targetType: "USER", targetId: userId });
       if (user?.email) sendAccountReactivatedEmail(user.email, user.name).catch(() => {});
+      const userAppeals = await storage.getReactivationAppealsByUser(userId);
+      const pendingAppeal = userAppeals.find(a => a.status === "PENDING");
+      if (pendingAppeal) {
+        await storage.updateAppealStatus(pendingAppeal.id, "APPROVED", req.session.userId!);
+      }
     } else {
       return res.status(400).json({ error: "Unknown action" });
     }
