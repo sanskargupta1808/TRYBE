@@ -9,11 +9,12 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { WebSocketServer, WebSocket } from "ws";
-import { assistantTools, executeTool } from "./assistant-tools";
+import { assistantTools, executeTool, READ_ONLY_TOOLS, TOOL_LABELS } from "./assistant-tools";
 
 declare module "express-session" {
   interface SessionData {
     userId: string;
+    pendingActions?: { tool: string; args: any; label: string; description: string }[];
   }
 }
 
@@ -1076,9 +1077,9 @@ ANALYSIS & DRAFTING:
 - Surface relevant calendar moments
 
 ━━━ HOW TO USE TOOLS ━━━
-- When the user asks you to DO something (join, post, send, invite, etc.), call the appropriate tool.
-- When you need information to answer a question, use search/list/get tools first, then respond.
-- After calling a tool, report the result clearly and concisely.
+- When the user asks you to DO something (join, post, send, invite, etc.), call the appropriate tool. Write actions will be presented to the user for confirmation before executing.
+- When you need information to answer a question, use search/list/get tools first, then respond. Read-only tools execute immediately without confirmation.
+- After calling a tool, describe what you intend to do clearly and concisely.
 - You can chain multiple tools if needed (e.g., search for a table, then join it).
 - For drafts: if the user asks you to draft AND post, first draft it and show it, then post using the tool. If they just ask to draft, put it in "draftContent" for review.
 
@@ -1174,6 +1175,7 @@ Rules:
 
       let assistantMessage = completion.choices[0]?.message;
       const toolResults: { tool: string; result: string; success: boolean }[] = [];
+      const pendingActions: { tool: string; args: any; label: string; description: string }[] = [];
 
       let iterations = 0;
       const maxIterations = 5;
@@ -1182,23 +1184,58 @@ Rules:
         iterations++;
         messages.push(assistantMessage);
 
+        let hasWriteTools = false;
         for (const toolCall of assistantMessage.tool_calls) {
           const toolName = toolCall.function.name;
           let toolArgs: any = {};
           try { toolArgs = JSON.parse(toolCall.function.arguments); } catch {}
 
-          console.log(`[Assistant/Tool] ${toolName}`, JSON.stringify(toolArgs));
-          const toolResult = await executeTool(toolName, toolArgs, req.session.userId!, storage, {
-            moderateContent,
-            sendMemberInviteEmail,
-          });
-          toolResults.push({ tool: toolName, result: toolResult.message, success: toolResult.success });
+          if (READ_ONLY_TOOLS.has(toolName)) {
+            console.log(`[Assistant/Tool:read] ${toolName}`, JSON.stringify(toolArgs));
+            const toolResult = await executeTool(toolName, toolArgs, req.session.userId!, storage, {
+              moderateContent,
+              sendMemberInviteEmail,
+            });
+            toolResults.push({ tool: toolName, result: toolResult.message, success: toolResult.success });
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(toolResult),
+            });
+          } else {
+            hasWriteTools = true;
+            const label = TOOL_LABELS[toolName] || toolName;
+            let description = "";
+            if (toolName === "join_table") description = `Join the table`;
+            else if (toolName === "leave_table") description = `Leave the table`;
+            else if (toolName === "create_thread") description = `Create discussion: "${toolArgs.title || ""}"`;
+            else if (toolName === "post_in_thread") description = `Post: "${(toolArgs.content || "").slice(0, 80)}${(toolArgs.content || "").length > 80 ? "..." : ""}"`;
+            else if (toolName === "send_direct_message") description = `Send message: "${(toolArgs.content || "").slice(0, 80)}${(toolArgs.content || "").length > 80 ? "..." : ""}"`;
+            else if (toolName === "signal_milestone") description = `Signal "${toolArgs.signalType || ""}" for an event`;
+            else if (toolName === "request_new_table") description = `Request new table: "${toolArgs.title || ""}"`;
+            else if (toolName === "send_invite") description = `Send invitation to ${toolArgs.email || ""}`;
+            else if (toolName === "update_profile") description = `Update profile settings`;
+            else if (toolName === "submit_feedback") description = `Submit feedback (${toolArgs.category || "GENERAL"})`;
+            else description = label;
 
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(toolResult),
+            pendingActions.push({ tool: toolName, args: toolArgs, label, description });
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: true, message: "Action queued — awaiting user confirmation before executing.", pending: true }),
+            });
+          }
+        }
+
+        if (hasWriteTools && pendingActions.length > 0) {
+          completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages,
+            response_format: { type: "json_object" },
+            max_tokens: 1500,
           });
+          assistantMessage = completion.choices[0]?.message;
+          break;
         }
 
         completion = await openai.chat.completions.create({
@@ -1226,6 +1263,13 @@ Rules:
         }));
       }
 
+      if (pendingActions.length > 0) {
+        result.pendingActions = pendingActions;
+        req.session.pendingActions = pendingActions;
+      } else {
+        req.session.pendingActions = undefined;
+      }
+
       const moderatableContent = [result.draftContent, result.summaryContent, result.reflectionContent, result.milestoneContent].filter(Boolean).join("\n\n");
       if (moderatableContent && openai) {
         try {
@@ -1245,6 +1289,34 @@ Rules:
       console.error("[Assistant]", err?.message);
       res.json({ assistantText: "I'm having trouble right now. Please try again in a moment.", suggestedActions: [] });
     }
+  });
+
+  // ─── OMNI: Execute Confirmed Actions ─────────────────────────────────────
+
+  app.post("/api/assistant/execute", requireActive, async (req, res) => {
+    const sessionPending = req.session.pendingActions;
+    if (!sessionPending || sessionPending.length === 0) {
+      return res.status(400).json({ error: "No pending actions to execute." });
+    }
+
+    const results: { tool: string; result: string; success: boolean }[] = [];
+    for (const action of sessionPending) {
+      if (READ_ONLY_TOOLS.has(action.tool)) continue;
+      console.log(`[Assistant/Execute] ${action.tool}`, JSON.stringify(action.args || {}));
+      const toolResult = await executeTool(action.tool, action.args || {}, req.session.userId!, storage, {
+        moderateContent,
+        sendMemberInviteEmail,
+      });
+      results.push({ tool: action.tool, result: toolResult.message, success: toolResult.success });
+    }
+
+    req.session.pendingActions = undefined;
+    res.json({ actionsPerformed: results });
+  });
+
+  app.post("/api/assistant/decline", requireActive, async (req, res) => {
+    req.session.pendingActions = undefined;
+    res.json({ ok: true });
   });
 
   // ─── OMNI: Activity Pattern Nudges ───────────────────────────────────────

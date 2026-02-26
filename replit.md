@@ -94,6 +94,9 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Chip press**: `chip-press` class adds `active:scale(0.95)` for tactile feedback on filter/signal chips
 - **Moment accent bar**: `moment-accent-bar` class adds a 3px left accent bar (primary/35%) on milestone cards
 - **Admin pages**: All 10 admin pages upgraded to `rounded-xl` card containers (24 surfaces total)
+- **Tag colour variation**: `tagColour()` utility in `lib/utils.ts` maps tag strings to 8 deterministic colour classes (`tag-warm`, `tag-teal`, `tag-violet`, `tag-sky`, `tag-rose`, `tag-lime`, `tag-amber`, `tag-slate`). Applied across Dashboard, Tables, TableDetail, Moments, Onboarding, Landing. Dark mode variants included.
+- **Landing page section animations**: Every section now has `animate-fade-in-up` entrance + stagger on feature cards, assistant capabilities list, and "Who it's for" badges
+- **Conversation list hover**: Messages list items now have `hover:shadow-sm` lift
 
 ### Trusted Invites & Tiered Approval
 - **Invite types**: `ADMIN_CODE` (requires manual admin approval) and `MEMBER_INVITE` (auto-approves on use, 14-day expiry, 5/month quota)
@@ -140,7 +143,8 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Moderation**: All structured outputs run through OpenAI moderation API
 - **Tone rules**: No exclamation marks, no emoji, no motivational/inspirational language, no corporate jargon
 - **Frontend**: Actions performed block (success/fail indicators), collapsible sections for structured content, nudge cards, focus review prompt
-- **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, suggestedActions
+- **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, pendingActions, suggestedActions
+- **Confirmation flow**: Write tools (join_table, create_thread, post_in_thread, etc.) are collected as `pendingActions` and presented to the user for approval before execution. Read-only tools (search, list, get) execute immediately. User approves → POST `/api/assistant/execute` executes the actions. User declines → no changes made.
 - **Cache invalidation**: After tool actions, frontend invalidates relevant query caches (tables, profile, messages, invites, calendar)
 - **Max tokens**: 1500
 

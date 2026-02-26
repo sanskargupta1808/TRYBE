@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { Search, Plus, Users, ChevronRight, Lock, Table2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { tagColour } from "@/lib/utils";
 
 export default function Tables() {
   const qc = useQueryClient();
@@ -79,7 +80,7 @@ export default function Tables() {
 
       {/* My Tables */}
       {!search && !tagFilter && (
-        <section className="mb-8">
+        <section className="mb-8 animate-fade-in-up stagger-1">
           <h2 className="text-sm font-semibold text-muted-foreground mb-3">My tables</h2>
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-20 rounded-md" />)}</div>
@@ -98,7 +99,7 @@ export default function Tables() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{table.title}</p>
                       <div className="flex flex-wrap gap-1 mt-1 items-center">
-                        {(table.tags || []).slice(0, 3).map((tag: string) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+                        {(table.tags || []).slice(0, 3).map((tag: string) => <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>)}
                         {(table.memberCount ?? 0) > 0 && (
                           <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
                             <Users className="h-3 w-3" />{table.memberCount}
@@ -116,7 +117,7 @@ export default function Tables() {
       )}
 
       {/* All / Suggested Tables */}
-      <section>
+      <section className="animate-fade-in-up stagger-2">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           {search || tagFilter ? `Results (${tables.length})` : "Suggested tables"}
         </h2>
@@ -135,7 +136,7 @@ export default function Tables() {
                     <h3 className="font-medium text-foreground text-sm">{table.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{table.purpose}</p>
                     <div className="flex flex-wrap gap-1 mt-2 items-center">
-                      {(table.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+                      {(table.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>)}
                       {(table.memberCount ?? 0) > 0 && (
                         <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
                           <Users className="h-3 w-3" />{table.memberCount} {table.memberCount === 1 ? "member" : "members"}

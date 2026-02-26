@@ -30,6 +30,13 @@ interface ActionPerformed {
   success: boolean;
 }
 
+interface PendingAction {
+  tool: string;
+  args: any;
+  label: string;
+  description: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -39,6 +46,8 @@ interface Message {
   draftContent?: string;
   suggestedActions?: SuggestedAction[];
   actionsPerformed?: ActionPerformed[];
+  pendingActions?: PendingAction[];
+  pendingStatus?: "waiting" | "approved" | "declined";
 }
 
 interface AssistantPanelProps {
@@ -254,7 +263,8 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
     onSuccess: (data) => {
       const hasStructured = data.reflectionContent || data.milestoneContent || data.summaryContent || data.draftContent;
       const hasActions = data.actionsPerformed && data.actionsPerformed.length > 0;
-      const fallbackText = hasStructured || hasActions
+      const hasPending = data.pendingActions && data.pendingActions.length > 0;
+      const fallbackText = hasStructured || hasActions || hasPending
         ? (data.assistantText || "Here is what I found.")
         : (data.assistantText || "I'm here to support your work.");
       setMessages(prev => [...prev, {
@@ -266,14 +276,11 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
         draftContent: data.draftContent,
         suggestedActions: data.suggestedActions || [],
         actionsPerformed: data.actionsPerformed || [],
+        pendingActions: data.pendingActions || [],
+        pendingStatus: hasPending ? "waiting" : undefined,
       }]);
       if (hasActions) {
-        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/tables/my"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/invites/my"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/calendar"] });
+        invalidateAfterActions();
       }
     },
     onError: () => {
@@ -283,6 +290,62 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
       }]);
     },
   });
+
+  const invalidateAfterActions = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables/my"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/invites/my"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/calendar"] });
+  };
+
+  const executeActions = useMutation({
+    mutationFn: async (_actions: PendingAction[]) => {
+      const res = await apiRequest("POST", "/api/assistant/execute", {});
+      return res.json();
+    },
+    onSuccess: (data, _vars, _ctx) => {
+      const results: ActionPerformed[] = data.actionsPerformed || [];
+      setMessages(prev => prev.map((msg, idx) => {
+        if (idx === prev.length - 1 && msg.pendingStatus === "waiting") {
+          return { ...msg, pendingStatus: "approved" as const, actionsPerformed: results, pendingActions: [] };
+        }
+        return msg;
+      }));
+      invalidateAfterActions();
+    },
+    onError: () => {
+      setMessages(prev => prev.map((msg, idx) => {
+        if (idx === prev.length - 1 && msg.pendingStatus === "waiting") {
+          return { ...msg, pendingStatus: "declined" as const, pendingActions: [] };
+        }
+        return msg;
+      }));
+    },
+  });
+
+  const handleApproveActions = (actions: PendingAction[]) => {
+    executeActions.mutate(actions);
+  };
+
+  const handleDeclineActions = async () => {
+    try {
+      await apiRequest("POST", "/api/assistant/decline", {});
+    } catch {}
+    setMessages(prev => {
+      const updated = [...prev];
+      const lastIdx = updated.length - 1;
+      if (updated[lastIdx]?.pendingStatus === "waiting") {
+        updated[lastIdx] = { ...updated[lastIdx], pendingStatus: "declined", pendingActions: [] };
+      }
+      return updated;
+    });
+    setMessages(prev => [...prev, {
+      role: "assistant",
+      content: "Understood. No actions were taken.",
+    }]);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -411,11 +474,57 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
                 </div>
               </div>
 
+              {msg.pendingActions && msg.pendingActions.length > 0 && msg.pendingStatus === "waiting" && (
+                <div className="mt-2 border border-primary/30 rounded-md bg-background overflow-hidden" data-testid={`block-pending-${i}`}>
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-primary/5 border-b border-primary/20">
+                    <Zap className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Confirm before proceeding</span>
+                  </div>
+                  <div className="px-3 py-2">
+                    {msg.pendingActions.map((action, j) => (
+                      <div key={j} className="flex items-start gap-2 py-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                        <div>
+                          <span className="text-xs font-medium text-foreground">{action.label}</span>
+                          <p className="text-xs text-muted-foreground">{action.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 px-3 py-2.5 border-t border-primary/20">
+                    <Button
+                      size="sm"
+                      onClick={() => handleApproveActions(msg.pendingActions!)}
+                      disabled={executeActions.isPending}
+                      data-testid={`button-approve-actions-${i}`}
+                    >
+                      {executeActions.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1.5" /> : <Check className="h-3 w-3 mr-1.5" />}
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleDeclineActions}
+                      disabled={executeActions.isPending}
+                      data-testid={`button-decline-actions-${i}`}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {msg.pendingStatus === "declined" && (
+                <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2" data-testid={`block-declined-${i}`}>
+                  <p className="text-xs text-muted-foreground">Actions were declined. No changes were made.</p>
+                </div>
+              )}
+
               {msg.actionsPerformed && msg.actionsPerformed.length > 0 && (
                 <div className="mt-2 border border-border rounded-md bg-background overflow-hidden" data-testid={`block-actions-${i}`}>
                   <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 border-b border-border">
                     <Zap className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-medium text-foreground">Actions performed</span>
+                    <span className="text-xs font-medium text-foreground">Actions completed</span>
                   </div>
                   <div className="px-3 py-2">
                     {msg.actionsPerformed.map((action, j) => (

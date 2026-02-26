@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, CheckCircle, Star, ThumbsUp } from "lucide-react";
+import { tagColour } from "@/lib/utils";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -53,7 +54,7 @@ export default function Moments() {
         <p className="text-muted-foreground text-sm mt-2">A curated calendar of awareness days, congresses, and policy windows.</p>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-xl p-3 mb-6 text-xs text-muted-foreground">
+      <div className="bg-muted/30 border border-border rounded-xl p-3 mb-6 text-xs text-muted-foreground animate-fade-in-up stagger-1">
         Your responses are visible only to relevant connections.
       </div>
 
@@ -72,11 +73,11 @@ export default function Moments() {
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(grouped).sort().map(([month, monthEvents]) => {
+          {Object.entries(grouped).sort().map(([month, monthEvents], idx) => {
             const [year, m] = month.split("-");
             const monthName = `${MONTHS[parseInt(m) - 1]} ${year}`;
             return (
-              <section key={month}>
+              <section key={month} className={`animate-fade-in-up stagger-${Math.min(idx + 2, 6)}`}>
                 <h2 className="text-sm font-semibold text-muted-foreground mb-3">{monthName}</h2>
                 <div className="space-y-3">
                   {monthEvents.map((event: any) => {
@@ -95,7 +96,7 @@ export default function Moments() {
                                 {event.endDate && <p className="text-xs text-muted-foreground">Until {formatDate(event.endDate)}</p>}
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {(event.tags || []).slice(0, 4).map((tag: string) => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                    <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>
                                   ))}
                                   {event.regionScope && <Badge variant="outline" className="text-xs">{event.regionScope}</Badge>}
                                 </div>

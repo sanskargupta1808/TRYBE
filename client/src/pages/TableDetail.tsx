@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, UserCheck } from "lucide-react";
+import { tagColour } from "@/lib/utils";
 
 export default function TableDetail() {
   const { id } = useParams<{ id: string }>();
@@ -122,7 +123,7 @@ export default function TableDetail() {
         </div>
         <p className="text-muted-foreground leading-relaxed mb-3">{data.purpose}</p>
         <div className="flex flex-wrap gap-2 items-center">
-          {(data.tags || []).map((tag: string) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+          {(data.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className={`border ${tagColour(tag)}`}>{tag}</Badge>)}
           <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
             <Users className="h-3 w-3" />
             <span>{data.members?.length || 0} member{data.members?.length !== 1 ? "s" : ""}</span>

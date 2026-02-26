@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Shield, Calendar, Bot, Users, X } from "lucide-react";
+import { tagColour } from "@/lib/utils";
 
 export default function Landing() {
   return (
@@ -29,7 +30,7 @@ export default function Landing() {
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 animate-fade-in-up">
             A private table for serious<br />health collaboration
           </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed mb-4 max-w-2xl mx-auto font-medium animate-fade-in-up stagger-1" style={{ fontWeight: 400 }}>
+          <p className="text-xl text-muted-foreground leading-relaxed mb-4 max-w-2xl mx-auto font-normal animate-fade-in-up stagger-1">
             TRYBE is an invite-only working environment for people across global health.
             No feeds. No noise. Just focused collaboration, supported by intelligent assistance.
           </p>
@@ -44,20 +45,20 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="why" className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50">
+      <section id="why" className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50 animate-fade-in-up">
         <h2 className="text-3xl font-semibold mb-6 heading-rule">Why TRYBE exists</h2>
         <p className="text-muted-foreground leading-relaxed text-lg mb-8 max-w-3xl">
           Global health work is often fragmented.
         </p>
         <div className="space-y-4 max-w-3xl">
-          <div className="bg-card border border-card-border rounded-xl p-5">
+          <div className="bg-card border border-card-border rounded-xl p-5 animate-fade-in-up stagger-1">
             <p className="text-muted-foreground leading-relaxed">
               Conversations happen in silos.
               Important milestones pass without coordination.
               The right people don't always connect at the right time.
             </p>
           </div>
-          <p className="text-foreground leading-relaxed text-lg">
+          <p className="text-foreground leading-relaxed text-lg animate-fade-in-up stagger-2">
             TRYBE provides a calm, structured place to bring the right people together around shared priorities.
           </p>
         </div>
@@ -65,8 +66,8 @@ export default function Landing() {
 
       <section id="how" className="bg-muted/30 border-y border-border">
         <div className="max-w-5xl mx-auto px-6 py-24">
-          <h2 className="text-3xl font-semibold text-center mb-4">What makes TRYBE different</h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-semibold text-center mb-4 animate-fade-in-up">What makes TRYBE different</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto animate-fade-in-up stagger-1">
             There are no public feeds. No follower counts. No popularity algorithms.
           </p>
           <div className="grid md:grid-cols-3 gap-6">
@@ -78,7 +79,7 @@ export default function Landing() {
               { icon: CheckCircle, title: "Full user control", desc: "You decide what to join. You decide who to connect with. The system supports you — it doesn't direct you." },
               { icon: Shield, title: "Invite-only access", desc: "Curated membership to preserve trust and professional quality." },
             ].map((f, i) => (
-              <div key={f.title} className="bg-card border border-card-border rounded-xl p-6 hover-elevate hover:shadow-md transition-shadow duration-200">
+              <div key={f.title} className={`bg-card border border-card-border rounded-xl p-6 hover-elevate hover:shadow-md transition-shadow duration-200 animate-fade-in-up stagger-${Math.min(i + 1, 6)}`}>
                 <f.icon className="h-5 w-5 text-primary mb-3" />
                 <h3 className="font-medium text-foreground mb-2">{f.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
@@ -88,7 +89,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50">
+      <section className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50 animate-fade-in-up">
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div>
             <h2 className="text-3xl font-semibold mb-4 heading-rule">TRYBE Assistant</h2>
@@ -100,15 +101,15 @@ export default function Landing() {
                 "Help you draft or refine messages",
                 "Summarise discussions",
                 "Suggest introductions (with your approval)",
-              ].map(it => (
-                <div key={it} className="flex items-start gap-2">
+              ].map((it, i) => (
+                <div key={it} className={`flex items-start gap-2 animate-fade-in-up stagger-${Math.min(i + 1, 6)}`}>
                   <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm text-foreground">{it}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div>
+          <div className="animate-fade-in-up stagger-3">
             <p className="text-muted-foreground mb-4 font-medium text-sm">It does not:</p>
             <div className="space-y-2">
               {[
@@ -128,20 +129,20 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="bg-primary/5 border-y border-border">
+      <section className="bg-primary/5 border-y border-border animate-fade-in-up">
         <div className="max-w-4xl mx-auto px-6 py-20 text-center">
           <h2 className="text-3xl font-semibold mb-4">Who it's for</h2>
           <p className="text-muted-foreground mb-8">TRYBE is designed for people working across global health, including:</p>
           <div className="flex flex-wrap justify-center gap-3">
-            {["Patient advocates", "Public health professionals", "Policy advisors", "Clinical research teams", "NGOs", "Responsible industry medical teams"].map(t => (
-              <Badge key={t} variant="secondary" className="text-sm py-1.5 px-3">{t}</Badge>
+            {["Patient advocates", "Public health professionals", "Policy advisors", "Clinical research teams", "NGOs", "Responsible industry medical teams"].map((t, i) => (
+              <Badge key={t} variant="secondary" className={`text-sm py-1.5 px-3 border animate-fade-in-up stagger-${Math.min(i + 1, 6)} ${tagColour(t)}`}>{t}</Badge>
             ))}
           </div>
           <p className="text-muted-foreground text-sm mt-6">Currently invite-only during Alpha.</p>
         </div>
       </section>
 
-      <section className="max-w-2xl mx-auto px-6 py-24 text-center">
+      <section className="max-w-2xl mx-auto px-6 py-24 text-center animate-fade-in-up">
         <h2 className="text-3xl font-semibold mb-4">Ready to request access?</h2>
         <p className="text-muted-foreground mb-8">We review each request carefully to maintain a trusted and purposeful environment.</p>
         <Link href="/request-invite">

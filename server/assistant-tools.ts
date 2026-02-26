@@ -1,5 +1,28 @@
 type Storage = typeof import("./storage");
 
+export const READ_ONLY_TOOLS = new Set([
+  "search_tables",
+  "search_milestones",
+  "search_members",
+  "get_table_details",
+  "get_thread_summary",
+  "list_my_tables",
+  "list_my_conversations",
+]);
+
+export const TOOL_LABELS: Record<string, string> = {
+  join_table: "Join a table",
+  leave_table: "Leave a table",
+  create_thread: "Create a discussion",
+  post_in_thread: "Post in a discussion",
+  send_direct_message: "Send a direct message",
+  signal_milestone: "Signal interest in an event",
+  request_new_table: "Request a new table",
+  send_invite: "Send an invitation",
+  update_profile: "Update your profile",
+  submit_feedback: "Submit feedback",
+};
+
 export interface ToolContext {
   moderateContent: (text: string) => Promise<{ flagged: boolean; reason?: string }>;
   sendMemberInviteEmail?: (to: string, inviterName: string, token: string, note?: string | null) => Promise<void>;

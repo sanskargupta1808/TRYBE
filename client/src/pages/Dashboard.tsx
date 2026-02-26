@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { Table2, Calendar, MessageSquare, ChevronRight, Bot, ArrowRight, Repeat2, UserPlus } from "lucide-react";
+import { tagColour } from "@/lib/utils";
 
 function getMonthLabel(dateStr: string) {
   const d = new Date(dateStr);
@@ -99,7 +100,7 @@ export default function Dashboard() {
             )}
             <div className="flex flex-wrap gap-2 mb-6">
               {(focusTable.tags || []).slice(0, 3).map((tag: string) => (
-                <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>
               ))}
             </div>
             <div className="flex items-center gap-3 flex-wrap">

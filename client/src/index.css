@@ -416,6 +416,24 @@
     border-radius: 0 2px 2px 0;
     background: hsl(var(--primary) / 0.35);
   }
+
+  .tag-warm { background-color: hsl(24 70% 95%); color: hsl(24 60% 35%); border-color: hsl(24 50% 88%); }
+  .tag-teal { background-color: hsl(174 40% 93%); color: hsl(174 40% 30%); border-color: hsl(174 30% 84%); }
+  .tag-violet { background-color: hsl(260 40% 95%); color: hsl(260 35% 40%); border-color: hsl(260 30% 88%); }
+  .tag-sky { background-color: hsl(200 50% 94%); color: hsl(200 45% 32%); border-color: hsl(200 35% 86%); }
+  .tag-rose { background-color: hsl(340 40% 95%); color: hsl(340 35% 38%); border-color: hsl(340 30% 88%); }
+  .tag-lime { background-color: hsl(85 35% 93%); color: hsl(85 35% 30%); border-color: hsl(85 25% 84%); }
+  .tag-amber { background-color: hsl(40 55% 93%); color: hsl(40 50% 30%); border-color: hsl(40 40% 84%); }
+  .tag-slate { background-color: hsl(215 20% 94%); color: hsl(215 15% 35%); border-color: hsl(215 12% 86%); }
+
+  .dark .tag-warm { background-color: hsl(24 40% 16%); color: hsl(24 50% 72%); border-color: hsl(24 30% 22%); }
+  .dark .tag-teal { background-color: hsl(174 25% 14%); color: hsl(174 35% 65%); border-color: hsl(174 20% 20%); }
+  .dark .tag-violet { background-color: hsl(260 25% 16%); color: hsl(260 30% 70%); border-color: hsl(260 20% 22%); }
+  .dark .tag-sky { background-color: hsl(200 30% 14%); color: hsl(200 40% 68%); border-color: hsl(200 20% 20%); }
+  .dark .tag-rose { background-color: hsl(340 25% 15%); color: hsl(340 30% 68%); border-color: hsl(340 20% 22%); }
+  .dark .tag-lime { background-color: hsl(85 20% 14%); color: hsl(85 30% 62%); border-color: hsl(85 15% 20%); }
+  .dark .tag-amber { background-color: hsl(40 30% 14%); color: hsl(40 40% 65%); border-color: hsl(40 25% 20%); }
+  .dark .tag-slate { background-color: hsl(215 12% 16%); color: hsl(215 12% 62%); border-color: hsl(215 10% 22%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -162,12 +162,12 @@ export default function Messages() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 animate-fade-in-up stagger-1">
           {conversations.map((conv: any) => {
             const other = conv.otherUser;
             return (
               <Link key={conv.id} href={`/app/messages/${conv.id}`}>
-                <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate" data-testid={`card-conversation-${conv.id}`}>
+                <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate hover:shadow-sm transition-shadow duration-200" data-testid={`card-conversation-${conv.id}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-primary text-sm font-medium">{other?.name?.charAt(0) || "?"}</span>

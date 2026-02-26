@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Send, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { tagColour } from "@/lib/utils";
 
 const HEALTH_ROLES = [
   "Patient Advocate", "Public Health Professional", "Policymaker / Advisor",
@@ -281,7 +282,7 @@ export default function Onboarding() {
                       {table.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {table.tags.slice(0, 3).map(tag => (
-                            <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                            <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>
                           ))}
                         </div>
                       )}
