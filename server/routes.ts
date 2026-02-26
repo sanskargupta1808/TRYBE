@@ -802,7 +802,37 @@ Return ONLY valid JSON:
 
   app.get("/api/admin/moderation", requireAdmin, async (req, res) => {
     const items = await storage.getAllModerationItems();
-    res.json(items);
+    const enriched = await Promise.all(items.map(async (item) => {
+      let postContent: string | null = null;
+      let authorId: string | null = null;
+      let authorName: string | null = null;
+      let authorEmail: string | null = null;
+      let threadTitle: string | null = null;
+      let tableTitle: string | null = null;
+      let reporterName: string | null = null;
+      if (item.contentType === "POST" && item.contentId) {
+        const post = await storage.getPostById(item.contentId);
+        if (post) {
+          postContent = post.content;
+          authorId = post.userId;
+          const author = post.userId ? await storage.getUserById(post.userId) : null;
+          if (author) { authorName = author.name; authorEmail = author.email; }
+          const thread = await storage.getThreadById(post.threadId);
+          if (thread) {
+            threadTitle = thread.title;
+            const tables = await storage.getAllTables();
+            const table = tables.find(t => t.id === thread.tableId);
+            if (table) tableTitle = table.title;
+          }
+        }
+      }
+      if (item.reportedByUserId) {
+        const reporter = await storage.getUserById(item.reportedByUserId);
+        if (reporter) reporterName = reporter.name;
+      }
+      return { ...item, postContent, authorId, authorName, authorEmail, threadTitle, tableTitle, reporterName };
+    }));
+    res.json(enriched);
   });
   app.post("/api/admin/moderation/:id/resolve", requireAdmin, async (req, res) => {
     const item = await storage.resolveModerationItem(req.params.id);
@@ -1564,10 +1594,32 @@ Rules:
   });
 
   app.post("/api/admin/moderation/:id/review", requireAdmin, async (req, res) => {
-    const { action, adminNote } = req.body;
-    const item = await storage.resolveModerationItem(req.params.id);
+    const { action, adminNote, warningMessage, targetUserId } = req.body;
+    const validActions = ["DISMISS", "WARN", "SUSPEND", "REMOVE_POST"];
+    if (!action || !validActions.includes(action)) return res.status(400).json({ error: "Invalid action" });
+    if (action === "WARN" && (!targetUserId || !warningMessage?.trim())) return res.status(400).json({ error: "Warning message and target user required" });
+    if (action === "SUSPEND" && !targetUserId) return res.status(400).json({ error: "Target user required" });
+    if (action === "WARN" && targetUserId && warningMessage) {
+      const conv = await storage.createDmConversation(req.session.userId!, targetUserId);
+      await storage.createDmMessage({ conversationId: conv.id, senderId: req.session.userId!, content: `⚠️ Conduct Warning\n\n${warningMessage}`, messageType: "TEXT" });
+      await createAuditEntry({ actorUserId: req.session.userId, action: "CONDUCT_WARNING_SENT", targetType: "USER", targetId: targetUserId, metadata: { moderationItemId: req.params.id, warningMessage } });
+    }
+    if (action === "SUSPEND" && targetUserId) {
+      await storage.updateUserStatus(targetUserId, "SUSPENDED");
+      const user = await storage.getUserById(targetUserId);
+      if (user?.email) sendAccountSuspendedEmail(user.email, user.name).catch(() => {});
+      await createAuditEntry({ actorUserId: req.session.userId, action: "USER_SUSPENDED", targetType: "USER", targetId: targetUserId, metadata: { moderationItemId: req.params.id } });
+    }
+    if (action === "REMOVE_POST") {
+      const items = await storage.getAllModerationItems();
+      const item = items.find(i => i.id === req.params.id);
+      if (item?.contentId && item.contentType === "POST") {
+        await storage.updatePostModeration(item.contentId, "REMOVED");
+      }
+    }
+    const resolved = await storage.resolveModerationItem(req.params.id);
     await createAuditEntry({ actorUserId: req.session.userId, action: "MODERATION_ACTION", targetType: "MODERATION", targetId: req.params.id, metadata: { action, adminNote } });
-    res.json(item);
+    res.json(resolved);
   });
 
   // ─── Admin Metrics ────────────────────────────────────────────────────────

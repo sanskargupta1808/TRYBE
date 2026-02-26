@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check, Sparkles, Paperclip, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Flag, Pencil, Trash2, Lock, X, Check, Sparkles, Paperclip, Image as ImageIcon, AlertTriangle } from "lucide-react";
 
 export default function ThreadDetail() {
   const { tableId, threadId } = useParams<{ tableId: string; threadId: string }>();
@@ -170,6 +170,13 @@ export default function ThreadDetail() {
         ) : (
           (data.posts || []).map(({ post, user: u }: any) => (
             <div key={post.id} className="bg-card border border-card-border rounded-xl p-4" data-testid={`post-${post.id}`}>
+              {post.moderationStatus === "REMOVED" ? (
+                <div className="flex items-center gap-2 text-muted-foreground py-1">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <p className="text-sm italic">This post was removed by a moderator for violating the code of conduct.</p>
+                </div>
+              ) : (
+              <>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -246,6 +253,8 @@ export default function ThreadDetail() {
                     </a>
                   )}
                 </div>
+              )}
+              </>
               )}
             </div>
           ))
