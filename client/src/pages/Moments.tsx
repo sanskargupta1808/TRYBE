@@ -21,7 +21,6 @@ function formatDate(dateStr: string) {
 const CALENDAR_SIGNAL_TYPES = [
   { type: "SUPPORT", label: "Support", icon: ThumbsUp },
   { type: "INTERESTED", label: "Interested", icon: Star },
-  { type: "ATTENDING", label: "Attending", icon: CheckCircle },
 ];
 
 const MILESTONE_SIGNAL_TYPES = [
@@ -56,7 +55,7 @@ export default function Moments() {
           className={`flex-1 text-sm font-medium px-4 py-2 rounded-md transition-colors ${tab === "calendar" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
           data-testid="tab-calendar"
         >
-          WHO Calendar
+          Calendar
         </button>
         <button
           onClick={() => setTab("milestones")}
@@ -82,12 +81,7 @@ function CalendarTab() {
       const res = await apiRequest("POST", `/api/calendar/${eventId}/signal`, { signalType });
       return res.json();
     },
-    onSuccess: (data: any, variables) => {
-      if (variables.signalType === "ATTENDING" && data && !data.removed) {
-        toast({ title: "You're attending!", description: "Check your email for the full event details." });
-      }
-      qc.invalidateQueries({ queryKey: ["/api/calendar"] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/calendar"] }),
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
