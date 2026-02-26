@@ -37,7 +37,13 @@ export async function verifyUserEmail(token: string) {
   return updated;
 }
 export async function updateUserStatus(id: string, status: string) {
-  const [updated] = await db.update(schema.users).set({ status }).where(eq(schema.users.id, id)).returning();
+  const updates: any = { status };
+  if (status === "SUSPENDED") {
+    updates.suspendedAt = new Date();
+  } else if (status === "ACTIVE") {
+    updates.suspendedAt = null;
+  }
+  const [updated] = await db.update(schema.users).set(updates).where(eq(schema.users.id, id)).returning();
   return updated;
 }
 export async function updateUserRole(id: string, role: string) {
@@ -717,6 +723,72 @@ export async function getAllAppeals() {
 export async function updateAppealStatus(id: string, status: string, reviewedByUserId: string) {
   const [updated] = await db.update(schema.reactivationAppeals).set({ status, reviewedByUserId, reviewedAt: new Date() }).where(eq(schema.reactivationAppeals.id, id)).returning();
   return updated;
+}
+
+export async function getSuspendedUsersForAutoDelete(daysThreshold: number) {
+  const cutoff = new Date(Date.now() - daysThreshold * 24 * 60 * 60 * 1000);
+  return db.select().from(schema.users)
+    .where(and(
+      eq(schema.users.status, "SUSPENDED"),
+      lte(schema.users.suspendedAt, cutoff)
+    ));
+}
+
+export async function deleteUserCompletely(userId: string) {
+  const convos = await db.select({ id: schema.dmConversations.id }).from(schema.dmConversations)
+    .where(or(eq(schema.dmConversations.userAId, userId), eq(schema.dmConversations.userBId, userId)));
+  const convoIds = convos.map(c => c.id);
+  if (convoIds.length > 0) {
+    for (const cid of convoIds) {
+      const msgs = await db.select({ id: schema.dmMessages.id }).from(schema.dmMessages).where(eq(schema.dmMessages.conversationId, cid));
+      const msgIds = msgs.map(m => m.id);
+      if (msgIds.length > 0) {
+        for (const mid of msgIds) {
+          await db.delete(schema.dmReactions).where(eq(schema.dmReactions.messageId, mid));
+        }
+        await db.delete(schema.dmMessages).where(eq(schema.dmMessages.conversationId, cid));
+      }
+    }
+    for (const cid of convoIds) {
+      await db.delete(schema.dmConversations).where(eq(schema.dmConversations.id, cid));
+    }
+  }
+  await db.delete(schema.calendarSignals).where(eq(schema.calendarSignals.userId, userId));
+  await db.delete(schema.communityEventSignals).where(eq(schema.communityEventSignals.userId, userId));
+  const userCommunityEvents = await db.select({ id: schema.communityEvents.id }).from(schema.communityEvents).where(eq(schema.communityEvents.createdByUserId, userId));
+  for (const ev of userCommunityEvents) {
+    await db.delete(schema.communityEventSignals).where(eq(schema.communityEventSignals.eventId, ev.id));
+    await db.delete(schema.communityEvents).where(eq(schema.communityEvents.id, ev.id));
+  }
+  const userPosts = await db.select({ id: schema.posts.id }).from(schema.posts).where(eq(schema.posts.userId, userId));
+  for (const post of userPosts) {
+    await db.delete(schema.moderationQueue).where(and(eq(schema.moderationQueue.contentType, "POST"), eq(schema.moderationQueue.contentId, post.id)));
+  }
+  await db.delete(schema.posts).where(eq(schema.posts.userId, userId));
+  const userThreads = await db.select({ id: schema.threads.id }).from(schema.threads).where(eq(schema.threads.createdByUserId, userId));
+  for (const t of userThreads) {
+    const threadPosts = await db.select({ id: schema.posts.id }).from(schema.posts).where(eq(schema.posts.threadId, t.id));
+    for (const p of threadPosts) {
+      await db.delete(schema.moderationQueue).where(and(eq(schema.moderationQueue.contentType, "POST"), eq(schema.moderationQueue.contentId, p.id)));
+    }
+    await db.delete(schema.posts).where(eq(schema.posts.threadId, t.id));
+    await db.delete(schema.threadMemory).where(eq(schema.threadMemory.threadId, t.id));
+    await db.delete(schema.threads).where(eq(schema.threads.id, t.id));
+  }
+  await db.delete(schema.tableMembers).where(eq(schema.tableMembers.userId, userId));
+  await db.delete(schema.tableJoinRequests).where(eq(schema.tableJoinRequests.userId, userId));
+  await db.update(schema.tables).set({ createdByUserId: null }).where(eq(schema.tables.createdByUserId, userId));
+  await db.delete(schema.tableRequests).where(eq(schema.tableRequests.requestedByUserId, userId));
+  await db.update(schema.invites).set({ createdByUserId: null }).where(eq(schema.invites.createdByUserId, userId));
+  await db.update(schema.invites).set({ usedByUserId: null }).where(eq(schema.invites.usedByUserId, userId));
+  await db.delete(schema.feedback).where(eq(schema.feedback.userId, userId));
+  await db.delete(schema.reactivationAppeals).where(eq(schema.reactivationAppeals.userId, userId));
+  await db.update(schema.reactivationAppeals).set({ reviewedByUserId: null }).where(eq(schema.reactivationAppeals.reviewedByUserId, userId));
+  await db.update(schema.moderationQueue).set({ assignedToUserId: null }).where(eq(schema.moderationQueue.assignedToUserId, userId));
+  await db.delete(schema.moderationQueue).where(eq(schema.moderationQueue.reportedByUserId, userId));
+  await db.delete(schema.auditLog).where(eq(schema.auditLog.actorUserId, userId));
+  await db.delete(schema.userProfiles).where(eq(schema.userProfiles.userId, userId));
+  await db.delete(schema.users).where(eq(schema.users.id, userId));
 }
 
 export async function cleanupPastEvents() {

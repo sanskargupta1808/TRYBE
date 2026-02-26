@@ -64,11 +64,16 @@ export default function Suspended() {
             </div>
 
             <div className="border border-border rounded-xl bg-card/60 p-6 shadow-md stagger-2 animate-fade-in-up">
-              <div className="flex items-center gap-2.5 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2.5 mb-5">
-                <ShieldAlert className="h-4 w-4 text-destructive flex-shrink-0" />
-                <p className="text-xs text-foreground">
-                  While suspended, you cannot access the platform, participate in tables, or send messages.
-                </p>
+              <div className="flex items-start gap-2.5 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2.5 mb-5">
+                <ShieldAlert className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-foreground">
+                    While suspended, you cannot access the platform, participate in tables, or send messages.
+                  </p>
+                  <p className="text-xs text-destructive font-medium mt-1" data-testid="text-14-day-warning">
+                    If no appeal is submitted within 14 days of suspension, your account and all associated data will be permanently deleted.
+                  </p>
+                </div>
               </div>
 
               <p className="text-sm text-muted-foreground mb-4">

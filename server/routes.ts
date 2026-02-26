@@ -1739,6 +1739,14 @@ Rules:
         console.log(`[Cleanup] Removed ${removedTables.length} inactive table(s), ${removedEvents} past event(s)`);
       }
 
+      const expiredSuspended = await storage.getSuspendedUsersForAutoDelete(14);
+      for (const u of expiredSuspended) {
+        if (u.role === "ADMIN") continue;
+        await storage.deleteUserCompletely(u.id);
+        await createAuditEntry({ actorUserId: null, action: "USER_AUTO_DELETED", targetType: "USER", targetId: u.id, metadata: { email: u.email, reason: "14-day suspension expiry" } });
+        console.log(`[Cleanup] Auto-deleted suspended user ${u.email} (14-day expiry)`);
+      }
+
       const currentYear = new Date().getFullYear();
       const nextYear = currentYear + 1;
       const currentYearEvents = generateEventsForYear(currentYear);

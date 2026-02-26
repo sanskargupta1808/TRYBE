@@ -452,6 +452,7 @@ export async function sendAccountSuspendedEmail(recipientEmail: string, recipien
     <h1>Your TRYBE account has been suspended${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
     <p>After review, your account has been suspended due to a violation of TRYBE's community guidelines or Code of Conduct.</p>
     <p>While your account is suspended, you will not be able to access the platform, participate in tables, or send messages.</p>
+    <p><strong>Important:</strong> If no reactivation appeal is submitted within 14 days, your account and all associated data will be permanently deleted.</p>
     <p>If you believe this was made in error, or if you would like to request reactivation, you can submit an appeal by clicking the button below.</p>
     <a href="${appealUrl}" class="cta">Submit a reactivation request</a>
     <hr class="divider" />

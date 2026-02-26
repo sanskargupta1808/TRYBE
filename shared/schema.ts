@@ -21,11 +21,12 @@ export const users = pgTable("users", {
   canInvite: boolean("can_invite").notNull().default(true),
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
+  suspendedAt: timestamp("suspended_at"),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, lastLoginAt: true, emailVerifiedAt: true, inviteQuotaMonthly: true, inviteQuotaUsedThisMonth: true, inviteQuotaResetAt: true, canInvite: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, lastLoginAt: true, emailVerifiedAt: true, inviteQuotaMonthly: true, inviteQuotaUsedThisMonth: true, inviteQuotaResetAt: true, canInvite: true, suspendedAt: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
