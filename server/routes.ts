@@ -113,12 +113,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   const PgStore = pgSession(session);
-  const sessionPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const sessionPool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5, idleTimeoutMillis: 30000, keepAlive: true });
   app.use(session({
     store: new PgStore({ pool: sessionPool, createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET || "trybe-secret-key-change-in-prod",
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
   }));
 
