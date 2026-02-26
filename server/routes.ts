@@ -1495,7 +1495,9 @@ Rules:
     });
   });
 
-  // ─── Scheduled Cleanup: Inactive Tables (14+ days) & Past Events ─────────
+  // ─── Scheduled: Cleanup + WHO Health Days Sync ──────────────────────────
+  const { generateEventsForYear } = await import("./who-health-days");
+
   const runCleanup = async () => {
     try {
       const removedTables = await storage.cleanupInactiveTables(14);
@@ -1503,8 +1505,18 @@ Rules:
       if (removedTables.length > 0 || removedEvents > 0) {
         console.log(`[Cleanup] Removed ${removedTables.length} inactive table(s), ${removedEvents} past event(s)`);
       }
+
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      const currentYearEvents = generateEventsForYear(currentYear);
+      const nextYearEvents = generateEventsForYear(nextYear);
+      const addedCurrent = await storage.syncWHOHealthDays(currentYearEvents);
+      const addedNext = await storage.syncWHOHealthDays(nextYearEvents);
+      if (addedCurrent > 0 || addedNext > 0) {
+        console.log(`[WHO Sync] Added ${addedCurrent} event(s) for ${currentYear}, ${addedNext} event(s) for ${nextYear}`);
+      }
     } catch (err) {
-      console.error("[Cleanup] Error:", err);
+      console.error("[Cleanup/Sync] Error:", err);
     }
   };
   runCleanup();

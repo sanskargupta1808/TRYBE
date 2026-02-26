@@ -602,6 +602,32 @@ export async function upsertThreadMemory(threadId: string, summary: string, last
   return created;
 }
 
+// ─── WHO Health Days Sync ─────────────────────────────────────────────────────
+export async function syncWHOHealthDays(events: { title: string; startDate: string; endDate: string | null; organiser: string; regionScope: string; tags: string[]; sourceNote: string }[]) {
+  let added = 0;
+  for (const ev of events) {
+    const existing = await db.select({ id: schema.calendarEvents.id })
+      .from(schema.calendarEvents)
+      .where(and(
+        eq(schema.calendarEvents.title, ev.title),
+        eq(schema.calendarEvents.startDate, ev.startDate)
+      ));
+    if (existing.length === 0) {
+      await db.insert(schema.calendarEvents).values({
+        title: ev.title,
+        startDate: ev.startDate,
+        endDate: ev.endDate,
+        organiser: ev.organiser,
+        regionScope: ev.regionScope,
+        tags: ev.tags,
+        sourceNote: ev.sourceNote,
+      });
+      added++;
+    }
+  }
+  return added;
+}
+
 // ─── Cleanup: Inactive Tables & Past Events ──────────────────────────────────
 export async function cleanupInactiveTables(inactiveDays = 14) {
   const allTables = await db.select({ id: schema.tables.id, createdAt: schema.tables.createdAt }).from(schema.tables).where(eq(schema.tables.status, "ACTIVE"));
