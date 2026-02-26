@@ -183,7 +183,12 @@ function MilestonesTab({ showCreateForm, setShowCreateForm, userId }: { showCrea
       const res = await apiRequest("POST", `/api/milestones/${eventId}/signal`, { signalType });
       return res.json();
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/milestones"] }),
+    onSuccess: (data, variables) => {
+      qc.invalidateQueries({ queryKey: ["/api/milestones"] });
+      if (variables.signalType === "ATTENDING" && data.emailSent) {
+        toast({ title: "You're attending!", description: "Check your email for the full event details." });
+      }
+    },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 

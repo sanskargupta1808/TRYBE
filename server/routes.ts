@@ -6,7 +6,7 @@ import pg from "pg";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
-import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendAccountSuspendedEmail, sendAccountReactivatedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail } from "./email";
+import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendAccountSuspendedEmail, sendAccountReactivatedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail, sendMilestoneAttendingEmail } from "./email";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
@@ -842,7 +842,20 @@ Return ONLY valid JSON:
     const { signalType } = req.body;
     if (!signalType || !["INTERESTED", "ATTENDING"].includes(signalType)) return res.status(400).json({ error: "Invalid signal type" });
     const signal = await storage.upsertCommunitySignal(req.session.userId!, req.params.id, signalType);
-    res.json(signal || { removed: true });
+    let emailSent = false;
+    if (signal && signalType === "ATTENDING") {
+      const [usr, evt] = await Promise.all([
+        storage.getUserById(req.session.userId!),
+        storage.getCommunityEventById(req.params.id),
+      ]);
+      if (usr?.email && evt) {
+        sendMilestoneAttendingEmail(usr.email, usr.name, evt).then(sent => {
+          if (sent) console.log(`[Email] Attending confirmation sent to ${usr.email} for "${evt.title}"`);
+        }).catch(() => {});
+        emailSent = true;
+      }
+    }
+    res.json(signal ? { ...signal, emailSent } : { removed: true });
   });
 
   app.delete("/api/milestones/:id", requireActive, async (req, res) => {
