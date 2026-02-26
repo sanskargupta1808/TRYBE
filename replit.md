@@ -149,6 +149,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **Frontend**: Actions performed block (success/fail indicators), collapsible sections for structured content, nudge cards, focus review prompt
 - **Response format**: JSON with assistantText, summaryContent, reflectionContent, milestoneContent, draftContent, actionsPerformed, pendingActions, suggestedActions
 - **Confirmation flow**: Write tools (join_table, create_thread, post_in_thread, etc.) are collected as `pendingActions` and presented to the user for approval before execution. Read-only tools (search, list, get) execute immediately. User approves → POST `/api/assistant/execute` executes the actions. User declines → no changes made.
+- **Chat persistence**: Current conversation stored in `sessionStorage` (key: `trybe_assistant_messages`). Survives drawer close/reopen and page navigation. Clears on tab close or "New conversation" button. Backend accepts last 20 messages as history context.
 - **Cache invalidation**: After tool actions, frontend invalidates relevant query caches (tables, profile, messages, invites, calendar)
 - **Max tokens**: 1500
 

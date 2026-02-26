@@ -1158,7 +1158,7 @@ Rules:
 - Omit any field that is not needed (no empty strings).`;
 
     const conversationMessages: any[] = (history || [])
-      .slice(-8)
+      .slice(-20)
       .map((m: { role: string; content: string }) => ({
         role: m.role === "user" ? "user" : "assistant",
         content: m.content,

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Bot, Send, ChevronRight, ChevronDown, Loader2, Copy, Check, FileText, AlignLeft, Lightbulb, CalendarDays, MessageSquare, RefreshCw, CheckCircle, XCircle, Zap } from "lucide-react";
+import { X, Bot, Send, ChevronRight, ChevronDown, Loader2, Copy, Check, FileText, AlignLeft, Lightbulb, CalendarDays, MessageSquare, RefreshCw, CheckCircle, XCircle, Zap, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -211,22 +211,44 @@ function StructuredContent({ content, copyable = true }: { content: string | Rec
   );
 }
 
+const ASSISTANT_STORAGE_KEY = "trybe_assistant_messages";
+const DEFAULT_GREETING: Message = {
+  role: "assistant",
+  content: "How can I support your work today? I can take actions for you — join tables, start discussions, send messages, invite colleagues — or help with analysis, drafting, and milestone preparation. Just tell me what you need.",
+  suggestedActions: [
+    { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
+    { type: "NAVIGATE", label: "View Milestones", url: "/app/moments" },
+  ],
+};
+
+function loadStoredMessages(): Message[] {
+  try {
+    const stored = sessionStorage.getItem(ASSISTANT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [DEFAULT_GREETING];
+}
+
+function saveMessages(messages: Message[]) {
+  try {
+    sessionStorage.setItem(ASSISTANT_STORAGE_KEY, JSON.stringify(messages));
+  } catch {}
+}
+
 export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "How can I support your work today? I can take actions for you — join tables, start discussions, send messages, invite colleagues — or help with analysis, drafting, and milestone preparation. Just tell me what you need.",
-      suggestedActions: [
-        { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
-        { type: "NAVIGATE", label: "View Milestones", url: "/app/moments" },
-      ],
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(loadStoredMessages);
   const [input, setInput] = useState("");
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [focusReviewDismissed, setFocusReviewDismissed] = useState(false);
+
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
 
   const { tableId, threadId } = parseContext(location);
   const quickActions = getQuickActions(location);
@@ -399,11 +421,27 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
             <p className="text-xs text-muted-foreground">Your intelligent companion in TRYBE</p>
           </div>
         </div>
-        {onClose && (
-          <Button size="icon" variant="ghost" onClick={onClose} data-testid="button-close-assistant">
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {messages.length > 1 && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setMessages([DEFAULT_GREETING]);
+                sessionStorage.removeItem(ASSISTANT_STORAGE_KEY);
+              }}
+              title="New conversation"
+              data-testid="button-new-conversation"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
+          {onClose && (
+            <Button size="icon" variant="ghost" onClick={onClose} data-testid="button-close-assistant">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1 px-4 py-3">
