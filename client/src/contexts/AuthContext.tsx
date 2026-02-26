@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchMe = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/auth/me", { credentials: "include" });
       const data = await res.json();

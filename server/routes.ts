@@ -145,7 +145,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (invite.autoApproveOnUse && !invite.requiresManualApproval) {
       const activated = await storage.updateUserStatus(verified!.id, "ACTIVE");
       await createAuditEntry({ actorUserId: verified!.id, action: "AUTO_APPROVED", targetType: "USER", targetId: verified!.id, metadata: { inviteType: invite.inviteType, invitedBy: invite.createdByUserId } });
-      return res.json({ user: { ...activated, passwordHash: undefined }, autoApproved: true, message: "Your access has been confirmed." });
+      req.session.userId = activated!.id;
+      await storage.updateUserLastLogin(activated!.id);
+      return new Promise<void>((resolve) => {
+        req.session.save(() => {
+          res.json({ user: { ...activated, passwordHash: undefined }, autoApproved: true, message: "Your access has been confirmed." });
+          resolve();
+        });
+      });
     }
 
     return res.json({ user: { ...verified, passwordHash: undefined }, autoApproved: false, message: "Registration successful. Awaiting admin approval." });
@@ -1380,8 +1387,8 @@ Rules:
       createdByUserId: req.session.userId,
       expiresAt,
       inviteType: "ADMIN_CODE",
-      autoApproveOnUse: false,
-      requiresManualApproval: true,
+      autoApproveOnUse: true,
+      requiresManualApproval: false,
     });
     await createAuditEntry({ actorUserId: req.session.userId, action: "INVITE_CREATED", targetType: "INVITE", targetId: invite.id, metadata: { email, inviteType: "ADMIN_CODE" } });
     let emailSent = false;
