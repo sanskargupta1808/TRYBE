@@ -286,3 +286,15 @@ export const tableJoinRequests = pgTable("table_join_requests", {
 });
 
 export type TableJoinRequest = typeof tableJoinRequests.$inferSelect;
+
+// ─── Thread Memory (Rolling Summaries) ───────────────────────────────────────
+export const threadMemory = pgTable("thread_memory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull().references(() => threads.id),
+  summary: text("summary").notNull(),
+  lastMessageIdIncluded: varchar("last_message_id_included"),
+  postCountIncluded: integer("post_count_included").notNull().default(0),
+  updatedAt: timestamp("updated_at").default(sql`now()`).notNull(),
+});
+
+export type ThreadMemory = typeof threadMemory.$inferSelect;

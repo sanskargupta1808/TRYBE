@@ -563,3 +563,28 @@ export async function getRecentActivityCount(userId: string, daysSince: number) 
     .where(and(eq(schema.posts.userId, userId), gte(schema.posts.createdAt, since)));
   return posts.length;
 }
+
+// ─── Thread Memory ───────────────────────────────────────────────────────────
+export async function getThreadMemory(threadId: string) {
+  const [mem] = await db.select().from(schema.threadMemory).where(eq(schema.threadMemory.threadId, threadId));
+  return mem || null;
+}
+export async function upsertThreadMemory(threadId: string, summary: string, lastMessageId: string | null, postCount: number) {
+  const existing = await getThreadMemory(threadId);
+  if (existing) {
+    const [updated] = await db.update(schema.threadMemory).set({
+      summary,
+      lastMessageIdIncluded: lastMessageId,
+      postCountIncluded: postCount,
+      updatedAt: new Date(),
+    }).where(eq(schema.threadMemory.id, existing.id)).returning();
+    return updated;
+  }
+  const [created] = await db.insert(schema.threadMemory).values({
+    threadId,
+    summary,
+    lastMessageIdIncluded: lastMessageId,
+    postCountIncluded: postCount,
+  }).returning();
+  return created;
+}

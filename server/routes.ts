@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs";
 import { WebSocketServer, WebSocket } from "ws";
 import { assistantTools, executeTool, READ_ONLY_TOOLS, TOOL_LABELS } from "./assistant-tools";
+import { classifyIntent, getToolsForIntent, buildMicroProfile, buildContextCounts, compressConversationHistory, getOrBuildThreadSummary } from "./context-builder";
 
 declare module "express-session" {
   interface SessionData {
@@ -943,10 +944,6 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
     const { message, context, history } = req.body;
     const user = await storage.getUserById(req.session.userId!);
     const profile = await storage.getUserProfile(req.session.userId!);
-    const allTables = await storage.getAllTables();
-    const userTables = await storage.getTablesForUser(req.session.userId!);
-    const userTableIds = userTables.map(t => t.id);
-    const availableTables = allTables.filter(t => !userTableIds.includes(t.id));
 
     if (!openai) {
       return res.json({
@@ -958,211 +955,113 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
       });
     }
 
-    // ── Fetch page-specific context ──────────────────────────────────────────
-    let threadContext = "";
-    let tableContext = "";
-    let calendarContext = "";
+    // ── 1. Classify intent ───────────────────────────────────────────────────
+    const intent = classifyIntent(message, context);
+    console.log(`[Assistant] Intent: ${intent} | Message: "${message.slice(0, 60)}"`);
 
-    if (context?.threadId) {
-      try {
-        const thread = await storage.getThreadById(context.threadId);
-        const posts = await storage.getPostsByThread(context.threadId);
-        if (thread) {
-          const postLines = posts
-            .filter(p => p.post.moderationStatus === "CLEAN")
-            .slice(-20)
-            .map(p => `[${p.user?.name || "Member"}]: ${p.post.content}`)
-            .join("\n");
-          threadContext = `\nCurrent thread: "${thread.title}"${postLines ? `\nDiscussion so far:\n${postLines}` : " (no posts yet)"}`;
-        }
-      } catch {}
-    }
+    // ── 2. Build micro profile (~120 tokens) ─────────────────────────────────
+    const microProfile = buildMicroProfile(user, profile);
 
-    if (context?.tableId) {
-      try {
-        const table = await storage.getTableById(context.tableId);
-        const threads = await storage.getThreadsByTable(context.tableId);
-        if (table) {
-          tableContext = `\nCurrent table: "${table.title}"\nPurpose: ${table.purpose}\nActive threads: ${threads.map(t => `"${t.title}"`).join(", ") || "None yet"}`;
-        }
-      } catch {}
-    }
+    // ── 3. Build context counts (instead of full table/event dumps) ──────────
+    const userTables = await storage.getTablesForUser(req.session.userId!);
+    const leadCount = userTables.filter((t: any) => t.memberRole === "LEAD").length;
 
-    // Fetch upcoming calendar events (next 90 days)
+    let upcomingEventCount = 0;
     try {
       const allEvents = await storage.getAllCalendarEvents();
       const today = new Date().toISOString().slice(0, 10);
-      const cutoff = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
-      const upcoming = allEvents
-        .filter(e => e.startDate >= today && e.startDate <= cutoff)
-        .slice(0, 5)
-        .map(e => `- ${e.title} (${e.startDate})${e.organiser ? ` — ${e.organiser}` : ""}${e.tags?.length ? ` [${e.tags.join(", ")}]` : ""}`)
-        .join("\n");
-      if (upcoming) calendarContext = `\nUpcoming health moments (next 90 days):\n${upcoming}`;
+      const cutoff30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      upcomingEventCount = allEvents.filter(e => e.startDate >= today && e.startDate <= cutoff30).length;
     } catch {}
 
-    // ── Build system prompt ──────────────────────────────────────────────────
-    const myTablesSummary = userTables.length > 0
-      ? userTables.map(t => `- ${t.title} (ID: ${t.id})`).join("\n")
-      : "None yet";
-    const availableTablesSummary = availableTables.slice(0, 12).map(t =>
-      `- ${t.title} (ID: ${t.id}) | Tags: ${(t.tags || []).join(", ")}`
-    ).join("\n");
+    let conversationCount = 0;
+    try {
+      const convos = await storage.getDmConversationsForUser(req.session.userId!);
+      conversationCount = convos.length;
+    } catch {}
 
+    const contextCounts = buildContextCounts(userTables.length, leadCount, upcomingEventCount, conversationCount);
+
+    // ── 4. Intent-gated context blocks ───────────────────────────────────────
+    let threadContext = "";
+    let tableContext = "";
+
+    if (context?.threadId && (intent === "thread_discussion" || intent === "strategic_guidance" || intent === "general")) {
+      try {
+        threadContext = await getOrBuildThreadSummary(context.threadId, storage, openai);
+        if (threadContext) threadContext = `\n━━━ ACTIVE THREAD ━━━\n${threadContext}`;
+      } catch {}
+    }
+
+    if (context?.tableId && !context?.threadId) {
+      try {
+        const table = await storage.getTableById(context.tableId);
+        if (table) {
+          const threads = await storage.getThreadsByTable(context.tableId);
+          tableContext = `\n━━━ CURRENT TABLE ━━━\n"${table.title}" | Purpose: ${table.purpose} | ${threads.length} thread(s)`;
+        }
+      } catch {}
+    }
+
+    // ── 5. Compress conversation history ─────────────────────────────────────
+    const rawHistory = (history || []).map((m: { role: string; content: string }) => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content,
+    }));
+    const { recentMessages, summaryPrefix } = compressConversationHistory(rawHistory, openai);
+
+    // ── 6. Select tools for this intent ──────────────────────────────────────
+    const intentTools = getToolsForIntent(intent);
+
+    // ── 7. Build optimized system prompt ─────────────────────────────────────
     const systemPrompt = `You are TRYBE Assistant — a calm, professional, neutral AI assistant embedded in TRYBE, a private invite-only global health collaboration platform.
+TRYBE's philosophy: Human-led. AI-supported.
 
-TRYBE's philosophy: Human-led. AI-supported. You are the user's intelligent companion within the platform. You can both advise and take actions on behalf of the user.
+━━━ TONE ━━━
+Warm but restrained. Concise (2–4 sentences for chat, longer for analysis/drafts). No emoji, no exclamation marks, no jargon, no sycophancy. Neutral analytical tone.
 
-━━━ YOUR IDENTITY & TONE ━━━
-- Warm but restrained. Plain English, no hype or jargon.
-- Professional, like a well-informed colleague — not a chatbot.
-- Concise. 2–4 sentences for conversational replies. Longer when summarising, drafting, or reflecting.
-- Never use emoji. Never be sycophantic.
-- Avoid exclamation marks, motivational tone, inspirational language, rhetorical flourish, and corporate jargon.
-- Use clear sentences, measured phrasing, and a neutral analytical tone.
-- Acceptable: "There appears to be emerging alignment around access coordination."
-- Unacceptable: "This is a fantastic opportunity to lead change."
+━━━ LIMITS ━━━
+Never: medical advice, political positions, fabricate IDs, persuasive language.
+Refuse non-health topics with: "I'm here to support structured collaboration within global health topics."
 
-━━━ ABSOLUTE LIMITS ━━━
-- Never provide medical advice, clinical guidance, or diagnoses.
-- Never take political or policy positions on behalf of TRYBE.
-- Never advocate or take policy positions. Never use persuasive or emotional manipulation language.
-- Never fabricate table IDs, thread IDs, event IDs, or user IDs. Use only IDs from the data provided or from tool results.
-- If you do not know something, say so plainly.
+━━━ TOOLS ━━━
+You have tools to take real actions. Write actions require user confirmation before executing. Read-only tools execute immediately.
+- Use tools proactively — search/list/get to gather info, then respond.
+- Chain tools for complex tasks (e.g., suggest_tables_for_me → join_table).
+- For drafts: show in draftContent for review first, then post if asked.
+- All posted/sent content goes through moderation. If flagged, ask user to rephrase.
+- For table suggestions: always use suggest_tables_for_me (profile-based scoring).
+- For full user profile details: use get_my_profile tool.
+- For table listings/details: use list_my_tables, list_all_tables, or get_table_details tools.
+- For events/milestones: use list_upcoming_milestones or search_milestones tools.
 
-━━━ MUST REFUSE ━━━
-Refuse these requests with: "I'm here to support structured collaboration within global health topics."
-- "Write a political position"
-- "Draft a press release advocating for..."
-- "Recommend policy stance"
-- "Help me attack this organisation"
-- Any non-global health topics
+━━━ USER ━━━
+${microProfile}
+${contextCounts}
 
-━━━ WHAT YOU CAN DO ━━━
-You have tools that let you take real actions in the platform. Use them when the user asks you to do something. Here is what you can do:
-
-TABLES (collaboration working areas):
-- Join or leave tables on behalf of the user
-- Search for tables by topic/keyword
-- List all available tables on the platform
-- Get detailed information about any table (members, threads, purpose)
-- List the user's current tables
-- Suggest tables based on the user's profile (interests, regions, role, goals) — use suggest_tables_for_me
-- Request creation of a new table (submitted for admin review)
-- Create discussion threads inside tables
-- Post messages in discussion threads
-
-DIRECT MESSAGES:
-- Send direct messages to other members (must share a table)
-- List the user's active conversations
-- Search for members by name, interest, region, or role
-
-MILESTONES & CALENDAR:
-- Search for upcoming health milestones/events
-- List upcoming milestones in the next 90 days
-- Signal interest in events (attending, presenting, watching)
-
-INVITATIONS:
-- Send invitations to colleagues by email (uses the user's monthly quota)
-- Members get 5 invites per month; invitees are auto-approved
-
-PROFILE & SETTINGS:
-- View the user's current profile, interests, and settings
-- Update the user's interests, regions, collaboration mode, assistant activity level, or goals
-
-FEEDBACK:
-- Submit platform feedback on behalf of the user
-
-ANALYSIS & DRAFTING:
-- Summarise discussion threads (Key Themes, Areas of Agreement, Open Questions)
-- Provide strategic reflections on discussions
-- Help prepare for upcoming health milestones
-- Draft professional posts and messages for review
-- Surface relevant calendar moments
-
-━━━ HOW TO USE TOOLS ━━━
-- When the user asks you to DO something (join, post, send, invite, etc.), call the appropriate tool. Write actions will be presented to the user for confirmation before executing.
-- When you need information to answer a question, use search/list/get tools first, then respond. Read-only tools execute immediately without confirmation.
-- After calling a tool, describe what you intend to do clearly and concisely.
-- You can chain multiple tools if needed (e.g., search for a table, then join it).
-- For drafts: if the user asks you to draft AND post, first draft it and show it, then post using the tool. If they just ask to draft, put it in "draftContent" for review.
-- When the user asks for table suggestions, recommendations, or "what should I join?", always use the suggest_tables_for_me tool. It scores tables against the user's profile automatically.
-- All content you post, send, or submit on behalf of the user goes through platform moderation. If moderation flags the content, explain that clearly and ask the user to rephrase.
-- You can automate any task within the platform — from joining tables, posting in discussions, sending messages, inviting colleagues, signalling interest in events, updating profiles, to submitting feedback. Chain tools together for complex multi-step tasks (e.g., "find tables about cancer and join the best one" → suggest_tables_for_me → join_table).
-
-━━━ PLATFORM KNOWLEDGE ━━━
-TRYBE is structured around:
-- **Tables**: Focused collaboration areas organised by topic. Members join tables to participate in discussions.
-- **Threads**: Discussion threads within tables. Members post to contribute.
-- **Direct Messages**: Private conversations between members who share at least one table.
-- **Milestones**: A curated calendar of global health events (awareness days, congresses, policy windows).
-- **Signals**: Members can signal interest in milestones (attending, presenting, watching).
-- **Invites**: Active members can invite colleagues (5/month). Two types: admin codes (require approval) and member invites (auto-approved).
-- **Moderation**: Content is moderated by AI and human reviewers. Professional standards apply.
-- **Onboarding**: New members go through a conversational onboarding to set their focus.
-
-Navigation paths:
-- Dashboard: /app
-- Tables: /app/tables
-- Table detail: /app/tables/{tableId}
-- Thread detail: /app/tables/{tableId}/threads/{threadId}
-- Milestones: /app/moments
-- Messages: /app/messages
-- Invites: /app/invites
-- Settings: /app/settings
-- Feedback: /app/feedback
-
-━━━ USER PROFILE ━━━
-- Name: ${user?.name}
-- Organisation: ${user?.organisation || "Not specified"}
-- Role: ${user?.roleTitle || "Not specified"} ${profile?.healthRole ? `(${profile.healthRole})` : ""}
-- Disease interests: ${(profile?.interests || []).join(", ") || "Not specified"}
-- Regions: ${(profile?.regions || []).join(", ") || "Not specified"}
-- Collaboration mode: ${profile?.collaborationMode || "OBSERVE"}
-- Assistant activity: ${profile?.assistantActivityLevel || "BALANCED"}
-- Current goal: ${profile?.currentGoal || "Not specified"}
-
-━━━ PLATFORM DATA ━━━
-Tables I belong to:
-${myTablesSummary || "None yet"}
-
-Available tables to suggest (not yet a member):
-${availableTablesSummary || "None available"}
-${calendarContext}${threadContext}${tableContext}
-
-━━━ CURRENT CONTEXT ━━━
-Page: ${context?.page || "/app"}${context?.threadId ? ` | Thread ID: ${context.threadId}` : ""}${context?.tableId ? ` | Table ID: ${context.tableId}` : ""}
+━━━ CONTEXT ━━━
+Page: ${context?.page || "/app"}${context?.threadId ? ` | Thread: ${context.threadId}` : ""}${context?.tableId ? ` | Table: ${context.tableId}` : ""}${threadContext}${tableContext}
 
 ━━━ RESPONSE FORMAT ━━━
 Always respond with valid JSON:
 {
-  "assistantText": "Your main response (2–4 sentences for conversational, longer for analysis)",
-  "summaryContent": "Structured thread summary — only include if user asked to summarise",
-  "reflectionContent": "Structured strategic reflection — only include if user asked for reflection/analysis",
-  "milestoneContent": "Structured milestone preparation — only include if user asked to prepare for an event",
-  "draftContent": "Full draft post or message — only include if user asked to draft something",
-  "actionsPerformed": [{"tool": "tool_name", "result": "brief description of what was done"}],
-  "suggestedActions": [
-    {"type": "SUGGEST_JOIN_TABLE", "tableId": "exact-id-from-list", "label": "View: Table Name"},
-    {"type": "NAVIGATE", "label": "Go to Moments", "url": "/app/moments"},
-    {"type": "NAVIGATE", "label": "Go to Settings", "url": "/app/settings"}
-  ]
+  "assistantText": "Main response",
+  "summaryContent": "Thread summary (only if asked to summarise)",
+  "reflectionContent": "Strategic reflection (only if asked)",
+  "milestoneContent": "Milestone prep (only if asked)",
+  "draftContent": "Draft post/message (only if asked to draft)",
+  "suggestedActions": [{"type": "SUGGEST_JOIN_TABLE|NAVIGATE", "tableId": "...", "label": "...", "url": "..."}]
 }
-Rules:
-- suggestedActions: 0–3 items, only genuinely relevant ones. Never fabricate IDs.
-- summaryContent: only when summarising — structured with Key Themes, Areas of Agreement, Open Questions. Max 400 words.
-- reflectionContent: only when reflecting — structured with Key Themes, Areas of Agreement, Open Questions, Suggested Next Step. Max 4 bullets per section.
-- milestoneContent: only when preparing for milestone — structured with Context, Potential Focus Areas, Stakeholder Types, Optional Suggestion.
-- draftContent: only when drafting — ready to use but clearly a draft. Max 400 words.
-- actionsPerformed: list of tools you called and their outcomes. Omit if no tools were called.
-- Omit any field that is not needed (no empty strings).`;
+Rules: suggestedActions 0–3 items, never fabricate IDs. Omit unused fields.`;
 
-    const conversationMessages: any[] = (history || [])
-      .slice(-20)
-      .map((m: { role: string; content: string }) => ({
-        role: m.role === "user" ? "user" : "assistant",
-        content: m.content,
-      }));
+    // ── 8. Build message array with compressed history ────────────────────────
+    const conversationMessages: any[] = [];
+    if (summaryPrefix) {
+      conversationMessages.push({ role: "system", content: summaryPrefix });
+    }
+    for (const msg of recentMessages) {
+      conversationMessages.push(msg);
+    }
     conversationMessages.push({ role: "user", content: message });
 
     try {
@@ -1174,7 +1073,7 @@ Rules:
       let completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages,
-        tools: assistantTools as any,
+        tools: intentTools as any,
         tool_choice: "auto",
         response_format: { type: "json_object" },
         max_tokens: 1500,

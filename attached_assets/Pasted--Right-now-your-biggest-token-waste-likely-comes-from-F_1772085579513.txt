@@ -1,0 +1,358 @@
+
+
+Right now, your biggest token waste likely comes from:
+
+* Full profile injection (even when irrelevant)
+* Listing all tables every message
+* Sending 20 posts blindly
+* Sending 90 days of events regardless of intent
+* Sending 20-message chat history every time
+
+
+
+🔥 Core Fix: Move From “Data Injection” → “Intent-Gated Retrieval”
+
+Instead of injecting everything, build a **3-stage context builder**:
+
+
+1️⃣ Split User Profile into Two Layers
+
+We currently inject:
+
+> interests, regions, goals, role
+
+🔁 Change to:
+
+✅ Layer A — Micro Profile (Always Injected, ≤ 120 tokens)
+
+Store a compressed, canonical form:
+
+```json
+{
+  "role": "Oncologist",
+  "primary_focus": "Breast cancer",
+  "regions": ["EU"],
+  "goal_summary": "Collaborate on clinical trial design",
+  "assistant_mode": "strategic"
+}
+```
+
+That’s it.
+
+Not:
+
+* Full disease interests array
+* Full profile snapshot
+* Onboarding metadata
+* Collaboration mode text
+
+Keep it ultra-tight.
+
+---
+
+✅ Layer B — Extended Profile (Tool-Callable Only)
+
+Full interests list
+Full onboarding state
+Health role description
+Profile snapshot
+
+OMNI calls a tool only if needed.
+
+This alone can cut 200–400 tokens per request.
+
+---
+
+2️⃣ Stop Injecting “All Current Tables”
+
+Right now you inject:
+
+> Your current tables and available tables
+
+That’s expensive.
+
+Instead:
+
+❌ Current pattern:
+
+```
+You are a member of:
+- Oncology Strategy
+- EU Policy Forum
+- Rare Disease Taskforce
+...
+```
+
+✅ Replace with:
+
+```
+User is member_of_tables_count: 4
+User is lead_of_tables_count: 1
+```
+
+If user says:
+
+> "What tables am I in?"
+> → Tool call fetches list.
+
+If user says:
+
+> "Post in Oncology Strategy"
+> → Tool resolves that specific table.
+
+You don't need table names unless referenced.
+
+This can save 150–600 tokens per request.
+
+
+3️⃣ Thread Context: Replace “Last 20 Posts” with Smart Compression
+
+Instead of injecting raw 20 posts:
+
+Use a rolling thread summary table:
+
+```
+thread_memory table:
+- thread_id
+- summary_300_tokens
+- last_updated_at
+- last_message_id_included
+```
+
+When new posts added:
+
+1. Fetch old summary
+2. Add new posts
+3. Resummarize to 300 tokens
+4. Overwrite
+
+At runtime inject:
+
+```
+THREAD SUMMARY:
+<300 token compressed context>
+```
+
+Only inject raw posts if:
+
+* The user explicitly references a specific message
+* The model needs quoting
+
+This can save 1,000+ tokens per thread-heavy request.
+
+4️⃣ Events: Make It Intent-Based
+
+Right now:
+
+> Upcoming 90 days of events always injected
+
+That’s very expensive.
+
+Instead:
+
+Inject only:
+
+```
+User has 3 upcoming events in next 30 days.
+```
+
+If user asks:
+
+* "What events are coming up?"
+* "Am I presenting anywhere?"
+
+→ Tool query `calendar_events`.
+
+Never pre-inject full event objects.
+
+
+
+5️⃣ Conversation History: Compress Aggressively
+
+Right now:
+
+> 20 previous messages sent from browser
+
+Better:
+
+Use sliding summary:
+
+Keep:
+
+* Last 4 raw messages
+* * Rolling conversation summary (≤ 250 tokens)
+
+Example:
+
+```
+CONVERSATION SUMMARY:
+User exploring cross-border oncology collaboration. Wants strategic positioning help. Considering proposal submission.
+
+RECENT MESSAGES:
+User: ...
+Assistant: ...
+User: ...
+```
+
+This maintains context with ~400 tokens instead of 1,500+.
+
+
+
+6️⃣ Convert Arrays → Semantic Tags
+
+Instead of injecting:
+
+```
+disease_interests: ["breast cancer", "lung cancer", "glioblastoma", "melanoma"]
+```
+
+Store internally as array.
+
+Inject as:
+
+```
+primary_focus: oncology (breast cancer specialization)
+```
+
+Full list only via tool.
+
+
+
+7️⃣ Introduce a Context Relevance Layer
+
+Before building prompt:
+
+### Step 1: Classify Intent
+
+* Social
+* Thread discussion
+* DM
+* Table management
+* Event inquiry
+* Strategic guidance
+* Feedback
+
+Step 2: Inject Only Required Blocks
+
+Example:
+
+| Intent          | Inject                          |
+| --------------- | ------------------------------- |
+| DM chat         | Micro profile + last 4 messages |
+| Thread reply    | Micro profile + thread summary  |
+| Event question  | Micro profile only              |
+| Strategy advice | Micro profile + goal summary    |
+| Admin action    | Minimal identity + permissions  |
+
+This prevents static prompt bloat.
+
+
+8️⃣ Stop Sending Tool Descriptions Every Time
+
+You said:
+
+> 25 tools injected
+
+That’s likely another 500–1,500 tokens.
+
+Instead:
+
+* Use dynamic tool registration per intent.
+* Or hierarchical tools:
+
+  * `tables_tool`
+  * `dm_tool`
+  * `events_tool`
+  * `moderation_tool`
+
+Only expose relevant toolset per request.
+
+
+9️⃣ Add Memory Confidence + Decay
+
+Some user data becomes stale:
+
+* Goals
+* Assistant activity level
+* Interests
+
+Add:
+
+```
+last_confirmed_at
+confidence_score
+```
+
+If low confidence:
+
+* Ask user to reconfirm
+* Don’t aggressively inject
+
+Prevents stale personalization.
+
+
+# 🚀 Ideal OMNI Prompt After Optimization
+
+Instead of 2,000–4,000 tokens:
+
+You’d send:
+
+```
+SYSTEM: OMNI assistant
+
+USER PROFILE (condensed):
+- Oncologist | EU | Focus: Breast Cancer
+- Goal: Clinical trial collaboration
+- Assistant mode: strategic
+
+THREAD SUMMARY (if relevant):
+<300 tokens>
+
+CONVERSATION SUMMARY:
+<200 tokens>
+
+RECENT MESSAGES:
+(last 4)
+
+AVAILABLE TOOLS:
+(tables_tool, dm_tool)
+```
+
+Total: ~600–900 tokens.
+
+Instead of potentially 3,000+.
+
+Where You're Likely Wasting Tokens Today
+
+1. Table listings
+2. 90-day event dumps
+3. 20 raw thread posts
+4. 20 raw conversation messages
+5. Full profile arrays
+6. Full tool descriptions
+
+ Important Principle
+
+> Store everything.
+> Inject almost nothing.
+> Retrieve only when required.
+
+Your database design is fine.
+
+The optimization must happen in the **context builder layer**, not schema.
+
+# 🏁 If You Want, I Can:
+
+* Design an exact context builder pipeline
+* Estimate token savings numerically
+* Suggest schema additions (like thread_memory table)
+* Or help design a cost-optimized OMNI v2 architecture
+
+Tell me your:
+
+* Average daily active users
+* Avg tables per user
+* Avg thread length
+* Model used (GPT-4o? o3? etc.)
+
+Then I can give you a precision optimization plan.
