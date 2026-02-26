@@ -788,6 +788,69 @@ Return ONLY valid JSON:
     res.json({ success: true });
   });
 
+  // ─── Community Events (User-Created Milestones) ───────────────────────────
+
+  app.get("/api/milestones", requireActive, async (req, res) => {
+    const events = await storage.getAllCommunityEvents();
+    const signals = await storage.getUserCommunitySignals(req.session.userId!);
+    const allSignals = await Promise.all(events.map(async (e) => {
+      const counts = await storage.getCommunityEventSignalCounts(e.id);
+      return { eventId: e.id, ...counts };
+    }));
+    const creators = await Promise.all(events.map(async (e) => {
+      if (!e.createdByUserId) return null;
+      const u = await storage.getUserById(e.createdByUserId);
+      return u ? { id: u.id, name: u.name, organisation: u.organisation } : null;
+    }));
+    const enriched = events.map((e, i) => ({
+      ...e,
+      creator: creators[i],
+      counts: allSignals.find(s => s.eventId === e.id) || { interested: 0, attending: 0 },
+    }));
+    res.json({ events: enriched, signals });
+  });
+
+  app.post("/api/milestones", requireActive, async (req, res) => {
+    const { title, description, eventDate, endDate, location, virtualLink, tags } = req.body;
+    if (!title?.trim() || !eventDate) return res.status(400).json({ error: "Title and date are required" });
+    const textToCheck = [title, description, location].filter(Boolean).join(" ");
+    if (textToCheck.trim()) {
+      const mod = await moderateContent(textToCheck);
+      if (mod.flagged) return res.status(400).json({ error: "Content may not meet TRYBE's professional conduct standards. Please rephrase." });
+    }
+    const event = await storage.createCommunityEvent({
+      title: title.trim(),
+      description: description?.trim() || null,
+      eventDate,
+      endDate: endDate || null,
+      location: location?.trim() || null,
+      virtualLink: virtualLink?.trim() || null,
+      tags: tags || [],
+      createdByUserId: req.session.userId!,
+    });
+    await createAuditEntry({ actorUserId: req.session.userId, action: "MILESTONE_CREATED", targetType: "COMMUNITY_EVENT", targetId: event.id });
+    res.json(event);
+  });
+
+  app.post("/api/milestones/:id/signal", requireActive, async (req, res) => {
+    const { signalType } = req.body;
+    if (!signalType || !["INTERESTED", "ATTENDING"].includes(signalType)) return res.status(400).json({ error: "Invalid signal type" });
+    const signal = await storage.upsertCommunitySignal(req.session.userId!, req.params.id, signalType);
+    res.json(signal || { removed: true });
+  });
+
+  app.delete("/api/milestones/:id", requireActive, async (req, res) => {
+    const event = await storage.getCommunityEventById(req.params.id);
+    if (!event) return res.status(404).json({ error: "Not found" });
+    const user = await storage.getUserById(req.session.userId!);
+    if (event.createdByUserId !== req.session.userId && user?.role !== "ADMIN") {
+      return res.status(403).json({ error: "Only the creator or admin can delete this event" });
+    }
+    await storage.deleteCommunityEvent(req.params.id);
+    await createAuditEntry({ actorUserId: req.session.userId, action: "MILESTONE_DELETED", targetType: "COMMUNITY_EVENT", targetId: req.params.id });
+    res.json({ success: true });
+  });
+
   // ─── Feedback ─────────────────────────────────────────────────────────────
 
   app.post("/api/feedback", requireActive, async (req, res) => {

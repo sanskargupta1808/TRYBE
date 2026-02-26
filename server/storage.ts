@@ -524,6 +524,46 @@ export async function upsertSignal(userId: string, eventId: string, signalType: 
   return signal;
 }
 
+// ─── Community Events (User-Created Milestones) ──────────────────────────────
+export async function getAllCommunityEvents() {
+  return db.select().from(schema.communityEvents).orderBy(schema.communityEvents.eventDate);
+}
+export async function getCommunityEventById(id: string) {
+  const [event] = await db.select().from(schema.communityEvents).where(eq(schema.communityEvents.id, id));
+  return event;
+}
+export async function createCommunityEvent(data: schema.InsertCommunityEvent) {
+  const [event] = await db.insert(schema.communityEvents).values(data).returning();
+  return event;
+}
+export async function deleteCommunityEvent(id: string) {
+  await db.delete(schema.communityEventSignals).where(eq(schema.communityEventSignals.eventId, id));
+  await db.delete(schema.communityEvents).where(eq(schema.communityEvents.id, id));
+}
+export async function getUserCommunitySignals(userId: string) {
+  return db.select().from(schema.communityEventSignals).where(eq(schema.communityEventSignals.userId, userId));
+}
+export async function upsertCommunitySignal(userId: string, eventId: string, signalType: string) {
+  const existing = await db.select().from(schema.communityEventSignals).where(and(eq(schema.communityEventSignals.userId, userId), eq(schema.communityEventSignals.eventId, eventId)));
+  if (existing.length > 0) {
+    if (existing[0].signalType === signalType) {
+      await db.delete(schema.communityEventSignals).where(eq(schema.communityEventSignals.id, existing[0].id));
+      return null;
+    }
+    const [updated] = await db.update(schema.communityEventSignals).set({ signalType }).where(eq(schema.communityEventSignals.id, existing[0].id)).returning();
+    return updated;
+  }
+  const [signal] = await db.insert(schema.communityEventSignals).values({ userId, eventId, signalType }).returning();
+  return signal;
+}
+export async function getCommunityEventSignalCounts(eventId: string) {
+  const signals = await db.select().from(schema.communityEventSignals).where(eq(schema.communityEventSignals.eventId, eventId));
+  return {
+    interested: signals.filter(s => s.signalType === "INTERESTED").length,
+    attending: signals.filter(s => s.signalType === "ATTENDING").length,
+  };
+}
+
 // ─── Feedback ─────────────────────────────────────────────────────────────────
 export async function createFeedback(data: schema.InsertFeedback) {
   const [fb] = await db.insert(schema.feedback).values(data).returning();

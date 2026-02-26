@@ -235,6 +235,34 @@ export const calendarSignals = pgTable("calendar_signals", {
 
 export type CalendarSignal = typeof calendarSignals.$inferSelect;
 
+// ─── Community Events (User-Created Milestones) ──────────────────────────────
+export const communityEvents = pgTable("community_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  eventDate: text("event_date").notNull(),
+  endDate: text("end_date"),
+  location: text("location"),
+  virtualLink: text("virtual_link"),
+  tags: text("tags").array().default(sql`'{}'::text[]`),
+  createdByUserId: varchar("created_by_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const insertCommunityEventSchema = createInsertSchema(communityEvents).omit({ id: true, createdAt: true });
+export type InsertCommunityEvent = z.infer<typeof insertCommunityEventSchema>;
+export type CommunityEvent = typeof communityEvents.$inferSelect;
+
+export const communityEventSignals = pgTable("community_event_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  eventId: varchar("event_id").references(() => communityEvents.id),
+  signalType: text("signal_type").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export type CommunityEventSignal = typeof communityEventSignals.$inferSelect;
+
 // ─── Feedback ─────────────────────────────────────────────────────────────────
 export const feedback = pgTable("feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
