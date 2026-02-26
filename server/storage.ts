@@ -180,6 +180,26 @@ export async function updateInviteRequestStatus(id: string, status: string) {
   return updated;
 }
 
+// ─── Member Invite Requests ───────────────────────────────────────────────────
+export async function createMemberInviteRequest(data: { requestedByUserId: string; email: string; reason?: string }) {
+  const [req] = await db.insert(schema.memberInviteRequests).values(data).returning();
+  return req;
+}
+export async function getMemberInviteRequestsByUser(userId: string) {
+  return db.select().from(schema.memberInviteRequests).where(eq(schema.memberInviteRequests.requestedByUserId, userId)).orderBy(desc(schema.memberInviteRequests.createdAt));
+}
+export async function getMemberInviteRequestCount(userId: string) {
+  const all = await db.select().from(schema.memberInviteRequests).where(eq(schema.memberInviteRequests.requestedByUserId, userId));
+  return all.length;
+}
+export async function getAllMemberInviteRequests() {
+  return db.select().from(schema.memberInviteRequests).orderBy(desc(schema.memberInviteRequests.createdAt));
+}
+export async function updateMemberInviteRequestStatus(id: string, status: string) {
+  const [updated] = await db.update(schema.memberInviteRequests).set({ status }).where(eq(schema.memberInviteRequests.id, id)).returning();
+  return updated;
+}
+
 // ─── User Profiles ────────────────────────────────────────────────────────────
 export async function getUserProfile(userId: string) {
   const [profile] = await db.select().from(schema.userProfiles).where(eq(schema.userProfiles.userId, userId));
