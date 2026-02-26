@@ -13,10 +13,11 @@ import { Loader2, CheckCircle2, KeyRound } from "lucide-react";
 export default function Register() {
   const [, navigate] = useLocation();
   const search = useSearch();
-  const { refetch } = useAuth();
+  const { user, refetch } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -35,6 +36,13 @@ export default function Register() {
       setForm(f => ({ ...f, inviteToken: tokenFromUrl }));
     }
   }, [tokenFromUrl]);
+
+  useEffect(() => {
+    if (pendingRedirect && user) {
+      navigate(pendingRedirect);
+      setPendingRedirect(null);
+    }
+  }, [user, pendingRedirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +75,7 @@ export default function Register() {
       const data = await res.json();
       await refetch();
       if (data.autoApproved) {
-        navigate("/app/welcome");
+        setPendingRedirect("/app/welcome");
       } else {
         navigate("/pending-approval");
       }
