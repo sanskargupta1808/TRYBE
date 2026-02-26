@@ -340,7 +340,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
                       className="text-xs text-primary font-medium hover:underline"
                       data-testid="button-nudge-action"
                     >
-                      {activeNudge.tableId ? "Go to space" : "Prepare"}
+                      {activeNudge.tableId ? "Go to table" : "Prepare"}
                     </button>
                     <button
                       onClick={() => setNudgeDismissed(true)}

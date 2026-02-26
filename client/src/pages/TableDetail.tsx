@@ -235,7 +235,7 @@ export default function TableDetail() {
               <MessageSquare className="h-7 w-7 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground text-sm mb-1">No discussions yet.</p>
-            <p className="text-muted-foreground text-xs">Start the first discussion to set direction for this space.</p>
+            <p className="text-muted-foreground text-xs">Start the first discussion to set direction for this table.</p>
           </div>
         ) : (
           <div className="space-y-2">

@@ -27,7 +27,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto px-6 py-28 text-center">
           <Badge variant="secondary" className="mb-6 animate-fade-in">Invite-only Alpha</Badge>
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 animate-fade-in-up">
-            A private space for serious<br />health collaboration
+            A private table for serious<br />health collaboration
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed mb-4 max-w-2xl mx-auto font-medium animate-fade-in-up stagger-1" style={{ fontWeight: 400 }}>
             TRYBE is an invite-only working environment for people across global health.

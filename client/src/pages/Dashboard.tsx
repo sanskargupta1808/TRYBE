@@ -162,7 +162,7 @@ export default function Dashboard() {
           )}
           {myTables.length > 3 && (
             <Link href="/app/tables">
-              <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-tables">View all spaces</p>
+              <p className="text-xs text-primary mt-3 hover:underline cursor-pointer" data-testid="link-view-all-tables">View all tables</p>
             </Link>
           )}
         </section>

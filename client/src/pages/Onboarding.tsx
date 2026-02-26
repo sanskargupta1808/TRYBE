@@ -46,7 +46,7 @@ const STEP_QUESTIONS: Record<Step, string> = {
   role: "What role do you currently hold? You can pick from the options below or simply describe what you do.",
   interests: "Which health areas are most relevant to you? Select as many as apply, or describe them in your own words.",
   regions: "Which regions matter most in your work? Pick from the list or tell me.",
-  goal: "Are you currently working on a specific initiative? A brief note helps me surface relevant spaces and milestones for you.",
+  goal: "Are you currently working on a specific initiative? A brief note helps me surface relevant tables and milestones for you.",
   preferences: "Last question — how active would you like me to be in suggesting opportunities? Pick your preferred style or just tell me in your own words.",
 };
 
@@ -192,7 +192,7 @@ export default function Onboarding() {
   const finishOnboarding = async () => {
     setDone(true);
     setSuggestionsLoading(true);
-    addMessages({ role: "assistant", content: "Thank you. I'll suggest a few relevant spaces and milestones to get started..." });
+    addMessages({ role: "assistant", content: "Thank you. I'll suggest a few relevant tables and milestones to get started..." });
 
     try {
       await apiRequest("PUT", "/api/profile", { ...profile, onboardingComplete: true });
