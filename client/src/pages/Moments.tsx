@@ -82,7 +82,12 @@ function CalendarTab() {
       const res = await apiRequest("POST", `/api/calendar/${eventId}/signal`, { signalType });
       return res.json();
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/calendar"] }),
+    onSuccess: (data: any, variables) => {
+      if (variables.signalType === "ATTENDING" && data && !data.removed) {
+        toast({ title: "You're attending!", description: "Check your email for the full event details." });
+      }
+      qc.invalidateQueries({ queryKey: ["/api/calendar"] });
+    },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
@@ -183,11 +188,11 @@ function MilestonesTab({ showCreateForm, setShowCreateForm, userId }: { showCrea
       const res = await apiRequest("POST", `/api/milestones/${eventId}/signal`, { signalType });
       return res.json();
     },
-    onSuccess: (data, variables) => {
-      qc.invalidateQueries({ queryKey: ["/api/milestones"] });
-      if (variables.signalType === "ATTENDING" && data.emailSent) {
+    onSuccess: (data: any, variables) => {
+      if (variables.signalType === "ATTENDING" && data && !data.removed) {
         toast({ title: "You're attending!", description: "Check your email for the full event details." });
       }
+      qc.invalidateQueries({ queryKey: ["/api/milestones"] });
     },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
