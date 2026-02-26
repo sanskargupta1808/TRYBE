@@ -477,36 +477,22 @@ Return ONLY valid JSON:
     res.json(table);
   });
 
-  // ─── Table Requests ───────────────────────────────────────────────────────
+  // ─── Table Creation (direct — no admin approval needed) ─────────────────
 
-  app.post("/api/table-requests", requireActive, async (req, res) => {
-    const { title, purpose, tags, reason } = req.body;
-    const mod = await moderateContent(`${title} ${purpose} ${reason || ""}`);
+  app.post("/api/tables", requireActive, async (req, res) => {
+    const { title, purpose, tags } = req.body;
+    if (!title || !purpose) return res.status(400).json({ error: "Title and purpose are required." });
+    const mod = await moderateContent(`${title} ${purpose}`);
     if (mod.flagged) return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase." });
-    const request = await storage.createTableRequest({ title, purpose, tags, reason, requestedByUserId: req.session.userId });
-    res.json(request);
+    const table = await storage.createTable({ title, purpose, tags: tags || [], createdByUserId: req.session.userId });
+    await storage.addTableMember(table.id, req.session.userId!, "HOST");
+    await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_CREATED", targetType: "TABLE", targetId: table.id });
+    res.json(table);
   });
+
   app.get("/api/admin/table-requests", requireAdmin, async (req, res) => {
     const requests = await storage.getAllTableRequests();
     res.json(requests);
-  });
-  app.post("/api/admin/table-requests/:id/approve", requireAdmin, async (req, res) => {
-    const updated = await storage.updateTableRequestStatus(req.params.id, "APPROVED");
-    // Auto-create the table
-    const table = await storage.createTable({ title: updated.title, purpose: updated.purpose, tags: updated.tags ?? [], createdByUserId: updated.requestedByUserId ?? undefined });
-    if (updated.requestedByUserId) await storage.addTableMember(table.id, updated.requestedByUserId, "HOST");
-    await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_REQUEST_APPROVED", targetType: "TABLE_REQUEST", targetId: req.params.id });
-    res.json({ request: updated, table });
-  });
-  app.post("/api/admin/table-requests/:id/decline", requireAdmin, async (req, res) => {
-    const updated = await storage.updateTableRequestStatus(req.params.id, "DECLINED");
-    if (updated.requestedByUserId) {
-      const requester = await storage.getUserById(updated.requestedByUserId);
-      if (requester?.email) {
-        sendTableRequestDeclinedEmail(requester.email, requester.name, updated.title).catch(() => {});
-      }
-    }
-    res.json(updated);
   });
 
   // ─── Threads ──────────────────────────────────────────────────────────────
@@ -1189,7 +1175,7 @@ Rules:
             else if (toolName === "post_in_thread") description = `Post: "${(toolArgs.content || "").slice(0, 80)}${(toolArgs.content || "").length > 80 ? "..." : ""}"`;
             else if (toolName === "send_direct_message") description = `Send message: "${(toolArgs.content || "").slice(0, 80)}${(toolArgs.content || "").length > 80 ? "..." : ""}"`;
             else if (toolName === "signal_milestone") description = `Signal "${toolArgs.signalType || ""}" for an event`;
-            else if (toolName === "request_new_table") description = `Request new table: "${toolArgs.title || ""}"`;
+            else if (toolName === "create_table") description = `Create new table: "${toolArgs.title || ""}"`;
             else if (toolName === "send_invite") description = `Send invitation to ${toolArgs.email || ""}`;
             else if (toolName === "update_profile") description = `Update profile settings`;
             else if (toolName === "submit_feedback") description = `Submit feedback (${toolArgs.category || "GENERAL"})`;
@@ -1521,6 +1507,21 @@ Rules:
       openModerationItems: modItems.filter(m => m.status === "OPEN").length,
     });
   });
+
+  // ─── Scheduled Cleanup: Inactive Tables (14+ days) & Past Events ─────────
+  const runCleanup = async () => {
+    try {
+      const removedTables = await storage.cleanupInactiveTables(14);
+      const removedEvents = await storage.cleanupPastEvents();
+      if (removedTables.length > 0 || removedEvents > 0) {
+        console.log(`[Cleanup] Removed ${removedTables.length} inactive table(s), ${removedEvents} past event(s)`);
+      }
+    } catch (err) {
+      console.error("[Cleanup] Error:", err);
+    }
+  };
+  runCleanup();
+  setInterval(runCleanup, 6 * 60 * 60 * 1000);
 
   return httpServer;
 }

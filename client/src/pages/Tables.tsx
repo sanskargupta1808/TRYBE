@@ -46,8 +46,8 @@ export default function Tables() {
           <p className="text-muted-foreground text-sm mt-2">Focused working areas organised by topic or initiative</p>
         </div>
         <Link href="/app/tables/request">
-          <Button size="sm" data-testid="button-request-table">
-            <Plus className="h-4 w-4 mr-1" />Request table
+          <Button size="sm" data-testid="button-create-table">
+            <Plus className="h-4 w-4 mr-1" />Create table
           </Button>
         </Link>
       </div>

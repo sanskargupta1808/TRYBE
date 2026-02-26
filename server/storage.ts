@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, desc, ne, inArray, count, max, gte } from "drizzle-orm";
+import { eq, and, or, desc, ne, inArray, count, max, gte, lt, lte, sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
@@ -206,6 +206,19 @@ export async function createTable(data: schema.InsertTable) {
   const [table] = await db.insert(schema.tables).values(data).returning();
   return table;
 }
+export async function deleteTable(id: string) {
+  const threadRows = await db.select({ id: schema.threads.id }).from(schema.threads).where(eq(schema.threads.tableId, id));
+  const threadIds = threadRows.map(t => t.id);
+  if (threadIds.length > 0) {
+    await db.delete(schema.threadMemory).where(inArray(schema.threadMemory.threadId, threadIds));
+    await db.delete(schema.posts).where(inArray(schema.posts.threadId, threadIds));
+    await db.delete(schema.threads).where(inArray(schema.threads.id, threadIds));
+  }
+  await db.delete(schema.tableJoinRequests).where(eq(schema.tableJoinRequests.tableId, id));
+  await db.delete(schema.tableMembers).where(eq(schema.tableMembers.tableId, id));
+  await db.delete(schema.tables).where(eq(schema.tables.id, id));
+}
+
 export async function updateTableStatus(id: string, status: string) {
   const [updated] = await db.update(schema.tables).set({ status }).where(eq(schema.tables.id, id)).returning();
   return updated;
@@ -587,4 +600,30 @@ export async function upsertThreadMemory(threadId: string, summary: string, last
     postCountIncluded: postCount,
   }).returning();
   return created;
+}
+
+// ─── Cleanup: Inactive Tables & Past Events ──────────────────────────────────
+export async function cleanupInactiveTables(inactiveDays = 14) {
+  const allTables = await db.select({ id: schema.tables.id, createdAt: schema.tables.createdAt }).from(schema.tables).where(eq(schema.tables.status, "ACTIVE"));
+  const cutoff = new Date(Date.now() - inactiveDays * 86400000);
+  const removed: string[] = [];
+  for (const t of allTables) {
+    const activity = await getTableLastActivity([t.id]);
+    const lastActive = activity[0]?.lastPostAt || t.createdAt;
+    if (lastActive && new Date(lastActive) < cutoff) {
+      await deleteTable(t.id);
+      removed.push(t.id);
+    }
+  }
+  return removed;
+}
+
+export async function cleanupPastEvents() {
+  const today = new Date().toISOString().split("T")[0];
+  const pastEvents = await db.select({ id: schema.calendarEvents.id }).from(schema.calendarEvents).where(lt(schema.calendarEvents.startDate, today));
+  for (const ev of pastEvents) {
+    await db.delete(schema.calendarSignals).where(eq(schema.calendarSignals.eventId, ev.id));
+    await deleteCalendarEvent(ev.id);
+  }
+  return pastEvents.length;
 }

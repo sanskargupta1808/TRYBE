@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Inbox } from "lucide-react";
+import { Inbox, Info } from "lucide-react";
 
 export default function AdminTableRequests() {
   const qc = useQueryClient();
@@ -31,7 +31,7 @@ export default function AdminTableRequests() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <p className="font-medium text-sm text-foreground">{req.title}</p>
-            <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${req.status === "APPROVED" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : req.status === "REJECTED" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"}`}>{req.status}</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${req.status === "APPROVED" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : req.status === "DECLINED" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"}`}>{req.status}</span>
           </div>
           {req.purpose && <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{req.purpose}</p>}
           {(req.tags || []).length > 0 && (
@@ -58,7 +58,12 @@ export default function AdminTableRequests() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Table Requests</h1>
-        <p className="text-muted-foreground text-sm mt-1">Member proposals for new collaboration tables</p>
+        <p className="text-muted-foreground text-sm mt-1">Legacy table requests. Members can now create tables directly.</p>
+      </div>
+
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 flex gap-3 items-start">
+        <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+        <p className="text-sm text-muted-foreground">Table creation no longer requires admin approval. Members create tables directly and become the host. Tables inactive for 14 days are automatically removed.</p>
       </div>
 
       {isLoading ? (
@@ -66,7 +71,7 @@ export default function AdminTableRequests() {
       ) : pending.length === 0 && reviewed.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-xl p-8 text-center">
           <Inbox className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground text-sm">No table requests yet.</p>
+          <p className="text-muted-foreground text-sm">No table requests.</p>
         </div>
       ) : (
         <div className="space-y-6">

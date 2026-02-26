@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ArrowLeft, CheckCircle, Loader2, Sparkles } from "lucide-react";
 
 const COMMON_TAGS = ["rare-disease", "cancer", "diabetes", "mental-health", "HIV/AIDS", "TB", "AMR", "policy", "research", "advocacy", "Global", "Europe", "Africa", "Asia"];
@@ -13,9 +13,9 @@ const COMMON_TAGS = ["rare-disease", "cancer", "diabetes", "mental-health", "HIV
 export default function RequestTable() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [submitted, setSubmitted] = useState(false);
+  const [createdTable, setCreatedTable] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[], reason: "" });
+  const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[] });
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
 
@@ -26,8 +26,11 @@ export default function RequestTable() {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiRequest("POST", "/api/table-requests", form);
-      setSubmitted(true);
+      const res = await apiRequest("POST", "/api/tables", form);
+      const table = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/tables"] });
+      setCreatedTable(table);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -46,9 +49,8 @@ export default function RequestTable() {
         title: data.title || "",
         purpose: (data.purpose || "").slice(0, 240),
         tags,
-        reason: data.reason || "",
       });
-      toast({ title: "Proposal drafted", description: "Review and edit the details before submitting." });
+      toast({ title: "Proposal drafted", description: "Review and edit the details before creating." });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -56,15 +58,18 @@ export default function RequestTable() {
     }
   };
 
-  if (submitted) {
+  if (createdTable) {
     return (
       <div className="p-6 max-w-xl mx-auto flex flex-col items-center text-center pt-20 animate-fade-in-up">
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="h-7 w-7 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold mb-3">Request submitted</h2>
-        <p className="text-muted-foreground mb-6">Thanks. We'll review this request shortly. If approved, you'll be invited as the table host.</p>
-        <Button variant="outline" onClick={() => navigate("/app/tables")}>Back to tables</Button>
+        <h2 className="text-xl font-semibold mb-3" data-testid="text-table-created">Table created</h2>
+        <p className="text-muted-foreground mb-6">Your table "{createdTable.title}" is live. You've been assigned as the host. Tables inactive for 14 days are automatically removed, so keep the conversation going.</p>
+        <div className="flex gap-3">
+          <Button onClick={() => navigate(`/app/tables/${createdTable.id}`)} data-testid="button-open-new-table">Open table</Button>
+          <Button variant="outline" onClick={() => navigate("/app/tables")} data-testid="button-back-to-tables">Back to tables</Button>
+        </div>
       </div>
     );
   }
@@ -76,9 +81,9 @@ export default function RequestTable() {
       </Link>
 
       <div className="mb-6 animate-fade-in-up">
-        <h1 className="text-2xl font-semibold mb-2 heading-rule">Request a new table</h1>
+        <h1 className="text-2xl font-semibold mb-2 heading-rule" data-testid="heading-create-table">Create a new table</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Tables are intentionally curated during Alpha to protect focus and trust. Tell us what you want to create.
+          Start a collaboration space for your topic. You'll be the host. Tables inactive for 14 days are automatically removed.
         </p>
       </div>
 
@@ -123,12 +128,8 @@ export default function RequestTable() {
             ))}
           </div>
         </div>
-        <div>
-          <Label htmlFor="reason" className="mb-1.5">Why is this needed now?</Label>
-          <Textarea id="reason" value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} rows={3} data-testid="input-table-reason" />
-        </div>
-        <Button type="submit" disabled={loading} className="w-full" data-testid="button-submit-table">
-          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Submit request
+        <Button type="submit" disabled={loading} className="w-full" data-testid="button-create-table">
+          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create table
         </Button>
       </form>
     </div>

@@ -21,7 +21,7 @@ export const TOOL_LABELS: Record<string, string> = {
   post_in_thread: "Post in a discussion",
   send_direct_message: "Send a direct message",
   signal_milestone: "Signal interest in an event",
-  request_new_table: "Request a new table",
+  create_table: "Create a new table",
   send_invite: "Send an invitation",
   update_profile: "Update your profile",
   submit_feedback: "Submit feedback",
@@ -143,15 +143,14 @@ export const assistantTools: ToolDefinition[] = [
   {
     type: "function",
     function: {
-      name: "request_new_table",
-      description: "Submit a request to create a new collaboration table. Use when the user wants a table that doesn't exist yet.",
+      name: "create_table",
+      description: "Create a new collaboration table immediately. The user becomes the host. Tables inactive for 14 days are automatically removed.",
       parameters: {
         type: "object",
         properties: {
-          title: { type: "string", description: "The proposed table title" },
+          title: { type: "string", description: "The table title" },
           purpose: { type: "string", description: "What this table is for" },
           tags: { type: "array", items: { type: "string" }, description: "Relevant topic tags" },
-          reason: { type: "string", description: "Why this table should be created" },
         },
         required: ["title", "purpose"],
       },
@@ -444,18 +443,18 @@ export async function executeTool(
         return { success: true, message: `You've signalled "${args.signalType.toLowerCase()}" for "${event.title}".` };
       }
 
-      case "request_new_table": {
-        const combinedText = `${args.title} ${args.purpose || ""} ${args.reason || ""}`;
+      case "create_table": {
+        const combinedText = `${args.title} ${args.purpose || ""}`;
         const reqMod = await ctx.moderateContent(combinedText);
-        if (reqMod.flagged) return { success: false, message: "Your table request content was flagged by moderation. Please rephrase." };
-        await storage.createTableRequest({
+        if (reqMod.flagged) return { success: false, message: "Your table content was flagged by moderation. Please rephrase." };
+        const newTable = await storage.createTable({
           title: args.title,
           purpose: args.purpose,
           tags: args.tags || [],
-          reason: args.reason || "",
-          requestedByUserId: userId,
+          createdByUserId: userId,
         });
-        return { success: true, message: `Your request to create the table "${args.title}" has been submitted for admin review.` };
+        await storage.addTableMember(newTable.id, userId, "HOST");
+        return { success: true, message: `Table "${args.title}" has been created and you are now the host. Note: tables inactive for 14 days are automatically removed.` };
       }
 
       case "send_invite": {

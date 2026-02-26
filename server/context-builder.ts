@@ -54,7 +54,7 @@ const ALWAYS_AVAILABLE_TOOLS = [
 
 const INTENT_EXTRA_TOOLS: Record<Intent, string[]> = {
   thread_discussion: ["create_thread", "post_in_thread"],
-  table_management: ["join_table", "leave_table", "request_new_table"],
+  table_management: ["join_table", "leave_table", "create_table"],
   dm_chat: ["send_direct_message"],
   event_inquiry: ["signal_milestone"],
   strategic_guidance: ["create_thread", "post_in_thread", "join_table"],
@@ -63,7 +63,7 @@ const INTENT_EXTRA_TOOLS: Record<Intent, string[]> = {
   feedback: ["submit_feedback"],
   general: [
     "join_table", "leave_table", "create_thread", "post_in_thread",
-    "send_direct_message", "signal_milestone", "request_new_table",
+    "send_direct_message", "signal_milestone", "create_table",
     "send_invite", "update_profile", "submit_feedback",
   ],
 };

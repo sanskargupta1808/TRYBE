@@ -62,6 +62,12 @@ TRYBE is a private, invite-only global health collaboration platform built for s
 - **10 collaboration tables**: across disease areas, policy, advocacy
 - **20 calendar events**: 2026 health milestones
 
+## Table Creation & Auto-Cleanup
+- **Direct creation**: Any active user can create tables directly (POST /api/tables). No admin approval needed. Creator becomes HOST automatically.
+- **Inactive table cleanup**: Every 6 hours, tables with no activity (no posts) for 14+ days are automatically deleted (cascade: threads, posts, thread_memory, join requests, members).
+- **Past event cleanup**: Every 6 hours, calendar events whose start date has passed are automatically deleted (with their signals).
+- **Admin table requests page**: Preserved as historical view for legacy requests. Shows info banner explaining the new direct creation model.
+
 ## Auth Flow
 1. User registers with an invite code → PENDING_APPROVAL
 2. Admin approves → ACTIVE → user completes onboarding
@@ -116,7 +122,7 @@ TRYBE is a private, invite-only global health collaboration platform built for s
   3. `post_in_thread` — Post messages in discussion threads
   4. `send_direct_message` — Send DMs to members who share a table
   5. `signal_milestone` — Signal interest in calendar events (ATTENDING/PRESENTING/WATCHING)
-  6. `request_new_table` — Submit table creation requests for admin review
+  6. `create_table` — Create a new collaboration table instantly (user becomes HOST)
   7. `send_invite` — Send colleague invitations by email (uses monthly quota)
   8. `update_profile` — Update interests, regions, collaboration mode, assistant activity, goals
   9. `submit_feedback` — Submit platform feedback

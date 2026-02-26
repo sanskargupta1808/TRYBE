@@ -123,14 +123,14 @@ export default function Dashboard() {
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-1">Get started</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-md mx-auto">
-              You're not in any tables yet. Join a suggested table or request a new one.
+              You're not in any tables yet. Join a suggested table or create a new one.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link href="/app/tables">
                 <Button data-testid="button-browse-tables">Browse tables</Button>
               </Link>
               <Link href="/app/tables/request">
-                <Button variant="outline" data-testid="button-request-table">Request a table</Button>
+                <Button variant="outline" data-testid="button-create-table">Create a table</Button>
               </Link>
             </div>
           </div>
