@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -176,9 +177,8 @@ export default function Register() {
 
           <div>
             <Label htmlFor="password" className="mb-1.5">Password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               required
@@ -189,9 +189,8 @@ export default function Register() {
 
           <div>
             <Label htmlFor="confirm" className="mb-1.5">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirm"
-              type="password"
               value={form.confirmPassword}
               onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
               required

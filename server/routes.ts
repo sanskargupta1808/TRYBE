@@ -4,7 +4,8 @@ import session from "express-session";
 import * as storage from "./storage";
 import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
-import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail } from "./email";
+import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail } from "./email";
+import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -185,6 +186,29 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (!token) return res.status(400).json({ error: "Token required" });
     const user = await storage.verifyUserEmail(token as string);
     if (!user) return res.status(400).json({ error: "Invalid or expired token" });
+    return res.json({ success: true });
+  });
+
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+    const user = await storage.getUserByEmail(email.toLowerCase().trim());
+    if (user) {
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      await storage.setPasswordResetToken(user.id, token, expiresAt);
+      await sendPasswordResetEmail(user.email, user.name, token);
+    }
+    return res.json({ success: true });
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: "Token and password are required" });
+    if (password.length < 12) return res.status(400).json({ error: "Password must be at least 12 characters" });
+    const user = await storage.getUserByResetToken(token);
+    if (!user) return res.status(400).json({ error: "Invalid or expired reset link. Please request a new one." });
+    await storage.resetPassword(user.id, password);
     return res.json({ success: true });
   });
 

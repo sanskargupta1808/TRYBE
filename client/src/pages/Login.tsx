@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,7 +71,7 @@ export default function Login() {
                 <Label htmlFor="password">Password</Label>
                 <Link href="/forgot-password" className="text-xs text-muted-foreground hover-elevate">Forgot password?</Link>
               </div>
-              <Input id="password" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required data-testid="input-password" />
+              <PasswordInput id="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required data-testid="input-password" />
             </div>
             <Button type="submit" disabled={loading} className="w-full" data-testid="button-signin">
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

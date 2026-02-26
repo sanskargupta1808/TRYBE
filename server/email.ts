@@ -387,6 +387,46 @@ export async function sendTableJoinDeclinedEmail(recipientEmail: string, recipie
   return result.sent;
 }
 
+export async function sendPasswordResetEmail(recipientEmail: string, recipientName: string, resetToken: string): Promise<boolean> {
+  const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Reset your TRYBE password</title>
+<style>
+  body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}
+  .wrapper{max-width:560px;margin:48px auto;background:#ffffff;border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;}
+  .header{background:#1a1a1a;padding:32px 40px;text-align:left;}
+  .body{padding:40px 40px 32px;}
+  h1{font-size:22px;font-weight:600;color:#111111;margin:0 0 12px;letter-spacing:-0.3px;}
+  p{font-size:15px;line-height:1.65;color:#555555;margin:0 0 20px;}
+  .cta{display:block;background:#c2692e;color:#ffffff;text-decoration:none;text-align:center;font-size:15px;font-weight:600;padding:14px 24px;border-radius:6px;margin:28px 0;letter-spacing:0.1px;}
+  .note{font-size:13px;color:#888888;line-height:1.6;}
+  .divider{border:none;border-top:1px solid #e8e6e1;margin:28px 0;}
+  .footer{padding:20px 40px;background:#f9f8f6;border-top:1px solid #e8e6e1;}
+  .footer p{font-size:12px;color:#aaaaaa;margin:0;line-height:1.6;}
+  .footer a{color:#aaaaaa;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><img src="${LOGO_URL}" alt="TRYBE" height="48" style="height:48px;width:auto;" /></div>
+  <div class="body">
+    <h1>Reset your password${recipientName ? `, ${recipientName.split(" ")[0]}` : ""}</h1>
+    <p>We received a request to reset your TRYBE account password. Click the button below to choose a new password.</p>
+    <a href="${resetUrl}" class="cta">Reset my password</a>
+    <p class="note">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password will remain unchanged.</p>
+    <hr class="divider" />
+    <p class="note">For security, never share this link with anyone. TRYBE will never ask for your password by email.</p>
+  </div>
+  <div class="footer">
+    <p>TRYBE &mdash; Private Global Health Collaboration &nbsp;&middot;&nbsp;
+    <a href="${APP_URL}/privacy">Privacy</a> &nbsp;&middot;&nbsp;
+    <a href="${APP_URL}/code-of-conduct">Code of Conduct</a></p>
+  </div>
+</div>
+</body></html>`.trim();
+  const result = await sendEmail(recipientEmail, "Reset your TRYBE password", html);
+  return result.sent;
+}
+
 export async function sendTableRequestDeclinedEmail(recipientEmail: string, recipientName: string, tableTitle: string): Promise<boolean> {
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>TRYBE — Table Request Update</title>
   <style>body{margin:0;padding:0;background:#f9f8f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}

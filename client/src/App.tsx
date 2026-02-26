@@ -16,6 +16,7 @@ import Register from "@/pages/Register";
 import RequestInvite from "@/pages/RequestInvite";
 import PendingApproval from "@/pages/PendingApproval";
 import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Onboarding from "@/pages/Onboarding";
 
 import Welcome from "@/pages/Welcome";
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/request-invite" component={RequestInvite} />
       <Route path="/pending-approval" component={PendingApproval} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
 
       {/* Policy */}
       <Route path="/privacy" component={Privacy} />

@@ -50,6 +50,18 @@ export async function updateUserLastLogin(id: string) {
 export async function verifyPassword(user: schema.User, password: string) {
   return bcrypt.compare(password, user.passwordHash);
 }
+export async function setPasswordResetToken(userId: string, token: string, expiresAt: Date) {
+  await db.update(schema.users).set({ passwordResetToken: token, passwordResetExpiresAt: expiresAt }).where(eq(schema.users.id, userId));
+}
+export async function getUserByResetToken(token: string) {
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.passwordResetToken, token));
+  if (!user || !user.passwordResetExpiresAt || new Date() > user.passwordResetExpiresAt) return null;
+  return user;
+}
+export async function resetPassword(userId: string, newPassword: string) {
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await db.update(schema.users).set({ passwordHash, passwordResetToken: null, passwordResetExpiresAt: null }).where(eq(schema.users.id, userId));
+}
 
 // ─── Invites ──────────────────────────────────────────────────────────────────
 export async function createInvite(data: {

@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   inviteQuotaUsedThisMonth: integer("invite_quota_used_this_month").notNull().default(0),
   inviteQuotaResetAt: timestamp("invite_quota_reset_at"),
   canInvite: boolean("can_invite").notNull().default(true),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
 });
