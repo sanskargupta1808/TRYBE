@@ -382,6 +382,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const profile = await storage.getUserProfile(req.session.userId!);
     res.json(profile);
   });
+  app.put("/api/handle", requireActive, async (req, res) => {
+    const { handle } = req.body;
+    if (!handle || typeof handle !== "string") return res.status(400).json({ error: "Handle is required" });
+    const cleaned = handle.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (cleaned.length < 3) return res.status(400).json({ error: "Handle must be at least 3 characters (letters, numbers, underscores only)" });
+    if (cleaned.length > 30) return res.status(400).json({ error: "Handle must be 30 characters or fewer" });
+    const updated = await storage.updateUserHandle(req.session.userId!, cleaned);
+    if (!updated) return res.status(409).json({ error: "That handle is already taken. Try another." });
+    res.json(updated);
+  });
   app.put("/api/profile", requireActive, async (req, res) => {
     const { profileSnapshot, currentGoal, ...rest } = req.body;
     const textToCheck = [profileSnapshot, currentGoal].filter(Boolean).join(" ");

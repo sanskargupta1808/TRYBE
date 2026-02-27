@@ -159,6 +159,7 @@ export default function TableDetail() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-sm text-foreground font-medium">{u.name}</span>
+                    {u.handle && <span className="text-xs text-muted-foreground ml-1">@{u.handle}</span>}
                     {u.organisation && <span className="text-xs text-muted-foreground ml-2">{u.organisation}</span>}
                   </div>
                   {memberRole === "HOST" && <Badge variant="secondary" className="text-xs ml-1 gap-0.5"><ShieldCheck className="h-2.5 w-2.5" />Host</Badge>}
@@ -325,6 +326,7 @@ function JoinRequests({ tableId }: { tableId: string }) {
               </div>
               <div className="min-w-0">
                 <span className="text-sm text-foreground font-medium">{r.user?.name || "Unknown"}</span>
+                {r.user?.handle && <span className="text-xs text-muted-foreground ml-1">@{r.user.handle}</span>}
                 {r.user?.healthRole && <span className="text-xs text-muted-foreground ml-2">{r.user.healthRole}</span>}
               </div>
             </div>

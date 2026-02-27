@@ -100,7 +100,7 @@ export function AppSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.organisation || user?.email}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.handle ? `@${user.handle}` : user?.email}</p>
           </div>
         </div>
         <button onClick={logout} className="mt-3 text-xs text-muted-foreground hover-elevate w-full text-left py-1">

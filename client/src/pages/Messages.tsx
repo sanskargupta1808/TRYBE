@@ -120,7 +120,7 @@ export default function Messages() {
                         <span className="text-primary text-xs font-medium">{contact.name?.charAt(0)}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{contact.name} {contact.handle && <span className="text-xs text-muted-foreground font-normal">@{contact.handle}</span>}</p>
                         {contact.organisation && <p className="text-xs text-muted-foreground truncate">{contact.organisation}</p>}
                         {contextLabel && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5" data-testid={`contact-context-${contact.id}`}>
@@ -173,7 +173,7 @@ export default function Messages() {
                       <span className="text-primary text-sm font-medium">{other?.name?.charAt(0) || "?"}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">{other?.name || "Member"}</p>
+                      <p className="text-sm font-medium text-foreground">{other?.name || "Member"} {other?.handle && <span className="text-xs text-muted-foreground font-normal">@{other.handle}</span>}</p>
                       {other?.organisation && <p className="text-xs text-muted-foreground truncate">{other.organisation}</p>}
                     </div>
                   </div>

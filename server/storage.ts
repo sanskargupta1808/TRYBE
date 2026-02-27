@@ -16,11 +16,26 @@ export async function getUserByEmail(email: string) {
 export async function getAllUsers() {
   return db.select().from(schema.users).orderBy(desc(schema.users.createdAt));
 }
+export async function generateUniqueHandle(name: string): Promise<string> {
+  let base = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (base.length < 3) base = "user" + base;
+  let handle = base.slice(0, 30);
+  let suffix = 1;
+  while (true) {
+    const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.handle, handle));
+    if (!existing) return handle;
+    const suffixStr = String(suffix);
+    handle = base.slice(0, 30 - suffixStr.length) + suffixStr;
+    suffix++;
+  }
+}
 export async function createUser(data: { name: string; email: string; password: string; organisation?: string; roleTitle?: string }) {
   const passwordHash = await bcrypt.hash(data.password, 10);
   const verifyToken = randomBytes(32).toString("hex");
+  const handle = await generateUniqueHandle(data.name);
   const [user] = await db.insert(schema.users).values({
     name: data.name,
+    handle,
     email: data.email,
     passwordHash,
     emailVerifyToken: verifyToken,
@@ -29,6 +44,12 @@ export async function createUser(data: { name: string; email: string; password: 
     status: "PENDING_VERIFICATION",
   }).returning();
   return user;
+}
+export async function updateUserHandle(userId: string, handle: string) {
+  const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.handle, handle), sql`${schema.users.id} != ${userId}`));
+  if (existing) return null;
+  const [updated] = await db.update(schema.users).set({ handle }).where(eq(schema.users.id, userId)).returning();
+  return updated;
 }
 export async function verifyUserEmail(token: string) {
   const [user] = await db.select().from(schema.users).where(eq(schema.users.emailVerifyToken, token));

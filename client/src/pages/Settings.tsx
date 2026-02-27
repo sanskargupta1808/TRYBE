@@ -9,7 +9,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, User, Bot, RefreshCw, Trash2, KeyRound } from "lucide-react";
+import { Loader2, User, Bot, RefreshCw, Trash2, KeyRound, AtSign } from "lucide-react";
 
 const DISEASE_AREAS = ["Cancer", "Rare Disease", "Diabetes", "Mental Health", "HIV/AIDS", "TB", "AMR", "Cardiovascular", "Respiratory", "NCD Prevention", "Neurology", "Paediatrics"];
 const REGIONS = ["Global", "Europe", "North America", "Asia Pacific", "Africa", "Latin America", "Middle East", "South Asia"];
@@ -89,6 +89,71 @@ function ChangePasswordSection() {
             Update password
           </Button>
         </form>
+      </div>
+    </section>
+  );
+}
+
+function HandleSection() {
+  const { toast } = useToast();
+  const { user, refetch: refetchAuth } = useAuth();
+  const [handle, setHandle] = useState(user?.handle || "");
+  const [editing, setEditing] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/handle", { handle: handle.replace(/^@/, "") });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Handle updated" });
+      refetchAuth();
+      setEditing(false);
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-4">
+        <AtSign className="h-4 w-4 text-muted-foreground" />
+        <h2 className="font-semibold text-foreground">Your handle</h2>
+      </div>
+      <div className="bg-card border border-card-border rounded-xl p-4">
+        <p className="text-xs text-muted-foreground mb-3">Your public identifier across TRYBE. Other members will see this in tables, messages, and invitations.</p>
+        {editing ? (
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Label className="text-xs mb-1.5">Handle</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                <Input
+                  value={handle}
+                  onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  className="pl-7"
+                  maxLength={30}
+                  placeholder="yourhandle"
+                  data-testid="input-handle"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">3–30 characters. Letters, numbers, underscores only.</p>
+            </div>
+            <div className="flex gap-1.5">
+              <Button size="sm" onClick={() => mutation.mutate()} disabled={mutation.isPending || handle.length < 3} data-testid="button-save-handle">
+                {mutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setHandle(user?.handle || ""); setEditing(false); }} data-testid="button-cancel-handle">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground" data-testid="text-current-handle">@{user?.handle || "—"}</span>
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-handle">Change</Button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -176,6 +241,9 @@ export default function Settings() {
           </div>
         </div>
       </section>
+
+      {/* Handle */}
+      <HandleSection />
 
       <ChangePasswordSection />
 

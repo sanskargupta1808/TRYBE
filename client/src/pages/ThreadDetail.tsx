@@ -183,7 +183,7 @@ export default function ThreadDetail() {
                     <span className="text-primary text-xs font-semibold">{u?.name?.charAt(0)}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{u?.name}</p>
+                    <p className="text-sm font-medium text-foreground">{u?.name} {u?.handle && <span className="text-xs text-muted-foreground font-normal">@{u.handle}</span>}</p>
                     <p className="text-xs text-muted-foreground">{u?.organisation}</p>
                   </div>
                 </div>

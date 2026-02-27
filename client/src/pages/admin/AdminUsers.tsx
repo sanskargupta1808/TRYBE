@@ -87,7 +87,7 @@ export default function AdminUsers() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-foreground">{u.name}</p>
+                    <p className="text-sm font-medium text-foreground">{u.name} {u.handle && <span className="text-xs text-muted-foreground font-normal">@{u.handle}</span>}</p>
                     <span className={`text-xs px-1.5 py-0.5 rounded-sm font-medium ${STATUS_COLORS[u.status] || "bg-muted text-muted-foreground"}`}>{u.status}</span>
                     {u.role === "ADMIN" && <Badge variant="secondary" className="text-xs">Admin</Badge>}
                     {u.pendingAppeal && (

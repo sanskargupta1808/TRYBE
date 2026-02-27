@@ -310,7 +310,7 @@ export default function MessageDetail() {
                 <span className="text-primary text-sm font-medium">{other.name?.charAt(0)}</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">{other.name}</p>
+                <p className="text-sm font-semibold text-foreground">{other.name} {other.handle && <span className="text-xs text-muted-foreground font-normal">@{other.handle}</span>}</p>
                 {other.organisation && <p className="text-xs text-muted-foreground">{other.organisation}</p>}
               </div>
             </div>
