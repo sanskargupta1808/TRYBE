@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Send, CheckCircle, Copy, AlertTriangle, Mail, ExternalLink } from "lucide-react";
+import { Send, CheckCircle, Copy, AlertTriangle, Mail, Users, ExternalLink } from "lucide-react";
 
 const APP_ORIGIN = window.location.origin;
 
@@ -25,6 +25,7 @@ export default function Invites() {
 
   const { data, isLoading } = useQuery<any>({ queryKey: ["/api/invites/my"] });
   const invites = data?.invites || [];
+  const quota = data?.quota;
 
   const sendMutation = useMutation({
     mutationFn: async () => {
@@ -56,6 +57,15 @@ export default function Invites() {
           Invitations from active members are confirmed automatically after email verification.
         </p>
       </div>
+
+      {quota && (
+        <div className="flex items-center gap-3 bg-muted/30 border border-border rounded-xl px-4 py-3 mb-6 animate-fade-in-up stagger-1" data-testid="status-invite-quota">
+          <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            {quota.remaining} of {quota.total} invitations remaining this month
+          </p>
+        </div>
+      )}
 
       {lastSent && (
         <div className="border border-border rounded-xl mb-6 overflow-hidden animate-fade-in-up" data-testid="panel-invite-sent">
@@ -119,7 +129,7 @@ export default function Invites() {
           </div>
           <Button
             onClick={() => sendMutation.mutate()}
-            disabled={sendMutation.isPending || !form.email.trim()}
+            disabled={sendMutation.isPending || !form.email.trim() || (quota && quota.remaining <= 0)}
             data-testid="button-send-invite"
           >
             {sendMutation.isPending ? (

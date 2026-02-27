@@ -292,6 +292,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     const user = await storage.getUserById(req.session.userId!);
     if (!user || user.status !== "ACTIVE") return res.status(403).json({ error: "Only active members can send invitations" });
+    if (!user.canInvite) return res.status(403).json({ error: "Your invite privileges have been paused. Please contact an admin." });
+
+    const quota = await storage.getUserInviteQuota(req.session.userId!);
+    if (!quota || quota.remaining <= 0) return res.status(429).json({ error: `You've used all ${quota?.total || 5} invitations this month. Your quota resets next month.` });
 
     const existingUser = await storage.getUserByEmail(email);
     if (existingUser) return res.status(400).json({ error: "Someone with this email address is already on TRYBE." });
@@ -307,6 +311,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       recipientNote: note,
     });
 
+    await storage.incrementInviteQuotaUsed(req.session.userId!);
     await createAuditEntry({
       actorUserId: req.session.userId,
       action: "MEMBER_INVITE_CREATED",
@@ -321,7 +326,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     emailSent = result.sent;
     emailError = result.error;
 
-    res.json({ invite, emailSent, emailError });
+    const updatedQuota = await storage.getUserInviteQuota(req.session.userId!);
+    res.json({ invite, emailSent, emailError, quota: updatedQuota });
   });
 
   // ─── Admin: Invite Requests ───────────────────────────────────────────────
