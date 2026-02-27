@@ -401,6 +401,72 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const profile = await storage.getUserProfile(req.session.userId!);
     res.json(profile);
   });
+
+  app.put("/api/user/profile", requireActive, async (req, res) => {
+    const { name, organisation, roleTitle, bio, contactVisibility } = req.body;
+    const updates: Record<string, any> = {};
+    if (name !== undefined) updates.name = name;
+    if (organisation !== undefined) updates.organisation = organisation;
+    if (roleTitle !== undefined) updates.roleTitle = roleTitle;
+    if (bio !== undefined) {
+      if (bio && bio.trim()) {
+        const mod = await moderateContent(bio);
+        if (mod.flagged) return res.status(400).json({ error: "Bio content may not meet TRYBE's professional conduct standards." });
+      }
+      updates.bio = bio;
+    }
+    if (contactVisibility !== undefined) {
+      if (!["EVERYONE", "MEMBERS_ONLY", "NOBODY"].includes(contactVisibility)) {
+        return res.status(400).json({ error: "Invalid contact visibility" });
+      }
+      updates.contactVisibility = contactVisibility;
+    }
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: "No fields to update" });
+    const user = await storage.updateUserProfile(req.session.userId!, updates);
+    res.json({ ...user, passwordHash: undefined });
+  });
+
+  app.put("/api/user/avatar", requireActive, async (req, res) => {
+    const { avatarUrl } = req.body;
+    if (avatarUrl !== undefined && avatarUrl !== null && typeof avatarUrl !== "string") {
+      return res.status(400).json({ error: "Invalid avatar URL" });
+    }
+    const user = await storage.updateUserProfile(req.session.userId!, { avatarUrl: avatarUrl || null });
+    res.json({ ...user, passwordHash: undefined });
+  });
+
+  app.get("/api/users/:userId/public-profile", requireActive, async (req, res) => {
+    const targetUser = await storage.getUserById(req.params.userId);
+    if (!targetUser || targetUser.status !== "ACTIVE") return res.status(404).json({ error: "User not found" });
+
+    const profile = await storage.getUserProfile(targetUser.id);
+    const userTables = await storage.getTablesForUser(targetUser.id);
+
+    let showEmail = targetUser.contactVisibility === "EVERYONE";
+    if (!showEmail && targetUser.contactVisibility === "MEMBERS_ONLY" && req.session.userId) {
+      const viewerTables = await storage.getTablesForUser(req.session.userId!);
+      const viewerTableIds = new Set(viewerTables.map(t => t.id));
+      showEmail = userTables.some(t => viewerTableIds.has(t.id));
+    }
+
+    res.json({
+      id: targetUser.id,
+      name: targetUser.name,
+      handle: targetUser.handle,
+      organisation: targetUser.organisation,
+      roleTitle: targetUser.roleTitle,
+      bio: targetUser.bio,
+      avatarUrl: targetUser.avatarUrl,
+      email: showEmail ? targetUser.email : undefined,
+      contactVisibility: targetUser.contactVisibility,
+      createdAt: targetUser.createdAt,
+      healthRole: profile?.healthRole,
+      regions: profile?.regions || [],
+      interests: profile?.interests || [],
+      tables: userTables.map(t => ({ id: t.id, title: t.title, purpose: t.purpose })),
+    });
+  });
+
   app.put("/api/handle", requireActive, async (req, res) => {
     const { handle } = req.body;
     if (!handle || typeof handle !== "string") return res.status(400).json({ error: "Handle is required" });

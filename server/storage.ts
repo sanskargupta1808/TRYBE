@@ -74,6 +74,10 @@ export async function updateUserRole(id: string, role: string) {
 export async function updateUserLastLogin(id: string) {
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, id));
 }
+export async function updateUserProfile(id: string, data: Partial<Pick<schema.User, "name" | "organisation" | "roleTitle" | "bio" | "avatarUrl" | "contactVisibility">>) {
+  const [updated] = await db.update(schema.users).set(data).where(eq(schema.users.id, id)).returning();
+  return updated;
+}
 export async function verifyPassword(user: schema.User, password: string) {
   return bcrypt.compare(password, user.passwordHash);
 }

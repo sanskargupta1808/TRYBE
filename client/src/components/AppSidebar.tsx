@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare, UserPlus, ShieldAlert } from "lucide-react";
+import { Home, Table2, Calendar, MessageSquare, Star, Settings, MessageCircle, Shield, Users, BarChart3, ClipboardList, CheckSquare, UserPlus, ShieldAlert, UserCircle } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
@@ -13,6 +13,7 @@ const appNavItems = [
   { title: "Moments", url: "/app/moments", icon: Calendar },
   { title: "Messages", url: "/app/messages", icon: MessageSquare },
   { title: "Invites", url: "/app/invites", icon: UserPlus },
+  { title: "Profile", url: "/app/profile", icon: UserCircle },
   { title: "Feedback", url: "/app/feedback", icon: Star },
   { title: "Settings", url: "/app/settings", icon: Settings },
 ];
@@ -94,15 +95,15 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 sidebar-fade-separator-top">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 sidebar-avatar-ring cursor-default">
+        <Link href="/app/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 sidebar-avatar-ring cursor-pointer">
             <span className="text-primary text-xs font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name}</p>
             <p className="text-xs text-muted-foreground truncate">{user?.handle ? `@${user.handle}` : user?.email}</p>
           </div>
-        </div>
+        </Link>
         <button onClick={logout} className="mt-3 text-xs text-muted-foreground hover-elevate w-full text-left py-1">
           Sign out
         </button>

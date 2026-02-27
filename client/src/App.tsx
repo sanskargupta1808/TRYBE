@@ -30,6 +30,7 @@ import Moments from "@/pages/Moments";
 import Messages from "@/pages/Messages";
 import MessageDetail from "@/pages/MessageDetail";
 import Feedback from "@/pages/Feedback";
+import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 
 import AdminOverview from "@/pages/admin/AdminOverview";
@@ -202,6 +203,12 @@ function Router() {
       <Route path="/app/feedback">
         <RequireAuth>
           <AppLayout><Feedback /></AppLayout>
+        </RequireAuth>
+      </Route>
+
+      <Route path="/app/profile">
+        <RequireAuth>
+          <AppLayout><Profile /></AppLayout>
         </RequireAuth>
       </Route>
 

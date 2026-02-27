@@ -4,11 +4,16 @@ import { queryClient } from "@/lib/queryClient";
 interface User {
   id: string;
   name: string;
+  handle?: string;
   email: string;
   status: string;
   role: string;
   organisation?: string;
   roleTitle?: string;
+  bio?: string;
+  avatarUrl?: string;
+  contactVisibility?: string;
+  createdAt?: string;
 }
 
 interface Profile {
