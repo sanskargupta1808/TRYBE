@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, Lock, Globe, Check, X } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, Lock, Globe, Check, X, Shield, ShieldCheck, UserMinus, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { tagColour } from "@/lib/utils";
 
 export default function TableDetail() {
@@ -65,7 +66,29 @@ export default function TableDetail() {
     messageMutation.mutate(memberId);
   };
 
-  const isHost = (data?.members || []).some(({ user: u, member }: any) => u?.id === user?.id && member?.memberRole === "HOST");
+  const myMembership = (data?.members || []).find(({ user: u }: any) => u?.id === user?.id);
+  const myRole = myMembership?.member?.memberRole;
+  const isHost = myRole === "HOST";
+  const isAssignee = myRole === "ASSIGNEE";
+  const canManage = isHost || isAssignee;
+
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const res = await apiRequest("POST", `/api/tables/${id}/members/${userId}/role`, { role });
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", id] }); toast({ title: "Role updated" }); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("POST", `/api/tables/${id}/members/${userId}/remove`, {});
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", id] }); toast({ title: "Member removed" }); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
 
   if (isLoading) return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
@@ -122,37 +145,73 @@ export default function TableDetail() {
       <section className="mb-6 animate-fade-in-up stagger-1">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Members</h2>
         <div className="space-y-2">
-          {(data.members || []).map(({ user: u, member }: any) => (
-            <div key={u.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2" data-testid={`badge-member-${u.id}`}>
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary text-xs font-medium">{u.name?.charAt(0)}</span>
+          {(data.members || []).map(({ user: u, member }: any) => {
+            const memberRole = member?.memberRole;
+            const isMe = u.id === user?.id;
+            const canChangeRole = isHost && !isMe && memberRole !== "HOST";
+            const canRemove = (isHost && !isMe && memberRole !== "HOST") || (isAssignee && !isMe && memberRole === "MEMBER");
+            const showMenu = canChangeRole || canRemove;
+            return (
+              <div key={u.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2" data-testid={`badge-member-${u.id}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary text-xs font-medium">{u.name?.charAt(0)}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-sm text-foreground font-medium">{u.name}</span>
+                    {u.organisation && <span className="text-xs text-muted-foreground ml-2">{u.organisation}</span>}
+                  </div>
+                  {memberRole === "HOST" && <Badge variant="secondary" className="text-xs ml-1 gap-0.5"><ShieldCheck className="h-2.5 w-2.5" />Host</Badge>}
+                  {memberRole === "ASSIGNEE" && <Badge variant="outline" className="text-xs ml-1 gap-0.5"><Shield className="h-2.5 w-2.5" />Assignee</Badge>}
                 </div>
-                <div className="min-w-0">
-                  <span className="text-sm text-foreground font-medium">{u.name}</span>
-                  {u.organisation && <span className="text-xs text-muted-foreground ml-2">{u.organisation}</span>}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {u.id !== user?.id && data.isMember && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2"
+                      onClick={() => handleMessage(u.id)}
+                      disabled={messagingUserId === u.id}
+                      data-testid={`button-message-member-${u.id}`}
+                    >
+                      {messagingUserId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Mail className="h-3 w-3 mr-1" /><span className="text-xs">Message</span></>}
+                    </Button>
+                  )}
+                  {showMenu && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" data-testid={`button-manage-member-${u.id}`}>
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canChangeRole && memberRole === "MEMBER" && (
+                          <DropdownMenuItem onClick={() => roleMutation.mutate({ userId: u.id, role: "ASSIGNEE" })} data-testid={`button-promote-${u.id}`}>
+                            <Shield className="h-3.5 w-3.5 mr-2" />Make Assignee
+                          </DropdownMenuItem>
+                        )}
+                        {canChangeRole && memberRole === "ASSIGNEE" && (
+                          <DropdownMenuItem onClick={() => roleMutation.mutate({ userId: u.id, role: "MEMBER" })} data-testid={`button-demote-${u.id}`}>
+                            <Users className="h-3.5 w-3.5 mr-2" />Make Member
+                          </DropdownMenuItem>
+                        )}
+                        {canRemove && (
+                          <DropdownMenuItem className="text-destructive" onClick={() => removeMemberMutation.mutate(u.id)} data-testid={`button-remove-member-${u.id}`}>
+                            <UserMinus className="h-3.5 w-3.5 mr-2" />Remove
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                {member.memberRole === "HOST" && <Badge variant="secondary" className="text-xs ml-1">Host</Badge>}
               </div>
-              {u.id !== user?.id && data.isMember && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="flex-shrink-0 h-7 px-2"
-                  onClick={() => handleMessage(u.id)}
-                  disabled={messagingUserId === u.id}
-                  data-testid={`button-message-member-${u.id}`}
-                >
-                  {messagingUserId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Mail className="h-3 w-3 mr-1" /><span className="text-xs">Message</span></>}
-                </Button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      {/* Join Requests (Host only, private tables) */}
-      {isHost && data.requiresApprovalToJoin && <JoinRequests tableId={id!} />}
+      {/* Join Requests (Host or Assignee, private tables) */}
+      {canManage && data.requiresApprovalToJoin && <JoinRequests tableId={id!} />}
 
       {/* Threads */}
       <section className="animate-fade-in-up stagger-2">

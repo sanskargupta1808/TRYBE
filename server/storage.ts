@@ -291,6 +291,13 @@ export async function addTableMember(tableId: string, userId: string, memberRole
 export async function removeTableMember(tableId: string, userId: string) {
   await db.delete(schema.tableMembers).where(and(eq(schema.tableMembers.tableId, tableId), eq(schema.tableMembers.userId, userId)));
 }
+export async function updateMemberRole(tableId: string, userId: string, role: string) {
+  const [updated] = await db.update(schema.tableMembers)
+    .set({ memberRole: role })
+    .where(and(eq(schema.tableMembers.tableId, tableId), eq(schema.tableMembers.userId, userId)))
+    .returning();
+  return updated;
+}
 
 // ─── Table Requests ───────────────────────────────────────────────────────────
 export async function createTableRequest(data: schema.InsertTableRequest) {

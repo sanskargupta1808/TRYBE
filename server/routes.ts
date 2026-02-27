@@ -561,15 +561,15 @@ Return ONLY valid JSON:
     const table = await storage.getTableById(req.params.id);
     if (!table) return res.status(404).json({ error: "Not found" });
     const members = await storage.getTableMembers(req.params.id);
-    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
-    if (!isHost) return res.status(403).json({ error: "Only the table host can view join requests" });
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (myRole !== "HOST" && myRole !== "ASSIGNEE") return res.status(403).json({ error: "Only hosts and assignees can view join requests" });
     const requests = await storage.getTableJoinRequests(req.params.id);
     res.json(requests);
   });
   app.post("/api/tables/:id/join-requests/:reqId/approve", requireActive, async (req, res) => {
     const members = await storage.getTableMembers(req.params.id);
-    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
-    if (!isHost) return res.status(403).json({ error: "Only the table host can approve requests" });
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (myRole !== "HOST" && myRole !== "ASSIGNEE") return res.status(403).json({ error: "Only hosts and assignees can approve requests" });
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "APPROVED");
     await storage.addTableMember(req.params.id, updated.userId);
     const table = await storage.getTableById(req.params.id);
@@ -581,8 +581,8 @@ Return ONLY valid JSON:
   });
   app.post("/api/tables/:id/join-requests/:reqId/decline", requireActive, async (req, res) => {
     const members = await storage.getTableMembers(req.params.id);
-    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
-    if (!isHost) return res.status(403).json({ error: "Only the table host can decline requests" });
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (myRole !== "HOST" && myRole !== "ASSIGNEE") return res.status(403).json({ error: "Only hosts and assignees can decline requests" });
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "DECLINED");
     const table = await storage.getTableById(req.params.id);
     const requester = await storage.getUserById(updated.userId);
@@ -590,6 +590,38 @@ Return ONLY valid JSON:
       sendTableJoinDeclinedEmail(requester.email, requester.name, table.title).catch(() => {});
     }
     res.json(updated);
+  });
+
+  // Member management: promote/demote/remove
+  app.post("/api/tables/:id/members/:userId/role", requireActive, async (req, res) => {
+    const { role } = req.body;
+    if (!["ASSIGNEE", "MEMBER"].includes(role)) return res.status(400).json({ error: "Invalid role" });
+    const members = await storage.getTableMembers(req.params.id);
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (!myRole) return res.status(403).json({ error: "You are not a member of this table" });
+    const targetRole = members.find((m: any) => m.user?.id === req.params.userId)?.member?.memberRole;
+    if (!targetRole) return res.status(404).json({ error: "Member not found" });
+    if (targetRole === "HOST") return res.status(403).json({ error: "Cannot change the host's role" });
+    if (myRole !== "HOST") return res.status(403).json({ error: "Only the host can change member roles" });
+    const updated = await storage.updateMemberRole(req.params.id, req.params.userId, role);
+    return res.json(updated);
+  });
+  app.post("/api/tables/:id/members/:userId/remove", requireActive, async (req, res) => {
+    const members = await storage.getTableMembers(req.params.id);
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (!myRole) return res.status(403).json({ error: "You are not a member of this table" });
+    const targetRole = members.find((m: any) => m.user?.id === req.params.userId)?.member?.memberRole;
+    if (!targetRole) return res.status(404).json({ error: "Member not found" });
+    if (targetRole === "HOST") return res.status(403).json({ error: "Cannot remove the host" });
+    if (myRole === "HOST") {
+      await storage.removeTableMember(req.params.id, req.params.userId);
+      return res.json({ success: true });
+    }
+    if (myRole === "ASSIGNEE" && targetRole === "MEMBER") {
+      await storage.removeTableMember(req.params.id, req.params.userId);
+      return res.json({ success: true });
+    }
+    return res.status(403).json({ error: "Only hosts and assignees can remove members" });
   });
 
   // Admin: table management
