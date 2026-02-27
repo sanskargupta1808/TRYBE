@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, Users, ChevronRight, Table2 } from "lucide-react";
+import { Search, Plus, Users, ChevronRight, Table2, Globe, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { tagColour } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ export default function Tables() {
   });
 
   const myIds = new Set(data?.myTableIds || []);
+  const pendingIds = new Set(data?.pendingTableIds || []);
   let tables = data?.all || [];
 
   if (search) tables = tables.filter((t: any) => t.title.toLowerCase().includes(search.toLowerCase()) || t.purpose?.toLowerCase().includes(search.toLowerCase()));
@@ -99,6 +100,7 @@ export default function Tables() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{table.title}</p>
                       <div className="flex flex-wrap gap-1 mt-1 items-center">
+                        {table.requiresApprovalToJoin && <Badge variant="outline" className="text-xs gap-0.5"><Lock className="h-2.5 w-2.5" />Private</Badge>}
                         {(table.tags || []).slice(0, 3).map((tag: string) => <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>)}
                         {(table.memberCount ?? 0) > 0 && (
                           <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
@@ -140,6 +142,7 @@ export default function Tables() {
                     <h3 className="font-medium text-foreground text-sm">{table.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{table.purpose}</p>
                     <div className="flex flex-wrap gap-1 mt-2 items-center">
+                      {table.requiresApprovalToJoin && <Badge variant="outline" className="text-xs gap-0.5"><Lock className="h-2.5 w-2.5" />Private</Badge>}
                       {(table.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className={`text-xs border ${tagColour(tag)}`}>{tag}</Badge>)}
                       {(table.memberCount ?? 0) > 0 && (
                         <span className="flex items-center gap-0.5 text-xs text-muted-foreground ml-1">
@@ -153,9 +156,15 @@ export default function Tables() {
                       <Button size="sm" variant="outline" data-testid={`button-view-${table.id}`}>View</Button>
                     </Link>
                     {!myIds.has(table.id) && (
-                      <Button size="sm" onClick={() => joinMutation.mutate(table.id)} disabled={joinMutation.isPending} data-testid={`button-join-${table.id}`}>
-                        Join
-                      </Button>
+                      pendingIds.has(table.id) ? (
+                        <Button size="sm" variant="outline" disabled data-testid={`button-join-${table.id}`}>
+                          Request pending
+                        </Button>
+                      ) : (
+                        <Button size="sm" onClick={() => joinMutation.mutate(table.id)} disabled={joinMutation.isPending} data-testid={`button-join-${table.id}`}>
+                          {table.requiresApprovalToJoin ? "Request to join" : "Join"}
+                        </Button>
+                      )
                     )}
                   </div>
                 </div>

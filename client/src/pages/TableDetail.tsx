@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, Lock, Globe, Check, X } from "lucide-react";
 import { tagColour } from "@/lib/utils";
 
 export default function TableDetail() {
@@ -92,15 +92,24 @@ export default function TableDetail() {
               <Button size="sm" variant="outline" onClick={() => leaveMutation.mutate()} disabled={leaveMutation.isPending} data-testid="button-leave-table">
                 {leaveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Leave table"}
               </Button>
+            ) : data.hasPendingRequest ? (
+              <Button size="sm" variant="outline" disabled data-testid="button-join-table">
+                <Loader2 className="h-3 w-3 mr-1" />Request pending
+              </Button>
             ) : (
               <Button size="sm" onClick={() => joinMutation.mutate()} disabled={joinMutation.isPending} data-testid="button-join-table">
-                {joinMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Join table"}
+                {joinMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : data.requiresApprovalToJoin ? "Request to join" : "Join table"}
               </Button>
             )}
           </div>
         </div>
         <p className="text-muted-foreground leading-relaxed mb-3">{data.purpose}</p>
         <div className="flex flex-wrap gap-2 items-center">
+          {data.requiresApprovalToJoin ? (
+            <Badge variant="outline" className="gap-0.5"><Lock className="h-2.5 w-2.5" />Private</Badge>
+          ) : (
+            <Badge variant="outline" className="gap-0.5"><Globe className="h-2.5 w-2.5" />Public</Badge>
+          )}
           {(data.tags || []).map((tag: string) => <Badge key={tag} variant="secondary" className={`border ${tagColour(tag)}`}>{tag}</Badge>)}
           <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
             <Users className="h-3 w-3" />
@@ -141,6 +150,9 @@ export default function TableDetail() {
           ))}
         </div>
       </section>
+
+      {/* Join Requests (Host only, private tables) */}
+      {isHost && data.requiresApprovalToJoin && <JoinRequests tableId={id!} />}
 
       {/* Threads */}
       <section className="animate-fade-in-up stagger-2">
@@ -212,5 +224,62 @@ export default function TableDetail() {
         )}
       </section>
     </div>
+  );
+}
+
+function JoinRequests({ tableId }: { tableId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const { data: requests, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/tables", tableId, "join-requests"],
+    queryFn: async () => { const res = await fetch(`/api/tables/${tableId}/join-requests`, { credentials: "include" }); if (!res.ok) throw new Error("Failed"); return res.json(); },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (reqId: string) => { const res = await apiRequest("POST", `/api/tables/${tableId}/join-requests/${reqId}/approve`, {}); return res.json(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", tableId] }); qc.invalidateQueries({ queryKey: ["/api/tables", tableId, "join-requests"] }); toast({ title: "Request approved" }); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: async (reqId: string) => { const res = await apiRequest("POST", `/api/tables/${tableId}/join-requests/${reqId}/decline`, {}); return res.json(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", tableId, "join-requests"] }); toast({ title: "Request declined" }); },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const pending = (requests || []).filter((r: any) => r.request.status === "PENDING");
+
+  if (isLoading || pending.length === 0) return null;
+
+  return (
+    <section className="mb-6 animate-fade-in-up stagger-1">
+      <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+        Join requests
+        <Badge variant="secondary" className="text-xs">{pending.length}</Badge>
+      </h2>
+      <div className="space-y-2">
+        {pending.map((r: any) => (
+          <div key={r.request.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2" data-testid={`join-request-${r.request.id}`}>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-primary text-xs font-medium">{r.user?.name?.charAt(0) || "?"}</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-sm text-foreground font-medium">{r.user?.name || "Unknown"}</span>
+                {r.user?.healthRole && <span className="text-xs text-muted-foreground ml-2">{r.user.healthRole}</span>}
+              </div>
+            </div>
+            <div className="flex gap-1.5 flex-shrink-0">
+              <Button size="sm" className="h-7 px-2" onClick={() => approveMutation.mutate(r.request.id)} disabled={approveMutation.isPending} data-testid={`button-approve-${r.request.id}`}>
+                <Check className="h-3 w-3 mr-1" />Approve
+              </Button>
+              <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => declineMutation.mutate(r.request.id)} disabled={declineMutation.isPending} data-testid={`button-decline-${r.request.id}`}>
+                <X className="h-3 w-3 mr-1" />Decline
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -316,6 +316,11 @@ export async function getTableJoinRequests(tableId: string) {
     .innerJoin(schema.users, eq(schema.tableJoinRequests.userId, schema.users.id))
     .where(eq(schema.tableJoinRequests.tableId, tableId));
 }
+export async function getUserPendingJoinRequests(userId: string) {
+  return db.select({ tableId: schema.tableJoinRequests.tableId })
+    .from(schema.tableJoinRequests)
+    .where(and(eq(schema.tableJoinRequests.userId, userId), eq(schema.tableJoinRequests.status, "PENDING")));
+}
 export async function updateJoinRequestStatus(id: string, status: string) {
   const [updated] = await db.update(schema.tableJoinRequests).set({ status }).where(eq(schema.tableJoinRequests.id, id)).returning();
   return updated;

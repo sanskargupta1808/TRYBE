@@ -514,8 +514,10 @@ Return ONLY valid JSON:
         filtered = [...matched, ...recommended];
       }
     }
+    const pendingReqs = await storage.getUserPendingJoinRequests(req.session.userId!);
+    const pendingTableIds = pendingReqs.map((r: any) => r.tableId);
     const clean = filtered.map(({ _score, ...t }) => t);
-    res.json({ all: clean, myTableIds: Array.from(myIds) });
+    res.json({ all: clean, myTableIds: Array.from(myIds), pendingTableIds });
   });
   app.get("/api/tables/my", requireActive, async (req, res) => {
     const tables = await storage.getTablesForUser(req.session.userId!);
@@ -527,13 +529,26 @@ Return ONLY valid JSON:
     const members = await storage.getTableMembers(req.params.id);
     const isMember = await storage.isTableMember(req.params.id, req.session.userId!);
     const threads = await storage.getThreadsByTable(req.params.id);
-    res.json({ ...table, members, isMember, threads });
+    let hasPendingRequest = false;
+    if (!isMember && table.requiresApprovalToJoin) {
+      const joinReqs = await storage.getTableJoinRequests(req.params.id);
+      hasPendingRequest = joinReqs.some((r: any) => r.request.userId === req.session.userId && r.request.status === "PENDING");
+    }
+    res.json({ ...table, members, isMember, threads, hasPendingRequest });
   });
   app.post("/api/tables/:id/join", requireActive, async (req, res) => {
     const table = await storage.getTableById(req.params.id);
     if (!table) return res.status(404).json({ error: "Not found" });
     const already = await storage.isTableMember(req.params.id, req.session.userId!);
     if (already) return res.status(400).json({ error: "Already a member" });
+    if (table.requiresApprovalToJoin) {
+      const existing = await storage.getTableJoinRequests(req.params.id);
+      const pending = existing.find((r: any) => r.request.userId === req.session.userId && r.request.status === "PENDING");
+      if (pending) return res.status(400).json({ error: "You already have a pending request for this table" });
+      await storage.createTableJoinRequest(req.params.id, req.session.userId!);
+      await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_JOIN_REQUESTED", targetType: "TABLE", targetId: req.params.id });
+      return res.json({ status: "requested" });
+    }
     const member = await storage.addTableMember(req.params.id, req.session.userId!);
     await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_JOINED", targetType: "TABLE", targetId: req.params.id });
     res.json({ status: "joined", member });
@@ -543,10 +558,18 @@ Return ONLY valid JSON:
     res.json({ success: true });
   });
   app.get("/api/tables/:id/join-requests", requireActive, async (req, res) => {
+    const table = await storage.getTableById(req.params.id);
+    if (!table) return res.status(404).json({ error: "Not found" });
+    const members = await storage.getTableMembers(req.params.id);
+    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
+    if (!isHost) return res.status(403).json({ error: "Only the table host can view join requests" });
     const requests = await storage.getTableJoinRequests(req.params.id);
     res.json(requests);
   });
   app.post("/api/tables/:id/join-requests/:reqId/approve", requireActive, async (req, res) => {
+    const members = await storage.getTableMembers(req.params.id);
+    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
+    if (!isHost) return res.status(403).json({ error: "Only the table host can approve requests" });
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "APPROVED");
     await storage.addTableMember(req.params.id, updated.userId);
     const table = await storage.getTableById(req.params.id);
@@ -557,6 +580,9 @@ Return ONLY valid JSON:
     res.json(updated);
   });
   app.post("/api/tables/:id/join-requests/:reqId/decline", requireActive, async (req, res) => {
+    const members = await storage.getTableMembers(req.params.id);
+    const isHost = members.some((m: any) => m.user?.id === req.session.userId && m.member?.memberRole === "HOST");
+    if (!isHost) return res.status(403).json({ error: "Only the table host can decline requests" });
     const updated = await storage.updateJoinRequestStatus(req.params.reqId, "DECLINED");
     const table = await storage.getTableById(req.params.id);
     const requester = await storage.getUserById(updated.userId);
@@ -581,11 +607,11 @@ Return ONLY valid JSON:
   // ─── Table Creation (direct — no admin approval needed) ─────────────────
 
   app.post("/api/tables", requireActive, async (req, res) => {
-    const { title, purpose, tags } = req.body;
+    const { title, purpose, tags, requiresApprovalToJoin } = req.body;
     if (!title || !purpose) return res.status(400).json({ error: "Title and purpose are required." });
     const mod = await moderateContent(`${title} ${purpose}`);
     if (mod.flagged) return res.status(400).json({ error: "This may not meet TRYBE's professional conduct standards. Please rephrase." });
-    const table = await storage.createTable({ title, purpose, tags: tags || [], createdByUserId: req.session.userId });
+    const table = await storage.createTable({ title, purpose, tags: tags || [], createdByUserId: req.session.userId, requiresApprovalToJoin: requiresApprovalToJoin === true });
     await storage.addTableMember(table.id, req.session.userId!, "HOST");
     await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_CREATED", targetType: "TABLE", targetId: table.id });
     res.json(table);

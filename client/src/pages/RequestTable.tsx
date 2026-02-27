@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, CheckCircle, Loader2, Sparkles, Plus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, Sparkles, Plus, X, Globe, Lock } from "lucide-react";
 
 const COMMON_TAGS = ["rare-disease", "cancer", "diabetes", "mental-health", "HIV/AIDS", "TB", "AMR", "policy", "research", "advocacy", "Global", "Europe", "Africa", "Asia"];
 
@@ -15,7 +15,7 @@ export default function RequestTable() {
   const { toast } = useToast();
   const [createdTable, setCreatedTable] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[] });
+  const [form, setForm] = useState({ title: "", purpose: "", tags: [] as string[], requiresApprovalToJoin: false });
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [customTagInput, setCustomTagInput] = useState("");
@@ -169,6 +169,35 @@ export default function RequestTable() {
             </div>
           )}
           <p className="text-xs text-muted-foreground mt-1.5">{form.tags.length}/10 tags selected</p>
+        </div>
+        <div>
+          <Label className="mb-2">Table visibility</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, requiresApprovalToJoin: false }))}
+              className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${!form.requiresApprovalToJoin ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+              data-testid="toggle-public"
+            >
+              <Globe className={`h-4 w-4 mt-0.5 flex-shrink-0 ${!form.requiresApprovalToJoin ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="text-sm font-medium">Public</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Anyone can join instantly</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, requiresApprovalToJoin: true }))}
+              className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${form.requiresApprovalToJoin ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+              data-testid="toggle-private"
+            >
+              <Lock className={`h-4 w-4 mt-0.5 flex-shrink-0 ${form.requiresApprovalToJoin ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="text-sm font-medium">Private</p>
+                <p className="text-xs text-muted-foreground mt-0.5">You approve who joins</p>
+              </div>
+            </button>
+          </div>
         </div>
         <Button type="submit" disabled={loading} className="w-full" data-testid="button-create-table">
           {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create table
