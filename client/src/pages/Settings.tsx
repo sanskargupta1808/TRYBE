@@ -9,7 +9,8 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, User, Bot, RefreshCw, Trash2, KeyRound, AtSign } from "lucide-react";
+import { Loader2, User, Bot, RefreshCw, Trash2, KeyRound, AtSign, Bell, BellOff } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const DISEASE_AREAS = ["Cancer", "Rare Disease", "Diabetes", "Mental Health", "HIV/AIDS", "TB", "AMR", "Cardiovascular", "Respiratory", "NCD Prevention", "Neurology", "Paediatrics"];
 const REGIONS = ["Global", "Europe", "North America", "Asia Pacific", "Africa", "Latin America", "Middle East", "South Asia"];
@@ -89,6 +90,66 @@ function ChangePasswordSection() {
             Update password
           </Button>
         </form>
+      </div>
+    </section>
+  );
+}
+
+function NotificationSection() {
+  const { toast } = useToast();
+  const { isSupported, permission, isSubscribed, subscribe, unsubscribe } = usePushNotifications();
+
+  if (!isSupported) return null;
+
+  const handleToggle = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+      toast({ title: "Notifications disabled" });
+    } else {
+      const ok = await subscribe();
+      if (ok) {
+        toast({ title: "Notifications enabled", description: "You'll receive push notifications for messages, thread posts, and events." });
+      } else if (permission === "denied") {
+        toast({ title: "Notifications blocked", description: "Please enable notifications in your browser settings.", variant: "destructive" });
+      }
+    }
+  };
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-4">
+        <Bell className="h-4 w-4 text-muted-foreground" />
+        <h2 className="font-semibold text-foreground">Push notifications</h2>
+      </div>
+      <div className="bg-card border border-card-border rounded-xl p-4">
+        <p className="text-xs text-muted-foreground mb-3">
+          Get notified on your device when someone sends you a message, posts in your threads, or signals interest in your events.
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {isSubscribed ? (
+              <Bell className="h-4 w-4 text-primary" />
+            ) : (
+              <BellOff className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-sm font-medium text-foreground" data-testid="text-notification-status">
+              {isSubscribed ? "Notifications are on" : "Notifications are off"}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant={isSubscribed ? "outline" : "default"}
+            onClick={handleToggle}
+            data-testid="button-toggle-notifications"
+          >
+            {isSubscribed ? "Turn off" : "Turn on"}
+          </Button>
+        </div>
+        {permission === "denied" && (
+          <p className="text-xs text-destructive mt-2">
+            Notifications are blocked in your browser. Go to your browser settings to allow notifications for this site.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -241,6 +302,9 @@ export default function Settings() {
           </div>
         </div>
       </section>
+
+      {/* Notifications */}
+      <NotificationSection />
 
       {/* Handle */}
       <HandleSection />

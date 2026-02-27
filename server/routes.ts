@@ -8,6 +8,7 @@ import { createAuditEntry } from "./storage";
 import OpenAI from "openai";
 import { sendInviteEmail, sendMemberInviteEmail, sendInviteRequestApprovedEmail, sendAccountApprovedEmail, sendAccountSuspendedEmail, sendAccountReactivatedEmail, sendTableJoinApprovedEmail, sendTableJoinDeclinedEmail, sendTableRequestDeclinedEmail, sendPasswordResetEmail, sendMilestoneAttendingEmail } from "./email";
 import { randomBytes } from "crypto";
+import { savePushSubscription, removePushSubscription, sendPushToUser, sendPushToMultipleUsers } from "./push";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -378,6 +379,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ─── User Profile ─────────────────────────────────────────────────────────
 
+  app.get("/api/push/vapid-key", requireActive, (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
+  });
+  app.post("/api/push/subscribe", requireActive, async (req, res) => {
+    const { subscription } = req.body;
+    if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+      return res.status(400).json({ error: "Invalid subscription" });
+    }
+    await savePushSubscription(req.session.userId!, subscription);
+    res.json({ success: true });
+  });
+  app.post("/api/push/unsubscribe", requireActive, async (req, res) => {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: "Endpoint required" });
+    await removePushSubscription(req.session.userId!, endpoint);
+    res.json({ success: true });
+  });
+
   app.get("/api/profile", requireActive, async (req, res) => {
     const profile = await storage.getUserProfile(req.session.userId!);
     res.json(profile);
@@ -723,6 +742,21 @@ Return ONLY valid JSON:
       fileMimeType: fileMimeType || null,
       moderationStatus: "CLEAN",
     });
+    const poster = await storage.getUserById(req.session.userId!);
+    const tableMembers = await storage.getTableMembers(thread.tableId);
+    const recipientIds = tableMembers
+      .filter((m: any) => m.user?.id !== req.session.userId)
+      .map((m: any) => m.user?.id)
+      .filter(Boolean);
+    if (recipientIds.length > 0) {
+      const table = await storage.getTableById(thread.tableId);
+      sendPushToMultipleUsers(recipientIds, {
+        title: `${poster?.name || "Someone"} posted in ${thread.title}`,
+        body: content?.trim()?.slice(0, 100) || "Shared an attachment",
+        tag: `thread-${thread.id}`,
+        url: `/app/tables/${thread.tableId}/threads/${thread.id}`,
+      }).catch(() => {});
+    }
     res.json(post);
   });
   app.post("/api/posts/:id/flag", requireActive, async (req, res) => {
@@ -835,6 +869,17 @@ Return ONLY valid JSON:
       replyToId: replyToId || null,
       moderationStatus: "CLEAN",
     });
+    const conv = await storage.getDmConversationById(req.params.id);
+    if (conv) {
+      const recipientId = conv.userAId === req.session.userId ? conv.userBId : conv.userAId;
+      const sender = await storage.getUserById(req.session.userId!);
+      sendPushToUser(recipientId, {
+        title: `${sender?.name || "Someone"} sent you a message`,
+        body: type === "TEXT" ? (content?.trim()?.slice(0, 100) || "") : "Sent an attachment",
+        tag: `dm-${req.params.id}`,
+        url: `/app/messages/${req.params.id}`,
+      }).catch(() => {});
+    }
     res.json(msg);
   });
 
@@ -947,6 +992,14 @@ Return ONLY valid JSON:
           if (sent) console.log(`[Email] Attending confirmation sent to ${usr.email} for "${evt.title}"`);
         }).catch(() => {});
         emailSent = true;
+      }
+      if (evt && evt.createdByUserId && evt.createdByUserId !== req.session.userId) {
+        sendPushToUser(evt.createdByUserId, {
+          title: `${usr?.name || "Someone"} is attending your event`,
+          body: evt.title,
+          tag: `milestone-${evt.id}`,
+          url: "/app/moments",
+        }).catch(() => {});
       }
     }
     res.json(signal ? { ...signal, emailSent } : { removed: true });

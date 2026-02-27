@@ -104,6 +104,16 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ i
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
 
+// ─── Push Subscriptions ──────────────────────────────────────────────────────
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
 // ─── Tables ───────────────────────────────────────────────────────────────────
 export const tables = pgTable("collaboration_tables", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
