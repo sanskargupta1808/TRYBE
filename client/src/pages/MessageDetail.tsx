@@ -53,6 +53,9 @@ export default function MessageDetail() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
+  const isInitialLoadRef = useRef(true);
 
   // Voice recording
   const { isRecording, duration, blob: voiceBlob, startRecording, stopRecording, cancelRecording, clearBlob } = useVoiceRecorder();
@@ -77,10 +80,29 @@ export default function MessageDetail() {
   const other = data?.otherUser;
   const otherId = data?.userAId === user?.id ? data?.userBId : data?.userAId;
 
-  // Scroll to bottom on new messages
+  const scrollToBottom = useCallback((instant?: boolean) => {
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: instant ? "instant" : "smooth" });
+    });
+  }, []);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data?.messages?.length]);
+    const count = data?.messages?.length ?? 0;
+    if (count === 0) return;
+    if (isInitialLoadRef.current) {
+      scrollToBottom(true);
+      isInitialLoadRef.current = false;
+    } else if (count > prevMessageCountRef.current) {
+      const container = messagesContainerRef.current;
+      const isNearBottom = container
+        ? container.scrollHeight - container.scrollTop - container.clientHeight < 150
+        : true;
+      if (isNearBottom) {
+        scrollToBottom();
+      }
+    }
+    prevMessageCountRef.current = count;
+  }, [data?.messages?.length, scrollToBottom]);
 
   // ── WebRTC Signaling ────────────────────────────────────────────────────────
   const handleSignal = useCallback(async (msg: any) => {
@@ -179,6 +201,7 @@ export default function MessageDetail() {
       setContent("");
       setIsOneTime(false);
       setReplyTo(null);
+      setTimeout(() => scrollToBottom(), 100);
     },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -363,7 +386,7 @@ export default function MessageDetail() {
       )}
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
         {(!data?.messages || data.messages.length === 0) ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
