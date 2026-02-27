@@ -1,0 +1,200 @@
+🔴 HIGH PRIORITY (Core Platform Functionality)
+1) Table Type: Private / General
+
+Status: Missing
+Needed:
+
+Add table visibility setting during creation:
+
+✅ General (open to relevant users by profile)
+
+🔒 Private (invite-only)
+
+Private tables should:
+
+Allow host to invite specific users
+
+Not appear in public recommendations
+
+Support organization-specific spaces (e.g., WPA, conference groups)
+
+Business-critical for event companies and institutional use.
+
+2) Table Ownership Logic
+
+Status: Not implemented correctly
+Issues:
+
+Tables persist after the host leaves.
+
+Needed Behavior:
+
+If host leaves:
+
+If other members exist → transfer ownership to another member.
+
+If no members remain → auto-delete table.
+
+Prevents platform clutter (e.g., campaign/event tables).
+
+3) Notifications System (Critical for Engagement)
+
+Status: Missing
+Required Notifications:
+
+🔔 New DM received
+
+🔔 New reply in joined table/thread
+
+🔔 Mentions (future enhancement)
+
+🔔 Milestone updates
+
+🔔 Calendar reminders (optional enhancement)
+
+Important:
+Not noisy — clean, minimal web + mobile notifications.
+
+Without this → discussions will die.
+
+4) Private Event Type (Moments)
+
+Status: Missing
+Needed:
+
+Milestones should also support:
+
+General Event
+
+Private Event (invite-only)
+
+Essential for conferences (e.g., WPA Conference).
+
+🟠 HIGH PRIORITY (User Identity & Trust)
+5) User Profiles (Major Gap)
+
+Status: Not developed
+This is critical.
+
+Missing:
+
+Public-facing profile page
+
+Basic identity visibility
+
+Professional context
+
+Required:
+
+Each user profile should include:
+
+Name
+
+Profile photo
+
+Role
+
+Organization
+
+Regions
+
+Disease interests
+
+Short bio
+
+Contact visibility preferences
+
+Joined tables
+
+Public activity (optional later)
+
+6) Public User ID System
+
+Unique public handle (e.g., @ravirapurel)
+
+Either:
+
+User-defined at onboarding
+
+System-generated but editable
+
+Used in:
+
+Tables
+
+Mentions
+
+DMs
+
+Invitations
+
+This builds identity + credibility + recognition.
+
+🟡 MEDIUM PRIORITY (UX Improvements)
+7) Table Dashboard Redesign
+
+Issue: Joined tables are visually jammed.
+Fix: Add spacing/gaps between table banners.
+
+8) AI Assistant Chat Stream Sync
+
+Issue: Message stream does not auto-scroll properly.
+Fix:
+
+Auto-scroll to latest message
+
+Keep conversation synchronized
+
+Improve UX flow
+
+9) Registration Links (CoC & Transparency)
+
+Issue: Open in same tab → user loses filled info.
+Fix: Open in new tab.
+
+🟡 EMAIL SYSTEM IMPROVEMENTS
+10) Email Design Fixes
+
+Issues Identified:
+
+Black Trybe banner (should be white)
+
+Logo not displaying
+
+“Accept Invitation” button color confusing (blue)
+
+Same visual issues appear in DM emails
+
+Fix:
+
+White logo banner
+
+Proper logo rendering
+
+Clear CTA button (white or branded)
+
+Unified email styling
+
+11) Email Delay (Milestone Attendance)
+
+Issue: Attendance email arrives ~10 minutes late.
+Required:
+
+Investigate queue/delivery delay
+
+Optimize trigger speed
+
+Invitation emails arrive immediately → system works but milestone trigger likely delayed.
+
+🟢 LOW PRIORITY / FUTURE ENHANCEMENTS
+12) Assistant Language Response
+
+AI understood Turkish but replied in English.
+
+Optional: respond in detected language.
+
+13) Admin Module (Future Architecture)
+
+Currently admin behaves like user.
+
+Dedicated admin module will be needed in future phase.

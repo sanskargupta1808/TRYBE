@@ -16,6 +16,13 @@ export async function getUserByEmail(email: string) {
 export async function getAllUsers() {
   return db.select().from(schema.users).orderBy(desc(schema.users.createdAt));
 }
+export async function searchActiveUsers(query: string, limit = 10) {
+  const q = `%${query.toLowerCase()}%`;
+  return db.select({ id: schema.users.id, name: schema.users.name, handle: schema.users.handle, organisation: schema.users.organisation })
+    .from(schema.users)
+    .where(and(eq(schema.users.status, "ACTIVE"), or(sql`LOWER(${schema.users.name}) LIKE ${q}`, sql`LOWER(${schema.users.handle}) LIKE ${q}`)))
+    .limit(limit);
+}
 export async function generateUniqueHandle(name: string): Promise<string> {
   let base = name.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (base.length < 3) base = "user" + base;

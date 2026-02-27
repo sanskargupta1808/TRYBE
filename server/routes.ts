@@ -435,6 +435,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ ...user, passwordHash: undefined });
   });
 
+  app.get("/api/members/search", requireActive, async (req, res) => {
+    const q = String(req.query.q || "").trim();
+    if (q.length < 2) return res.json([]);
+    const results = await storage.searchActiveUsers(q, 10);
+    res.json(results.filter((u: any) => u.id !== req.session.userId));
+  });
+
   app.get("/api/users/:userId/public-profile", requireActive, async (req, res) => {
     const targetUser = await storage.getUserById(req.params.userId);
     if (!targetUser || targetUser.status !== "ACTIVE") return res.status(404).json({ error: "User not found" });
@@ -569,7 +576,8 @@ Return ONLY valid JSON:
       ...(profile?.regions || []).map((s: string) => s.toLowerCase()),
       ...(profile?.healthRole ? [profile.healthRole.toLowerCase()] : []),
     ]);
-    const scored = allTables.map(t => {
+    const visibleTables = allTables.filter(t => myIds.has(t.id) || !t.requiresApprovalToJoin);
+    const scored = visibleTables.map(t => {
       const tableTags = (t.tags || []).map((s: string) => s.toLowerCase());
       const exactOverlap = tableTags.filter(tag => userInterests.has(tag)).length;
       let partialScore = 0;
@@ -649,7 +657,31 @@ Return ONLY valid JSON:
     res.json({ status: "joined", member });
   });
   app.post("/api/tables/:id/leave", requireActive, async (req, res) => {
-    await storage.removeTableMember(req.params.id, req.session.userId!);
+    const tableId = req.params.id;
+    const userId = req.session.userId!;
+    const table = await storage.getTableById(tableId);
+    if (!table) return res.status(404).json({ error: "Table not found" });
+    const role = await storage.getTableMemberRole(tableId, userId);
+    if (!role) return res.status(400).json({ error: "You are not a member of this table" });
+    
+    if (role === "HOST") {
+      const members = await storage.getTableMembers(tableId);
+      const otherMembers = members.filter((m: any) => m.user?.id !== userId);
+      
+      if (otherMembers.length === 0) {
+        await storage.removeTableMember(tableId, userId);
+        await storage.deleteTable(tableId);
+        await createAuditEntry({ actorUserId: userId, action: "TABLE_DELETED", targetType: "TABLE", targetId: tableId, metadata: { reason: "host_left_no_members" } });
+        return res.json({ success: true, tableDeleted: true });
+      }
+      
+      const successor = otherMembers.find((m: any) => m.member?.memberRole === "ASSIGNEE") || otherMembers[0];
+      await storage.updateMemberRole(tableId, successor.user.id, "HOST");
+      await createAuditEntry({ actorUserId: userId, action: "HOST_TRANSFERRED", targetType: "TABLE", targetId: tableId, metadata: { newHostId: successor.user.id } });
+    }
+    
+    await storage.removeTableMember(tableId, userId);
+    await createAuditEntry({ actorUserId: userId, action: "TABLE_LEFT", targetType: "TABLE", targetId: tableId });
     res.json({ success: true });
   });
   app.get("/api/tables/:id/join-requests", requireActive, async (req, res) => {
@@ -685,6 +717,22 @@ Return ONLY valid JSON:
       sendTableJoinDeclinedEmail(requester.email, requester.name, table.title).catch(() => {});
     }
     res.json(updated);
+  });
+
+  app.post("/api/tables/:id/invite-member", requireActive, async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    const tableId = req.params.id;
+    const members = await storage.getTableMembers(tableId);
+    const myRole = members.find((m: any) => m.user?.id === req.session.userId)?.member?.memberRole;
+    if (myRole !== "HOST" && myRole !== "ASSIGNEE") return res.status(403).json({ error: "Only hosts and assignees can invite members" });
+    const alreadyMember = members.some((m: any) => m.user?.id === userId);
+    if (alreadyMember) return res.status(400).json({ error: "User is already a member" });
+    const targetUser = await storage.getUserById(userId);
+    if (!targetUser || targetUser.status !== "ACTIVE") return res.status(404).json({ error: "User not found" });
+    const member = await storage.addTableMember(tableId, userId);
+    await createAuditEntry({ actorUserId: req.session.userId, action: "TABLE_MEMBER_INVITED", targetType: "TABLE", targetId: tableId, metadata: { invitedUserId: userId } });
+    res.json({ status: "added", member });
   });
 
   // Member management: promote/demote/remove
@@ -1068,10 +1116,13 @@ Return ONLY valid JSON:
         storage.getCommunityEventById(req.params.id),
       ]);
       if (usr?.email && evt) {
-        sendMilestoneAttendingEmail(usr.email, usr.name, evt).then(sent => {
+        try {
+          const sent = await sendMilestoneAttendingEmail(usr.email, usr.name, evt);
           if (sent) console.log(`[Email] Attending confirmation sent to ${usr.email} for "${evt.title}"`);
-        }).catch(() => {});
-        emailSent = true;
+          emailSent = sent;
+        } catch (e) {
+          console.error("[Email] Milestone attending email failed:", e);
+        }
       }
       if (evt && evt.createdByUserId && evt.createdByUserId !== req.session.userId) {
         sendPushToUser(evt.createdByUserId, {

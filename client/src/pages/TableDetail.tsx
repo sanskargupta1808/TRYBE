@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, Lock, Globe, Check, X, Shield, ShieldCheck, UserMinus, MoreVertical } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Plus, ChevronRight, Loader2, Mail, Lock, Globe, Check, X, Shield, ShieldCheck, UserMinus, MoreVertical, UserPlus, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { tagColour } from "@/lib/utils";
 
@@ -22,6 +22,8 @@ export default function TableDetail() {
   const [showNewThread, setShowNewThread] = useState(false);
   const [showAllThreads, setShowAllThreads] = useState(false);
   const [messagingUserId, setMessagingUserId] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState("");
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/tables", id],
@@ -36,7 +38,16 @@ export default function TableDetail() {
 
   const leaveMutation = useMutation({
     mutationFn: async () => { const res = await apiRequest("POST", `/api/tables/${id}/leave`, {}); return res.json(); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tables", id] }); toast({ title: "Left table" }); },
+    onSuccess: (d) => {
+      qc.invalidateQueries({ queryKey: ["/api/tables", id] });
+      qc.invalidateQueries({ queryKey: ["/api/tables"] });
+      if (d?.tableDeleted) {
+        toast({ title: "Table deleted (you were the only member)" });
+        navigate("/app/tables");
+      } else {
+        toast({ title: "Left table" });
+      }
+    },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
@@ -65,6 +76,30 @@ export default function TableDetail() {
     setMessagingUserId(memberId);
     messageMutation.mutate(memberId);
   };
+
+  const inviteSearchQuery = useQuery<any[]>({
+    queryKey: ["/api/members/search", inviteSearch],
+    queryFn: async () => {
+      if (!inviteSearch.trim()) return [];
+      const res = await fetch(`/api/members/search?q=${encodeURIComponent(inviteSearch)}`, { credentials: "include" });
+      return res.json();
+    },
+    enabled: inviteSearch.trim().length >= 2,
+  });
+
+  const inviteMemberMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("POST", `/api/tables/${id}/invite-member`, { userId });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tables", id] });
+      toast({ title: "Member added to table" });
+      setInviteSearch("");
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
 
   const myMembership = (data?.members || []).find(({ user: u }: any) => u?.id === user?.id);
   const myRole = myMembership?.member?.memberRole;
@@ -210,6 +245,71 @@ export default function TableDetail() {
           })}
         </div>
       </section>
+
+      {canManage && (
+        <div className="mb-4 animate-fade-in-up stagger-1">
+          {showInvite ? (
+            <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Invite a member</span>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setShowInvite(false); setInviteSearch(""); }} data-testid="button-close-invite">
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={inviteSearch}
+                  onChange={(e) => setInviteSearch(e.target.value)}
+                  placeholder="Search by name or handle..."
+                  className="pl-8 h-8 text-sm"
+                  data-testid="input-invite-search"
+                />
+              </div>
+              {inviteSearch.trim().length >= 2 && (
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {inviteSearchQuery.isLoading ? (
+                    <div className="flex items-center justify-center py-2"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+                  ) : (inviteSearchQuery.data || []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2 text-center">No members found</p>
+                  ) : (
+                    (inviteSearchQuery.data || [])
+                      .filter((u: any) => !(data.members || []).some(({ user: m }: any) => m?.id === u.id))
+                      .map((u: any) => (
+                        <div key={u.id} className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-muted/50" data-testid={`invite-result-${u.id}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <span className="text-primary text-xs">{u.name?.charAt(0)}</span>
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-sm font-medium">{u.name}</span>
+                              {u.handle && <span className="text-xs text-muted-foreground ml-1">@{u.handle}</span>}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2"
+                            onClick={() => inviteMemberMutation.mutate(u.id)}
+                            disabled={inviteMemberMutation.isPending}
+                            data-testid={`button-invite-${u.id}`}
+                          >
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            <span className="text-xs">Add</span>
+                          </Button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setShowInvite(true)} data-testid="button-invite-member">
+              <UserPlus className="h-3 w-3 mr-1" />Invite member
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Join Requests (Host or Assignee, private tables) */}
       {canManage && data.requiresApprovalToJoin && <JoinRequests tableId={id!} />}
