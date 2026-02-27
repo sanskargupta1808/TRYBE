@@ -93,7 +93,7 @@ export default function Tables() {
               <p className="text-muted-foreground text-sm">You haven't joined any tables yet.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {(data?.all || []).filter((t: any) => myIds.has(t.id)).map((table: any) => (
                 <Link key={table.id} href={`/app/tables/${table.id}`}>
                   <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate" data-testid={`card-mytable-${table.id}`}>
@@ -134,7 +134,7 @@ export default function Tables() {
             <p className="text-xs text-muted-foreground">Update your profile interests in Settings, or create a new table.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {tables.filter((t: any) => search || tagFilter ? true : !myIds.has(t.id)).map((table: any) => (
               <div key={table.id} className="bg-card border border-card-border rounded-xl p-4 hover-elevate" data-testid={`card-table-${table.id}`}>
                 <div className="flex items-start justify-between gap-3">
