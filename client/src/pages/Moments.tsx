@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Calendar, CheckCircle, Star, ThumbsUp, Plus, MapPin, Link as LinkIcon, X, Users, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle, Star, ThumbsUp, Plus, MapPin, Link as LinkIcon, X, Users, Trash2, Globe, Lock } from "lucide-react";
 import { tagColour } from "@/lib/utils";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -282,6 +282,11 @@ function MilestonesTab({ showCreateForm, setShowCreateForm, userId }: { showCrea
                                 </div>
 
                                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                  {event.visibility === "PRIVATE" ? (
+                                    <Badge variant="outline" className="text-xs gap-0.5"><Lock className="h-2.5 w-2.5" />Private</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs gap-0.5"><Globe className="h-2.5 w-2.5" />Public</Badge>
+                                  )}
                                   {event.creator && <span>By {event.creator.name}{event.creator.organisation && ` · ${event.creator.organisation}`}</span>}
                                   {event.counts && (event.counts.interested > 0 || event.counts.attending > 0) && (
                                     <span className="flex items-center gap-1">
@@ -345,6 +350,7 @@ function CreateMilestoneForm({ onClose }: { onClose: () => void }) {
   const [virtualLink, setVirtualLink] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
+  const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -356,6 +362,7 @@ function CreateMilestoneForm({ onClose }: { onClose: () => void }) {
         location: location.trim() || null,
         virtualLink: virtualLink.trim() || null,
         tags,
+        visibility,
       });
       return res.json();
     },
@@ -412,6 +419,36 @@ function CreateMilestoneForm({ onClose }: { onClose: () => void }) {
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">Virtual link</label>
             <Input value={virtualLink} onChange={e => setVirtualLink(e.target.value)} placeholder="https://zoom.us/..." data-testid="input-milestone-link" />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">Event visibility</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setVisibility("PUBLIC")}
+              className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${visibility === "PUBLIC" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+              data-testid="toggle-event-public"
+            >
+              <Globe className={`h-4 w-4 mt-0.5 flex-shrink-0 ${visibility === "PUBLIC" ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="text-sm font-medium">Public</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Visible to everyone</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility("PRIVATE")}
+              className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${visibility === "PRIVATE" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+              data-testid="toggle-event-private"
+            >
+              <Lock className={`h-4 w-4 mt-0.5 flex-shrink-0 ${visibility === "PRIVATE" ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="text-sm font-medium">Private</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Table members &amp; contacts only</p>
+              </div>
+            </button>
           </div>
         </div>
 

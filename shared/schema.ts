@@ -270,6 +270,7 @@ export const communityEvents = pgTable("community_events", {
   location: text("location"),
   virtualLink: text("virtual_link"),
   tags: text("tags").array().default(sql`'{}'::text[]`),
+  visibility: text("visibility").notNull().default("PUBLIC"),
   createdByUserId: varchar("created_by_user_id").references(() => users.id),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
 });

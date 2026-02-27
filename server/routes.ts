@@ -936,8 +936,21 @@ Return ONLY valid JSON:
   // ─── Community Events (User-Created Milestones) ───────────────────────────
 
   app.get("/api/milestones", requireActive, async (req, res) => {
-    const events = await storage.getAllCommunityEvents();
-    const signals = await storage.getUserCommunitySignals(req.session.userId!);
+    const userId = req.session.userId!;
+    const allEvents = await storage.getAllCommunityEvents();
+
+    const tableCoMemberIds = new Set((await storage.getSharedTableMembersForUser(userId)).map(u => u.userId));
+    const contactIds = new Set((await storage.getUserConversationPartnerIds(userId)));
+
+    const events = allEvents.filter(e => {
+      if (e.visibility !== "PRIVATE") return true;
+      if (e.createdByUserId === userId) return true;
+      if (e.createdByUserId && tableCoMemberIds.has(e.createdByUserId)) return true;
+      if (e.createdByUserId && contactIds.has(e.createdByUserId)) return true;
+      return false;
+    });
+
+    const signals = await storage.getUserCommunitySignals(userId);
     const allSignals = await Promise.all(events.map(async (e) => {
       const counts = await storage.getCommunityEventSignalCounts(e.id);
       return { eventId: e.id, ...counts };
@@ -956,7 +969,7 @@ Return ONLY valid JSON:
   });
 
   app.post("/api/milestones", requireActive, async (req, res) => {
-    const { title, description, eventDate, endDate, location, virtualLink, tags } = req.body;
+    const { title, description, eventDate, endDate, location, virtualLink, tags, visibility } = req.body;
     if (!title?.trim() || !eventDate) return res.status(400).json({ error: "Title and date are required" });
     const textToCheck = [title, description, location].filter(Boolean).join(" ");
     if (textToCheck.trim()) {
@@ -971,6 +984,7 @@ Return ONLY valid JSON:
       location: location?.trim() || null,
       virtualLink: virtualLink?.trim() || null,
       tags: tags || [],
+      visibility: visibility === "PRIVATE" ? "PRIVATE" : "PUBLIC",
       createdByUserId: req.session.userId!,
     });
     await createAuditEntry({ actorUserId: req.session.userId, action: "MILESTONE_CREATED", targetType: "COMMUNITY_EVENT", targetId: event.id });

@@ -496,6 +496,11 @@ export async function getDmConversationsForUser(userId: string) {
     or(eq(schema.dmConversations.userAId, userId), eq(schema.dmConversations.userBId, userId))
   ).orderBy(desc(schema.dmConversations.createdAt));
 }
+export async function getUserConversationPartnerIds(userId: string): Promise<string[]> {
+  const convos = await getDmConversationsForUser(userId);
+  const partnerIds = convos.map(c => c.userAId === userId ? c.userBId : c.userAId).filter(Boolean) as string[];
+  return [...new Set(partnerIds)];
+}
 export async function getDmConversationById(id: string) {
   const [conv] = await db.select().from(schema.dmConversations).where(eq(schema.dmConversations.id, id));
   return conv;
