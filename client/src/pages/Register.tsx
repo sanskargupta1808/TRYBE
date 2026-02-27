@@ -215,9 +215,9 @@ export default function Register() {
             />
             <Label htmlFor="agree" className="text-sm font-normal leading-relaxed cursor-pointer">
               I agree to the{" "}
-              <Link href="/code-of-conduct" className="underline text-foreground" target="_blank">Code of Conduct</Link>
+              <a href="/code-of-conduct" className="underline text-foreground" target="_blank" rel="noopener noreferrer">Code of Conduct</a>
               {" "}and{" "}
-              <Link href="/ai-transparency" className="underline text-foreground" target="_blank">AI Transparency</Link>
+              <a href="/ai-transparency" className="underline text-foreground" target="_blank" rel="noopener noreferrer">AI Transparency</a>
               {" "}policy.
             </Label>
           </div>
