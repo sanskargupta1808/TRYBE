@@ -252,15 +252,6 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
     saveMessages(messages);
   }, [messages]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      const viewport = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]");
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }, 80);
-  }, [messages, sendMessage.isPending]);
-
   const { tableId, threadId } = parseContext(location);
   const quickActions = getQuickActions(location);
 
@@ -323,6 +314,15 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
       }]);
     },
   });
+
+  useEffect(() => {
+    setTimeout(() => {
+      const viewport = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]");
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }, 80);
+  }, [messages, sendMessage.isPending]);
 
   const invalidateAfterActions = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
