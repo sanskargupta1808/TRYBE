@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -245,10 +245,21 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
   const [input, setInput] = useState("");
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [focusReviewDismissed, setFocusReviewDismissed] = useState(false);
+  const scrollEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     saveMessages(messages);
   }, [messages]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      const viewport = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]");
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }, 80);
+  }, [messages, sendMessage.isPending]);
 
   const { tableId, threadId } = parseContext(location);
   const quickActions = getQuickActions(location);
@@ -444,7 +455,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-3">
+      <ScrollArea className="flex-1 px-4 py-3" ref={scrollAreaRef}>
         <div className="space-y-4">
           {activeNudge && (
             <div className="rounded-md border border-primary/20 bg-primary/5 p-3" data-testid="block-nudge">
@@ -646,6 +657,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
               </div>
             </div>
           )}
+          <div ref={scrollEndRef} />
         </div>
       </ScrollArea>
 
