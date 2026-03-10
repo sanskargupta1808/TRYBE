@@ -61,11 +61,12 @@ export default function RequestTable() {
       const res = await apiRequest("POST", "/api/ai/generate-table", { prompt: aiPrompt.trim() });
       const data = await res.json();
       const tags = Array.isArray(data.tags) ? data.tags.slice(0, 10) : [];
-      setForm({
+      setForm(f => ({
+        ...f,
         title: data.title || "",
         purpose: (data.purpose || "").slice(0, 240),
         tags,
-      });
+      }));
       toast({ title: "Proposal drafted", description: "Review and edit the details before creating." });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });

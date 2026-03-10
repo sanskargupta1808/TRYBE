@@ -576,7 +576,10 @@ Return ONLY valid JSON:
       ...(profile?.regions || []).map((s: string) => s.toLowerCase()),
       ...(profile?.healthRole ? [profile.healthRole.toLowerCase()] : []),
     ]);
-    const visibleTables = allTables.filter(t => myIds.has(t.id) || !t.requiresApprovalToJoin);
+    const pendingReqs = await storage.getUserPendingJoinRequests(req.session.userId!);
+    const pendingTableIds = pendingReqs.map((r: any) => r.tableId);
+    const pendingIds = new Set(pendingTableIds);
+    const visibleTables = allTables.filter(t => myIds.has(t.id) || !t.requiresApprovalToJoin || pendingIds.has(t.id));
     const scored = visibleTables.map(t => {
       const tableTags = (t.tags || []).map((s: string) => s.toLowerCase());
       const exactOverlap = tableTags.filter(tag => userInterests.has(tag)).length;
@@ -617,8 +620,6 @@ Return ONLY valid JSON:
         filtered = [...matched, ...recommended];
       }
     }
-    const pendingReqs = await storage.getUserPendingJoinRequests(req.session.userId!);
-    const pendingTableIds = pendingReqs.map((r: any) => r.tableId);
     const clean = filtered.map(({ _score, ...t }) => t);
     res.json({ all: clean, myTableIds: Array.from(myIds), pendingTableIds });
   });
