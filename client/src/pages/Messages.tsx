@@ -120,7 +120,7 @@ export default function Messages() {
                         <span className="text-primary text-xs font-medium">{contact.name?.charAt(0)}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{contact.name} {contact.handle && <span className="text-xs text-muted-foreground font-normal">@{contact.handle}</span>}</p>
+                        <p className="text-sm font-medium text-foreground truncate"><Link href={`/app/users/${contact.id}`} className="hover:text-primary hover:underline transition-colors" data-testid={`link-contact-profile-${contact.id}`}>{contact.name}</Link> {contact.handle && <span className="text-xs text-muted-foreground font-normal">@{contact.handle}</span>}</p>
                         {contact.organisation && <p className="text-xs text-muted-foreground truncate">{contact.organisation}</p>}
                         {contextLabel && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5" data-testid={`contact-context-${contact.id}`}>
@@ -166,14 +166,18 @@ export default function Messages() {
           {conversations.map((conv: any) => {
             const other = conv.otherUser;
             return (
-              <Link key={conv.id} href={`/app/messages/${conv.id}`}>
-                <div className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate hover:shadow-sm transition-shadow duration-200" data-testid={`card-conversation-${conv.id}`}>
+              <div
+                key={conv.id}
+                className="flex items-center justify-between bg-card border border-card-border rounded-xl px-4 py-3 hover-elevate hover:shadow-sm transition-shadow duration-200 cursor-pointer"
+                data-testid={`card-conversation-${conv.id}`}
+                onClick={() => navigate(`/app/messages/${conv.id}`)}
+              >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-primary text-sm font-medium">{other?.name?.charAt(0) || "?"}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">{other?.name || "Member"} {other?.handle && <span className="text-xs text-muted-foreground font-normal">@{other.handle}</span>}</p>
+                      <p className="text-sm font-medium text-foreground">{other?.id ? <Link href={`/app/users/${other.id}`} className="hover:text-primary hover:underline transition-colors" data-testid={`link-conv-profile-${other.id}`} onClick={(e: any) => e.stopPropagation()}>{other.name || "Member"}</Link> : (other?.name || "Member")} {other?.handle && <span className="text-xs text-muted-foreground font-normal">@{other.handle}</span>}</p>
                       {other?.organisation && <p className="text-xs text-muted-foreground truncate">{other.organisation}</p>}
                     </div>
                   </div>
@@ -181,8 +185,7 @@ export default function Messages() {
                     <p className="text-xs text-muted-foreground">{new Date(conv.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                </div>
-              </Link>
+              </div>
             );
           })}
         </div>

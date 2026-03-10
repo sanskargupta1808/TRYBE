@@ -193,7 +193,7 @@ export default function TableDetail() {
                     <span className="text-primary text-xs font-medium">{u.name?.charAt(0)}</span>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-sm text-foreground font-medium">{u.name}</span>
+                    <Link href={`/app/users/${u.id}`} className="text-sm text-foreground font-medium hover:text-primary hover:underline transition-colors" data-testid={`link-member-profile-${u.id}`}>{u.name}</Link>
                     {u.handle && <span className="text-xs text-muted-foreground ml-1">@{u.handle}</span>}
                     {u.organisation && <span className="text-xs text-muted-foreground ml-2">{u.organisation}</span>}
                   </div>

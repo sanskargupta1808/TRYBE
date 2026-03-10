@@ -911,7 +911,7 @@ Return ONLY valid JSON:
     const enriched = await Promise.all(convs.map(async (conv) => {
       const otherId = conv.userAId === req.session.userId ? conv.userBId : conv.userAId;
       const other = otherId ? await storage.getUserById(otherId) : null;
-      return { ...conv, otherUser: other ? { id: other.id, name: other.name, organisation: other.organisation } : null };
+      return { ...conv, otherUser: other ? { id: other.id, name: other.name, handle: other.handle, organisation: other.organisation, avatarUrl: other.avatarUrl, roleTitle: other.roleTitle } : null };
     }));
     res.json(enriched);
   });
@@ -958,7 +958,7 @@ Return ONLY valid JSON:
     const messages = await storage.getDmMessages(req.params.id);
     const otherId = conv.userAId === req.session.userId ? conv.userBId : conv.userAId;
     const other = otherId ? await storage.getUserById(otherId) : null;
-    res.json({ ...conv, messages, otherUser: other ? { id: other.id, name: other.name, organisation: other.organisation } : null });
+    res.json({ ...conv, messages, otherUser: other ? { id: other.id, name: other.name, handle: other.handle, organisation: other.organisation, avatarUrl: other.avatarUrl, roleTitle: other.roleTitle } : null });
   });
   app.post("/api/messages/:id/send", requireActive, async (req, res) => {
     const { content, messageType, fileUrl, fileName, fileMimeType, isOneTime, replyToId } = req.body;

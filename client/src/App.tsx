@@ -31,6 +31,7 @@ import Messages from "@/pages/Messages";
 import MessageDetail from "@/pages/MessageDetail";
 import Feedback from "@/pages/Feedback";
 import Profile from "@/pages/Profile";
+import UserProfile from "@/pages/UserProfile";
 import Settings from "@/pages/Settings";
 
 import AdminOverview from "@/pages/admin/AdminOverview";
@@ -209,6 +210,12 @@ function Router() {
       <Route path="/app/profile">
         <RequireAuth>
           <AppLayout><Profile /></AppLayout>
+        </RequireAuth>
+      </Route>
+
+      <Route path="/app/users/:userId">
+        <RequireAuth>
+          <AppLayout><UserProfile /></AppLayout>
         </RequireAuth>
       </Route>
 
