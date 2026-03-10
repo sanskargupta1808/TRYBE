@@ -69,7 +69,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               data-testid="button-open-assistant"
             >
               <Bot className="h-3.5 w-3.5" />
-              Ask TRYBE Assistant
+              Ask OMNI
             </button>
           </div>
           <div className="relative">

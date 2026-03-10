@@ -92,8 +92,8 @@ export default function Landing() {
       <section className="max-w-4xl mx-auto px-6 py-24 border-t border-border/50 animate-fade-in-up">
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div>
-            <h2 className="text-3xl font-semibold mb-4 heading-rule">TRYBE Assistant</h2>
-            <p className="text-muted-foreground mb-6 leading-relaxed mt-4">Every member has access to TRYBE Assistant. It can:</p>
+            <h2 className="text-3xl font-semibold mb-4 heading-rule">OMNI</h2>
+            <p className="text-muted-foreground mb-6 leading-relaxed mt-4">Every member has access to OMNI. It can:</p>
             <div className="space-y-3">
               {[
                 "Suggest relevant tables",

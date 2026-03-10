@@ -251,7 +251,7 @@ export default function Settings() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/profile"] });
       setLocal(null);
-      toast({ title: "Assistant memory cleared", description: "TRYBE Assistant will start fresh on your next conversation." });
+      toast({ title: "Assistant memory cleared", description: "OMNI will start fresh on your next conversation." });
     },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -317,7 +317,7 @@ export default function Settings() {
           <Bot className="h-4 w-4 text-muted-foreground" />
           <h2 className="font-semibold text-foreground">What I know about you</h2>
         </div>
-        <p className="text-xs text-muted-foreground mb-4">This is used by TRYBE Assistant to tailor suggestions. You can edit or reset at any time.</p>
+        <p className="text-xs text-muted-foreground mb-4">This is used by OMNI to tailor suggestions. You can edit or reset at any time.</p>
 
         <div className="space-y-5">
           <div>

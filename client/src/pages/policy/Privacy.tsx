@@ -24,7 +24,7 @@ export default function Privacy() {
           <h2 className="text-base font-semibold text-foreground mb-2">How we use it</h2>
           <ul className="text-muted-foreground text-sm space-y-1 list-disc pl-4">
             <li>To operate the platform and facilitate professional collaboration</li>
-            <li>To power TRYBE Assistant suggestions (processed by OpenAI; no training on your data)</li>
+            <li>To power OMNI suggestions (processed by OpenAI; no training on your data)</li>
             <li>To keep the platform safe and moderated</li>
             <li>To improve TRYBE based on aggregated, anonymised usage patterns</li>
           </ul>

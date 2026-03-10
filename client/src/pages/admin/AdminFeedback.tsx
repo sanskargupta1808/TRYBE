@@ -7,7 +7,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   FEATURE: "Feature request",
   UX: "User experience",
   SAFETY: "Safety concern",
-  ASSISTANT: "TRYBE Assistant",
+  ASSISTANT: "OMNI",
   BUG: "Bug report",
 };
 

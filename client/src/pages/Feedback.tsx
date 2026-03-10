@@ -11,7 +11,7 @@ const CATEGORIES = [
   { value: "FEATURE", label: "Feature request" },
   { value: "UX", label: "User experience" },
   { value: "SAFETY", label: "Safety concern" },
-  { value: "ASSISTANT", label: "TRYBE Assistant" },
+  { value: "ASSISTANT", label: "OMNI" },
   { value: "BUG", label: "Bug report" },
 ];
 

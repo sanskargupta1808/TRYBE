@@ -2,12 +2,12 @@ export default function AITransparency() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-semibold text-foreground mb-2">How TRYBE Assistant works</h1>
+        <h1 className="text-2xl font-semibold text-foreground mb-2">How OMNI works</h1>
         <p className="text-muted-foreground text-sm mb-8">Transparency about how artificial intelligence is used in TRYBE</p>
 
         <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
           <section>
-            <h2 className="text-base font-semibold text-foreground mb-2">TRYBE Assistant uses artificial intelligence to:</h2>
+            <h2 className="text-base font-semibold text-foreground mb-2">OMNI uses artificial intelligence to:</h2>
             <ul className="list-disc pl-4 space-y-1">
               <li>Suggest relevant tables</li>
               <li>Highlight milestones</li>
@@ -31,12 +31,12 @@ export default function AITransparency() {
 
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">Data and privacy</h2>
-            <p>Your conversations with TRYBE Assistant are sent to OpenAI for processing. OpenAI does not use your data to train models. Conversation history is stored on TRYBE's servers for continuity. You may request deletion at any time.</p>
+            <p>Your conversations with OMNI are sent to OpenAI for processing. OpenAI does not use your data to train models. Conversation history is stored on TRYBE's servers for continuity. You may request deletion at any time.</p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">Feedback</h2>
-            <p>If TRYBE Assistant gives you an unhelpful, inaccurate, or inappropriate response, please use the Feedback section to let us know. This helps us improve.</p>
+            <p>If OMNI gives you an unhelpful, inaccurate, or inappropriate response, please use the Feedback section to let us know. This helps us improve.</p>
           </section>
         </div>
       </div>

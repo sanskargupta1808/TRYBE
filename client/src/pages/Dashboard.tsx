@@ -243,7 +243,7 @@ export default function Dashboard() {
             const btn = document.querySelector('[data-testid="button-open-assistant"]') as HTMLButtonElement;
             btn?.click();
           }} data-testid="button-callout-assistant">
-            <Bot className="h-3.5 w-3.5 mr-1.5" />Ask TRYBE Assistant
+            <Bot className="h-3.5 w-3.5 mr-1.5" />Ask OMNI
           </Button>
         </div>
         <div
