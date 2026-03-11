@@ -4,9 +4,17 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export async function seed() {
-  // Check if admin already exists
   const existingAdmin = await db.select().from(users).where(eq(users.email, "admin@trybe.health"));
-  if (existingAdmin.length > 0) return;
+  if (existingAdmin.length > 0) {
+    const admin = existingAdmin[0];
+    const passwordOk = await bcrypt.compare("ChangeMe123!", admin.passwordHash);
+    if (!passwordOk) {
+      const newHash = await bcrypt.hash("ChangeMe123!", 10);
+      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, admin.id));
+      console.log("🔑 Admin password reset to default");
+    }
+    return;
+  }
 
   console.log("🌱 Seeding TRYBE database...");
 
