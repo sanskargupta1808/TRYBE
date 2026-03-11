@@ -8,6 +8,34 @@ import { useLocation } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 
+import Markdown from "react-markdown";
+
+function MarkdownText({ text, className = "" }: { text: string; className?: string }) {
+  return (
+    <Markdown
+      className={`prose-sm prose-neutral dark:prose-invert max-w-none ${className}`}
+      components={{
+        h1: ({ children }) => <p className="font-semibold text-foreground mt-2 mb-1">{children}</p>,
+        h2: ({ children }) => <p className="font-semibold text-foreground mt-1.5 mb-0.5">{children}</p>,
+        h3: ({ children }) => <p className="font-medium text-foreground mt-1 mb-0.5">{children}</p>,
+        p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+        em: ({ children }) => <em>{children}</em>,
+        ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
+        li: ({ children }) => <li>{children}</li>,
+        code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded text-xs">{children}</code>,
+        pre: ({ children }) => <pre className="bg-muted rounded-md p-2 my-1.5 overflow-x-auto text-xs">{children}</pre>,
+        blockquote: ({ children }) => <blockquote className="border-l-2 border-primary/30 pl-3 my-1.5 text-muted-foreground italic">{children}</blockquote>,
+        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">{children}</a>,
+        hr: () => <hr className="my-2 border-border" />,
+      }}
+    >
+      {text}
+    </Markdown>
+  );
+}
+
 interface SuggestedAction {
   type: string;
   label: string;
@@ -176,7 +204,7 @@ function StructuredContent({ content, copyable = true }: { content: string | Rec
   if (sections.length <= 1) {
     return (
       <div>
-        <div className="whitespace-pre-wrap">{normalized}</div>
+        <MarkdownText text={normalized} />
         {copyable && (
           <div className="mt-2 pt-2 border-t border-border">
             <CopyButton text={normalized} />
@@ -199,7 +227,7 @@ function StructuredContent({ content, copyable = true }: { content: string | Rec
       {parsed.map((section, idx) => (
         <div key={idx}>
           <p className="text-xs font-semibold text-foreground mb-0.5">{section.heading}</p>
-          <div className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{section.body}</div>
+          <MarkdownText text={section.body} className="text-xs text-muted-foreground leading-relaxed" />
         </div>
       ))}
       {copyable && (
@@ -519,7 +547,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-foreground"
                 }`}>
-                  {msg.content}
+                  {msg.role === "user" ? msg.content : <MarkdownText text={msg.content} />}
                 </div>
               </div>
 
@@ -617,8 +645,8 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
                     </div>
                     <CopyButton text={msg.draftContent} />
                   </div>
-                  <div className="px-3 py-2.5 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                    {msg.draftContent}
+                  <div className="px-3 py-2.5 text-xs text-foreground leading-relaxed">
+                    <MarkdownText text={msg.draftContent} />
                   </div>
                   <div className="px-3 py-2 border-t border-border">
                     <button
