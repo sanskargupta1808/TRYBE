@@ -185,7 +185,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     await storage.updateUserLastLogin(user.id);
     await createAuditEntry({ actorUserId: user.id, action: "USER_LOGIN", targetType: "USER", targetId: user.id });
     const profile = await storage.getUserProfile(user.id);
-    return res.json({ user: { ...user, passwordHash: undefined }, profile });
+    return new Promise<void>((resolve) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error("Failed to save session:", err);
+          res.status(500).json({ error: "Failed to establish session" });
+          return resolve();
+        }
+        res.json({ user: { ...user, passwordHash: undefined }, profile });
+        resolve();
+      });
+    });
   });
 
   app.post("/api/auth/logout", (req, res) => {
