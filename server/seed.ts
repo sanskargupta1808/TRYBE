@@ -1,46 +1,57 @@
+import "./env";
 import { db } from "./db";
 import { users, invites, tables, tableMembers, calendarEvents } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export async function seed() {
-  const existingAdmin = await db.select().from(users).where(eq(users.email, "admin@trybe.health"));
-  if (existingAdmin.length > 0) {
-    const admin = existingAdmin[0];
-    const passwordOk = await bcrypt.compare("ChangeMe123!", admin.passwordHash);
-    if (!passwordOk) {
-      const newHash = await bcrypt.hash("ChangeMe123!", 10);
-      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, admin.id));
-      console.log("🔑 Admin password reset to default");
-    }
-    return;
-  }
+  const adminEmail = process.env.ADMIN_EMAIL || "sanskarsg38@gmail.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "12345678";
 
   console.log("🌱 Seeding TRYBE database...");
 
-  // Admin user
-  const passwordHash = await bcrypt.hash("ChangeMe123!", 10);
-  const [admin] = await db.insert(users).values({
-    name: "TRYBE Admin",
-    email: "admin@trybe.health",
-    passwordHash,
-    emailVerifiedAt: new Date(),
-    status: "ACTIVE",
-    role: "ADMIN",
-    organisation: "TRYBE",
-    roleTitle: "Platform Administrator",
-  }).returning();
-  console.log(`✅ Admin user created: admin@trybe.health / ChangeMe123!`);
+  const [existingAdmin] = await db.select().from(users).where(eq(users.email, adminEmail));
+  let admin = existingAdmin;
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
 
-  // Create initial invites
-  await db.insert(invites).values([
-    { token: "ALPHA-TRYBE-001", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
-    { token: "ALPHA-TRYBE-002", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
-    { token: "ALPHA-TRYBE-003", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
-    { token: "ALPHA-TRYBE-004", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
-    { token: "ALPHA-TRYBE-005", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
-  ]);
-  console.log("✅ Initial invites created: ALPHA-TRYBE-001 through ALPHA-TRYBE-005");
+  if (admin) {
+    const passwordOk = await bcrypt.compare(adminPassword, admin.passwordHash);
+    const updates: Partial<typeof users.$inferInsert> = {};
+    if (!passwordOk) updates.passwordHash = adminPasswordHash;
+    if (admin.role !== "ADMIN") updates.role = "ADMIN";
+    if (admin.status !== "ACTIVE") updates.status = "ACTIVE";
+    if (!admin.emailVerifiedAt) updates.emailVerifiedAt = new Date();
+    if (Object.keys(updates).length > 0) {
+      const [updated] = await db.update(users).set(updates).where(eq(users.id, admin.id)).returning();
+      admin = updated;
+      console.log("✅ Admin updated");
+    }
+  } else {
+    const [created] = await db.insert(users).values({
+      name: "TRYBE Admin",
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      emailVerifiedAt: new Date(),
+      status: "ACTIVE",
+      role: "ADMIN",
+      organisation: "TRYBE",
+      roleTitle: "Platform Administrator",
+    }).returning();
+    admin = created;
+    console.log(`✅ Admin user created: ${adminEmail}`);
+  }
+
+  const [existingInvite] = await db.select({ id: invites.id }).from(invites).limit(1);
+  if (!existingInvite) {
+    await db.insert(invites).values([
+      { token: "ALPHA-TRYBE-001", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
+      { token: "ALPHA-TRYBE-002", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
+      { token: "ALPHA-TRYBE-003", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
+      { token: "ALPHA-TRYBE-004", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
+      { token: "ALPHA-TRYBE-005", status: "UNUSED", createdByUserId: admin.id, expiresAt: new Date(Date.now() + 90 * 86400000) },
+    ]);
+    console.log("✅ Initial invites created: ALPHA-TRYBE-001 through ALPHA-TRYBE-005");
+  }
 
   // Seed collaboration tables
   const tableData = [
@@ -56,11 +67,14 @@ export async function seed() {
     { title: "Paediatric Oncology – Advocacy Network", purpose: "Uniting paediatric oncology advocates to improve access to treatment and research globally.", tags: ["oncology", "paediatric", "cancer"] },
   ];
 
-  for (const t of tableData) {
-    const [table] = await db.insert(tables).values({ ...t, createdByUserId: admin.id, requiresApprovalToJoin: true }).returning();
-    await db.insert(tableMembers).values({ tableId: table.id, userId: admin.id, memberRole: "HOST" });
+  const [existingTable] = await db.select({ id: tables.id }).from(tables).limit(1);
+  if (!existingTable) {
+    for (const t of tableData) {
+      const [table] = await db.insert(tables).values({ ...t, createdByUserId: admin.id, requiresApprovalToJoin: true }).returning();
+      await db.insert(tableMembers).values({ tableId: table.id, userId: admin.id, memberRole: "HOST" });
+    }
+    console.log("✅ Collaboration tables seeded");
   }
-  console.log("✅ Collaboration tables seeded");
 
   // Seed 2026 health calendar events
   const calendarData = [
@@ -86,9 +100,13 @@ export async function seed() {
     { title: "World Patient Safety Day", startDate: "2026-09-17", tags: ["patient-safety", "WHO"], organiser: "WHO", regionScope: "Global" },
   ];
 
-  for (const event of calendarData) {
-    await db.insert(calendarEvents).values(event);
+  const [existingEvent] = await db.select({ id: calendarEvents.id }).from(calendarEvents).limit(1);
+  if (!existingEvent) {
+    for (const event of calendarData) {
+      await db.insert(calendarEvents).values(event);
+    }
+    console.log("✅ Calendar events seeded (20 2026 health milestones)");
   }
-  console.log("✅ Calendar events seeded (20 2026 health milestones)");
+
   console.log("🎉 Seeding complete!");
 }
