@@ -26,3 +26,8 @@ if (fs.existsSync(envPath)) {
     }
   }
 }
+
+if (process.env.ALLOW_SELF_SIGNED_TLS === "true") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  console.warn("[env] ALLOW_SELF_SIGNED_TLS enabled. TLS certificate verification is disabled.");
+}

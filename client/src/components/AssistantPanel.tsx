@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -11,28 +11,33 @@ import { useToast } from "@/hooks/use-toast";
 import Markdown from "react-markdown";
 
 function MarkdownText({ text, className = "" }: { text: string; className?: string }) {
+  const MarkdownRenderer: any = (Markdown as any)?.default ?? Markdown;
+  if (!MarkdownRenderer || (typeof MarkdownRenderer !== "function" && typeof MarkdownRenderer !== "object")) {
+    return <p className={`text-sm ${className}`}>{text}</p>;
+  }
   return (
-    <Markdown
-      className={`prose-sm prose-neutral dark:prose-invert max-w-none ${className}`}
-      components={{
-        h1: ({ children }) => <p className="font-semibold text-foreground mt-2 mb-1">{children}</p>,
-        h2: ({ children }) => <p className="font-semibold text-foreground mt-1.5 mb-0.5">{children}</p>,
-        h3: ({ children }) => <p className="font-medium text-foreground mt-1 mb-0.5">{children}</p>,
-        p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
-        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-        em: ({ children }) => <em>{children}</em>,
-        ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
-        li: ({ children }) => <li>{children}</li>,
-        code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded text-xs">{children}</code>,
-        pre: ({ children }) => <pre className="bg-muted rounded-md p-2 my-1.5 overflow-x-auto text-xs">{children}</pre>,
-        blockquote: ({ children }) => <blockquote className="border-l-2 border-primary/30 pl-3 my-1.5 text-muted-foreground italic">{children}</blockquote>,
-        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">{children}</a>,
-        hr: () => <hr className="my-2 border-border" />,
-      }}
-    >
-      {text}
-    </Markdown>
+    <div className={`prose-sm prose-neutral dark:prose-invert max-w-none ${className}`}>
+      <MarkdownRenderer
+        components={{
+          h1: ({ children }: { children: ReactNode }) => <p className="font-semibold text-foreground mt-2 mb-1">{children}</p>,
+          h2: ({ children }: { children: ReactNode }) => <p className="font-semibold text-foreground mt-1.5 mb-0.5">{children}</p>,
+          h3: ({ children }: { children: ReactNode }) => <p className="font-medium text-foreground mt-1 mb-0.5">{children}</p>,
+          p: ({ children }: { children: ReactNode }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+          strong: ({ children }: { children: ReactNode }) => <strong className="font-semibold">{children}</strong>,
+          em: ({ children }: { children: ReactNode }) => <em>{children}</em>,
+          ul: ({ children }: { children: ReactNode }) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
+          ol: ({ children }: { children: ReactNode }) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
+          li: ({ children }: { children: ReactNode }) => <li>{children}</li>,
+          code: ({ children }: { children: ReactNode }) => <code className="bg-muted px-1 py-0.5 rounded text-xs">{children}</code>,
+          pre: ({ children }: { children: ReactNode }) => <pre className="bg-muted rounded-md p-2 my-1.5 overflow-x-auto text-xs">{children}</pre>,
+          blockquote: ({ children }: { children: ReactNode }) => <blockquote className="border-l-2 border-primary/30 pl-3 my-1.5 text-muted-foreground italic">{children}</blockquote>,
+          a: ({ href, children }: { href?: string; children: ReactNode }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">{children}</a>,
+          hr: () => <hr className="my-2 border-border" />,
+        }}
+      >
+        {text}
+      </MarkdownRenderer>
+    </div>
   );
 }
 
@@ -140,6 +145,10 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const handleCopy = async () => {
+    if (!navigator?.clipboard?.writeText) {
+      toast({ title: "Copy unavailable", description: "Clipboard access is not available.", variant: "destructive" });
+      return;
+    }
     await navigator.clipboard.writeText(text);
     setCopied(true);
     toast({ title: "Copied to clipboard" });
@@ -184,7 +193,12 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, t
 }
 
 function normalizeStructuredContent(content: string | Record<string, any>): string {
+  if (content == null) return "";
   if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content.map(item => String(item)).join("\n");
+  }
+  if (typeof content !== "object") return String(content);
   const lines: string[] = [];
   for (const [key, value] of Object.entries(content)) {
     lines.push(`**${key}**`);
@@ -192,6 +206,8 @@ function normalizeStructuredContent(content: string | Record<string, any>): stri
       value.forEach(item => lines.push(`- ${item}`));
     } else if (typeof value === "string") {
       lines.push(value);
+    } else if (value != null) {
+      lines.push(String(value));
     }
     lines.push("");
   }
@@ -249,18 +265,56 @@ const DEFAULT_GREETING: Message = {
   ],
 };
 
+function sanitizeStoredMessages(raw: unknown): Message[] | null {
+  if (!Array.isArray(raw)) return null;
+  const safe: Message[] = [];
+  const isStructured = (value: any) =>
+    typeof value === "string" || (value && typeof value === "object");
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const role = (entry as any).role;
+    const content = (entry as any).content;
+    if ((role !== "user" && role !== "assistant") || typeof content !== "string") continue;
+    safe.push({
+      role,
+      content,
+      summaryContent: isStructured((entry as any).summaryContent)
+        ? (entry as any).summaryContent
+        : undefined,
+      reflectionContent: isStructured((entry as any).reflectionContent)
+        ? (entry as any).reflectionContent
+        : undefined,
+      milestoneContent: isStructured((entry as any).milestoneContent)
+        ? (entry as any).milestoneContent
+        : undefined,
+      draftContent: typeof (entry as any).draftContent === "string" ? (entry as any).draftContent : undefined,
+      suggestedActions: Array.isArray((entry as any).suggestedActions) ? (entry as any).suggestedActions : undefined,
+      actionsPerformed: Array.isArray((entry as any).actionsPerformed) ? (entry as any).actionsPerformed : undefined,
+      pendingActions: Array.isArray((entry as any).pendingActions) ? (entry as any).pendingActions : undefined,
+      pendingStatus: (entry as any).pendingStatus === "waiting" || (entry as any).pendingStatus === "approved" || (entry as any).pendingStatus === "declined"
+        ? (entry as any).pendingStatus
+        : undefined,
+    });
+  }
+  return safe.length > 0 ? safe : null;
+}
+
 function loadStoredMessages(): Message[] {
+  if (typeof window === "undefined") return [DEFAULT_GREETING];
   try {
     const stored = sessionStorage.getItem(ASSISTANT_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const sanitized = sanitizeStoredMessages(parsed);
+      if (sanitized && sanitized.length > 0) return sanitized;
     }
   } catch {}
+  try { sessionStorage.removeItem(ASSISTANT_STORAGE_KEY); } catch {}
   return [DEFAULT_GREETING];
 }
 
 function saveMessages(messages: Message[]) {
+  if (typeof window === "undefined") return;
   try {
     sessionStorage.setItem(ASSISTANT_STORAGE_KEY, JSON.stringify(messages));
   } catch {}
@@ -431,6 +485,10 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
       onDraft(draft);
       toast({ title: "Draft added to compose box" });
     } else {
+      if (!navigator?.clipboard?.writeText) {
+        toast({ title: "Copy unavailable", description: "Clipboard access is not available.", variant: "destructive" });
+        return;
+      }
       navigator.clipboard.writeText(draft);
       toast({ title: "Draft copied to clipboard" });
     }
@@ -467,7 +525,7 @@ export function AssistantPanel({ onClose, onDraft }: AssistantPanelProps) {
               variant="ghost"
               onClick={() => {
                 setMessages([DEFAULT_GREETING]);
-                sessionStorage.removeItem(ASSISTANT_STORAGE_KEY);
+                try { sessionStorage.removeItem(ASSISTANT_STORAGE_KEY); } catch {}
               }}
               title="New conversation"
               data-testid="button-new-conversation"

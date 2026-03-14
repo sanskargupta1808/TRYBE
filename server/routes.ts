@@ -1403,19 +1403,20 @@ Select exactly 3 tables that best match this user's profile. Prefer tables that 
   });
 
   app.post("/api/assistant", requireActive, async (req, res) => {
-    const { message, context, history } = req.body;
-    const user = await storage.getUserById(req.session.userId!);
-    const profile = await storage.getUserProfile(req.session.userId!);
+    try {
+      const { message, context, history } = req.body;
+      const user = await storage.getUserById(req.session.userId!);
+      const profile = await storage.getUserProfile(req.session.userId!);
 
-    if (!openai) {
-      return res.json({
-        assistantText: "I'm here to support your work. Explore the Tables section to find tables relevant to your focus.",
-        suggestedActions: [
-          { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
-          { type: "NAVIGATE", label: "View Moments", url: "/app/moments" },
-        ],
-      });
-    }
+      if (!openai) {
+        return res.json({
+          assistantText: "I'm here to support your work. Explore the Tables section to find tables relevant to your focus.",
+          suggestedActions: [
+            { type: "NAVIGATE", label: "Browse Tables", url: "/app/tables" },
+            { type: "NAVIGATE", label: "View Moments", url: "/app/moments" },
+          ],
+        });
+      }
 
     // ── 1. Classify intent (for tool selection) ────────────────────────────
     const intent = classifyIntent(message, context);
@@ -1598,11 +1599,11 @@ Rules:
     }
     conversationMessages.push({ role: "user", content: message });
 
-    try {
-      const messages: any[] = [
-        { role: "system", content: systemPrompt },
-        ...conversationMessages,
-      ];
+      try {
+        const messages: any[] = [
+          { role: "system", content: systemPrompt },
+          ...conversationMessages,
+        ];
 
       let completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -1724,9 +1725,13 @@ Rules:
         } catch {}
       }
 
-      res.json(result);
+        res.json(result);
+      } catch (err: any) {
+        console.error("[Assistant]", err?.message);
+        res.json({ assistantText: "I'm having trouble right now. Please try again in a moment.", suggestedActions: [] });
+      }
     } catch (err: any) {
-      console.error("[Assistant]", err?.message);
+      console.error("[Assistant] Request failed:", err?.message);
       res.json({ assistantText: "I'm having trouble right now. Please try again in a moment.", suggestedActions: [] });
     }
   });
@@ -1764,78 +1769,83 @@ Rules:
   const nudgeThrottle = new Map<string, { lastNudgeAt: number; weeklyCount: number; weekStart: number }>();
 
   app.get("/api/assistant/nudges", requireActive, async (req, res) => {
-    const userId = req.session.userId!;
-    const profile = await storage.getUserProfile(userId);
-
-    if (profile?.assistantActivityLevel === "QUIET") {
-      return res.json({ nudges: [], focusReviewDue: false });
-    }
-
-    const now = Date.now();
-    const throttle = nudgeThrottle.get(userId) || { lastNudgeAt: 0, weeklyCount: 0, weekStart: now };
-    const weekMs = 7 * 86400000;
-    if (now - throttle.weekStart > weekMs) {
-      throttle.weeklyCount = 0;
-      throttle.weekStart = now;
-    }
-
-    if (throttle.weeklyCount >= 3) {
-      const focusReviewDue = !profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000);
-      return res.json({ nudges: [], focusReviewDue });
-    }
-
-    const nudges: { type: string; message: string; tableId?: string; eventTitle?: string }[] = [];
-
     try {
-      const userTables = await storage.getTablesForUser(userId);
-      if (userTables.length > 0) {
-        const tableIds = userTables.map(t => t.id);
-        const activityData = await storage.getTableLastActivity(tableIds);
+      const userId = req.session.userId!;
+      const profile = await storage.getUserProfile(userId);
 
-        for (const table of userTables) {
-          const activity = activityData.find(a => a.tableId === table.id);
-          const lastPost = activity?.lastPostAt ? new Date(activity.lastPostAt).getTime() : 0;
-          if (!lastPost || now - lastPost > 10 * 86400000) {
-            nudges.push({
-              type: "INACTIVE_TABLE",
-              message: `The "${table.title}" table has been quiet recently. Would you like to re-engage?`,
-              tableId: table.id,
-            });
+      if (profile?.assistantActivityLevel === "QUIET") {
+        return res.json({ nudges: [], focusReviewDue: false });
+      }
+
+      const now = Date.now();
+      const throttle = nudgeThrottle.get(userId) || { lastNudgeAt: 0, weeklyCount: 0, weekStart: now };
+      const weekMs = 7 * 86400000;
+      if (now - throttle.weekStart > weekMs) {
+        throttle.weeklyCount = 0;
+        throttle.weekStart = now;
+      }
+
+      if (throttle.weeklyCount >= 3) {
+        const focusReviewDue = !profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000);
+        return res.json({ nudges: [], focusReviewDue });
+      }
+
+      const nudges: { type: string; message: string; tableId?: string; eventTitle?: string }[] = [];
+
+      try {
+        const userTables = await storage.getTablesForUser(userId);
+        if (userTables.length > 0) {
+          const tableIds = userTables.map(t => t.id);
+          const activityData = await storage.getTableLastActivity(tableIds);
+
+          for (const table of userTables) {
+            const activity = activityData.find(a => a.tableId === table.id);
+            const lastPost = activity?.lastPostAt ? new Date(activity.lastPostAt).getTime() : 0;
+            if (!lastPost || now - lastPost > 10 * 86400000) {
+              nudges.push({
+                type: "INACTIVE_TABLE",
+                message: `The "${table.title}" table has been quiet recently. Would you like to re-engage?`,
+                tableId: table.id,
+              });
+            }
           }
         }
-      }
-    } catch {}
+      } catch {}
 
-    try {
-      const allEvents = await storage.getAllCalendarEvents();
-      const today = new Date();
-      const cutoff = new Date(now + 30 * 86400000);
-      const upcoming = allEvents.filter(e => {
-        const d = new Date(e.startDate);
-        return d >= today && d <= cutoff;
-      });
-
-      for (const event of upcoming.slice(0, 2)) {
-        const daysAway = Math.ceil((new Date(event.startDate).getTime() - now) / 86400000);
-        const weeksText = daysAway > 7 ? `${Math.ceil(daysAway / 7)} weeks` : `${daysAway} days`;
-        nudges.push({
-          type: "UPCOMING_MILESTONE",
-          message: `${event.title} is in ${weeksText}. Would preparation be useful?`,
-          eventTitle: event.title,
+      try {
+        const allEvents = await storage.getAllCalendarEvents();
+        const today = new Date();
+        const cutoff = new Date(now + 30 * 86400000);
+        const upcoming = allEvents.filter(e => {
+          const d = new Date(e.startDate);
+          return d >= today && d <= cutoff;
         });
+
+        for (const event of upcoming.slice(0, 2)) {
+          const daysAway = Math.ceil((new Date(event.startDate).getTime() - now) / 86400000);
+          const weeksText = daysAway > 7 ? `${Math.ceil(daysAway / 7)} weeks` : `${daysAway} days`;
+          nudges.push({
+            type: "UPCOMING_MILESTONE",
+            message: `${event.title} is in ${weeksText}. Would preparation be useful?`,
+            eventTitle: event.title,
+          });
+        }
+      } catch {}
+
+      const limitedNudges = nudges.slice(0, 1);
+      if (limitedNudges.length > 0) {
+        throttle.lastNudgeAt = now;
+        throttle.weeklyCount++;
+        nudgeThrottle.set(userId, throttle);
       }
-    } catch {}
 
-    const limitedNudges = nudges.slice(0, 1);
-    if (limitedNudges.length > 0) {
-      throttle.lastNudgeAt = now;
-      throttle.weeklyCount++;
-      nudgeThrottle.set(userId, throttle);
+      const focusReviewDue = profile?.onboardingComplete && (!profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000));
+
+      res.json({ nudges: limitedNudges, focusReviewDue: !!focusReviewDue });
+    } catch (err: any) {
+      console.error("[Assistant/Nudges]", err?.message);
+      res.json({ nudges: [], focusReviewDue: false });
     }
-
-    const focusReviewDue = profile?.onboardingComplete && (!profile?.lastFocusReviewAt || (now - new Date(profile.lastFocusReviewAt).getTime() > 30 * 86400000));
-
-    res.json({ nudges: limitedNudges, focusReviewDue: !!focusReviewDue });
   });
 
   app.post("/api/assistant/dismiss-focus-review", requireActive, async (req, res) => {

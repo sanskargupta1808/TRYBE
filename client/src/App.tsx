@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AssistantPanel } from "@/components/AssistantPanel";
+import { AssistantErrorBoundary } from "@/components/AssistantErrorBoundary";
 import { useState } from "react";
 import { Bot } from "lucide-react";
 
@@ -81,7 +82,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <>
             <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setAssistantOpen(false)} />
             <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md shadow-2xl bg-background/90 backdrop-blur-xl border-l border-border animate-slide-in-right rounded-l-[2.5rem] overflow-hidden">
-              <AssistantPanel onClose={() => setAssistantOpen(false)} />
+              <AssistantErrorBoundary onClose={() => setAssistantOpen(false)}>
+                <AssistantPanel onClose={() => setAssistantOpen(false)} />
+              </AssistantErrorBoundary>
             </div>
           </>
         )}
